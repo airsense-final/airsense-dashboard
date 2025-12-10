@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { DashboardPage } from './pages/DashboardPage';
+import { TestSimulationPage } from './pages/TestSimulationPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
@@ -20,6 +21,8 @@ function App() {
   
   if (currentRoute === '#/' || currentRoute === '') {
       content = <DashboardPage />;
+  } else if (currentRoute === '#/test-simulation') {
+      content = <TestSimulationPage />;
   } else {
       content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
   }
