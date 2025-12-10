@@ -17,7 +17,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({ alerts }) => {
 
       setVisibleAlerts(prev => [...prev, newAlert]);
 
-      // 5 saniye sonra alerti kaldır
+      
       setTimeout(() => {
         setVisibleAlerts(prev => prev.filter(a => a.id !== newAlert.id));
       }, 5000);
@@ -29,7 +29,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({ alerts }) => {
   return (
     <div className="fixed top-20 right-4 z-50 space-y-2 max-w-md">
       {visibleAlerts.map((alert) => {
-        const isCritical = alert.message.includes('KRİTİK');
+        const isCritical = alert.message.includes('CRITICAL');
         return (
           <div
             key={alert.id}

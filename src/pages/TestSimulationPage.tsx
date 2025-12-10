@@ -21,12 +21,12 @@ export const TestSimulationPage: React.FC = () => {
   const [autoRunIndex, setAutoRunIndex] = useState(0);
 
   useEffect(() => {
-    // Sensor verisi değişikliklerini dinle
+    
     const unsubscribeSensor = testScenarioService.subscribe((data) => {
       setSensorData(data);
     });
 
-    // Alert'leri dinle
+    
     const unsubscribeAlerts = testScenarioService.subscribeToAlerts((alert) => {
       setAlerts(prev => [...prev, alert]);
     });
@@ -37,12 +37,12 @@ export const TestSimulationPage: React.FC = () => {
     };
   }, []);
 
-  // Otomatik test çalıştırma
+  
   useEffect(() => {
     if (autoRunEnabled && !isRunning && autoRunIndex < TEST_SCENARIOS.length) {
       const timer = setTimeout(() => {
         handleRunScenario(TEST_SCENARIOS[autoRunIndex]);
-      }, 2000); // 2 saniye bekle
+      }, 2000);
 
       return () => clearTimeout(timer);
     } else if (autoRunEnabled && autoRunIndex >= TEST_SCENARIOS.length) {
@@ -66,8 +66,8 @@ export const TestSimulationPage: React.FC = () => {
         setAutoRunIndex(prev => prev + 1);
       }
     } catch (error) {
-      console.error('Test hatası:', error);
-      setAlerts(prev => [...prev, `❌ Test hatası: ${error}`]);
+      console.error('Test error:', error);
+      setAlerts(prev => [...prev, `❌ Test error: ${error}`]);
     } finally {
       setIsRunning(false);
       setCurrentScenario(null);
