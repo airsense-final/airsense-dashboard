@@ -19,30 +19,40 @@ export const TestSimulationPage: React.FC = () => {
   const [alerts, setAlerts] = useState<string[]>([]);
   const [autoRunEnabled, setAutoRunEnabled] = useState(false);
   const [autoRunIndex, setAutoRunIndex] = useState(0);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
-    
+    // Start polling for real-time sensor data from backend
+    console.log('🎯 TestSimulationPage mounted, starting polling...');
+    testScenarioService.startPolling();
+
+    // Sensor verisi değişikliklerini dinle
     const unsubscribeSensor = testScenarioService.subscribe((data) => {
+      console.log('📊 Sensor data updated in component:', data);
       setSensorData(data);
+      setLastUpdate(new Date());
+      setBackendStatus('connected');
     });
 
-    
+    // Alert'leri dinle
     const unsubscribeAlerts = testScenarioService.subscribeToAlerts((alert) => {
       setAlerts(prev => [...prev, alert]);
     });
 
     return () => {
+      testScenarioService.stopPolling();
       unsubscribeSensor();
       unsubscribeAlerts();
     };
   }, []);
 
-  
+  // Otomatik test çalıştırma
   useEffect(() => {
     if (autoRunEnabled && !isRunning && autoRunIndex < TEST_SCENARIOS.length) {
       const timer = setTimeout(() => {
         handleRunScenario(TEST_SCENARIOS[autoRunIndex]);
-      }, 2000);
+      }, 2000); // 2 saniye bekle
 
       return () => clearTimeout(timer);
     } else if (autoRunEnabled && autoRunIndex >= TEST_SCENARIOS.length) {
@@ -66,8 +76,8 @@ export const TestSimulationPage: React.FC = () => {
         setAutoRunIndex(prev => prev + 1);
       }
     } catch (error) {
-      console.error('Test error:', error);
-      setAlerts(prev => [...prev, `❌ Test error: ${error}`]);
+      console.error('Test hatası:', error);
+      setAlerts(prev => [...prev, `❌ Test hatası: ${error}`]);
     } finally {
       setIsRunning(false);
       setCurrentScenario(null);
@@ -112,9 +122,23 @@ export const TestSimulationPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
             <span>Test Simulation</span>
+            {backendStatus === 'connected' && (
+              <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full flex items-center space-x-1">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                <span>Live</span>
+              </span>
+            )}
+            {backendStatus === 'checking' && (
+              <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full">Connecting...</span>
+            )}
           </h1>
           <p className="text-gray-400">
             Monitor system response with automated test scenarios
+            {lastUpdate && (
+              <span className="text-xs text-gray-500 ml-2">
+                Last update: {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex space-x-3">

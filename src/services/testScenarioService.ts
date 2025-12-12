@@ -1,3 +1,8 @@
+// Test Scenario Service - Manages automated test scenarios
+
+// Backend API configuration
+const API_BASE_URL = 'http://localhost:8000/api/v1';
+const POLLING_INTERVAL = 2000; // 2 seconds
 
 export interface SensorData {
   temperature: number;
@@ -5,7 +10,7 @@ export interface SensorData {
   co2: number;
   methane: number;
   co: number;
-  airQuality: number;
+  airQuality: number; // NH3, NOx, Benzene, Smoke combination
   flammableGas: number;
   timestamp: Date;
 }
@@ -16,7 +21,7 @@ export interface TestScenario {
   description: string;
   steps: TestStep[];
   expectedResult: string;
-  duration: number;
+  duration: number; // milliseconds
 }
 
 export interface TestStep {
@@ -48,7 +53,7 @@ export interface StepResult {
   alertsTriggered: string[];
 }
 
-
+// Önceden tanımlanmış test senaryoları
 export const TEST_SCENARIOS: TestScenario[] = [
   {
     id: 'fire-scenario',
@@ -174,22 +179,24 @@ class TestScenarioService {
   private currentResults: TestResult | null = null;
   private abortController: AbortController | null = null;
 
-  
-  private mockSensorData: SensorData = {
+  // Real-time sensor data from backend
+  private sensorData: SensorData = {
     temperature: 25,
     humidity: 50,
     co2: 400,
     methane: 0,
     co: 0,
-    airQuality: 100,
+    airQuality: 100, // 0-1000 range, higher value = worse quality
     flammableGas: 0,
     timestamp: new Date()
   };
 
   private listeners: Array<(data: SensorData) => void> = [];
   private alertListeners: Array<(alert: string) => void> = [];
+  private pollingInterval: number | null = null;
+  private isTestMode = false; // Flag to distinguish between real data and test scenarios
 
-  
+  // Sensor verisi değişikliklerini dinle
   subscribe(callback: (data: SensorData) => void): () => void {
     this.listeners.push(callback);
     return () => {
@@ -197,7 +204,7 @@ class TestScenarioService {
     };
   }
 
-  
+  // Alert dinleyicileri
   subscribeToAlerts(callback: (alert: string) => void): () => void {
     this.alertListeners.push(callback);
     return () => {
@@ -206,57 +213,131 @@ class TestScenarioService {
   }
 
   private notifyListeners() {
-    this.listeners.forEach(callback => callback({ ...this.mockSensorData }));
+    this.listeners.forEach(callback => callback({ ...this.sensorData }));
+  }
+
+  // Fetch real-time sensor data from backend
+  private async fetchSensorData(): Promise<void> {
+    try {
+      console.log(`[${new Date().toLocaleTimeString()}] Fetching sensor data from: ${API_BASE_URL}/sensors/latest`);
+      
+      const response = await fetch(`${API_BASE_URL}/sensors/latest`);
+      if (!response.ok) {
+        console.error('Failed to fetch sensor data:', response.status, response.statusText);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('[Sensor Data Received]', data);
+      
+      // Only update if not in test mode (running a scenario)
+      if (!this.isTestMode) {
+        this.sensorData = {
+          temperature: data.temperature,
+          humidity: data.humidity,
+          co2: data.co2,
+          methane: data.methane,
+          co: data.co,
+          airQuality: data.airQuality,
+          flammableGas: data.flammableGas,
+          timestamp: new Date(data.timestamp)
+        };
+        
+        console.log('[Sensor Data Updated]', this.sensorData);
+        this.notifyListeners();
+        
+        // Check thresholds for real data
+        Object.keys(this.sensorData).forEach(key => {
+          if (key !== 'timestamp') {
+            const alerts = this.checkThresholds(key, this.sensorData[key as keyof SensorData] as number);
+            alerts.forEach(alert => this.triggerAlert(alert));
+          }
+        });
+      } else {
+        console.log('[Test Mode Active] Skipping real sensor data update');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching sensor data:', error);
+      console.error('Make sure backend is running at:', API_BASE_URL);
+    }
+  }
+
+  // Start polling for real-time data
+  startPolling(): void {
+    if (this.pollingInterval !== null) {
+      console.log('⚠️ Polling already active');
+      return; // Already polling
+    }
+    
+    console.log('🚀 Starting real-time sensor polling...');
+    console.log(`📡 Polling interval: ${POLLING_INTERVAL}ms`);
+    console.log(`🔗 Backend URL: ${API_BASE_URL}`);
+    
+    // Fetch immediately
+    this.fetchSensorData();
+    
+    // Then poll at intervals
+    this.pollingInterval = window.setInterval(() => {
+      this.fetchSensorData();
+    }, POLLING_INTERVAL);
+  }
+
+  // Stop polling
+  stopPolling(): void {
+    if (this.pollingInterval !== null) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
   }
 
   private triggerAlert(message: string) {
     this.alertListeners.forEach(callback => callback(message));
   }
 
-  
+  // Sensör değerini kontrol et ve alert tetikle
   private checkThresholds(sensorType: string, value: number) {
     const alerts: string[] = [];
 
     switch (sensorType) {
       case 'temperature':
-        if (value > 50) alerts.push(`CRITICAL: High temperature! ${value}°C`);
-        else if (value > 35) alerts.push(`WARNING: Temperature high: ${value}°C`);
-        else if (value < 10) alerts.push(`WARNING: Low temperature: ${value}°C`);
+        if (value > 50) alerts.push(`KRİTİK: Yüksek sıcaklık! ${value}°C`);
+        else if (value > 35) alerts.push(`UYARI: Sıcaklık yükseldi: ${value}°C`);
+        else if (value < 10) alerts.push(`UYARI: Düşük sıcaklık: ${value}°C`);
         break;
       case 'co2':
-        if (value > 2000) alerts.push(`CRITICAL: High CO2! ${value} ppm`);
-        else if (value > 1000) alerts.push(`WARNING: CO2 level high: ${value} ppm`);
+        if (value > 2000) alerts.push(`KRİTİK: Yüksek CO2! ${value} ppm`);
+        else if (value > 1000) alerts.push(`UYARI: CO2 seviyesi yükseldi: ${value} ppm`);
         break;
       case 'methane':
-        if (value > 1500) alerts.push(`CRITICAL: High Methane! ${value} ppm`);
-        else if (value > 1000) alerts.push(`WARNING: Methane detected: ${value} ppm`);
+        if (value > 1500) alerts.push(`KRİTİK: Yüksek Methane! ${value} ppm`);
+        else if (value > 1000) alerts.push(`UYARI: Methane tespit edildi: ${value} ppm`);
         break;
       case 'co':
-        if (value > 70) alerts.push(`CRITICAL: Dangerous CO level! ${value} ppm`);
-        else if (value > 35) alerts.push(`WARNING: High CO level: ${value} ppm`);
+        if (value > 70) alerts.push(`KRİTİK: Tehlikeli CO seviyesi! ${value} ppm`);
+        else if (value > 35) alerts.push(`UYARI: Yüksek CO seviyesi: ${value} ppm`);
         break;
       case 'airQuality':
-        if (value > 600) alerts.push(`CRITICAL: Very poor air quality! Level: ${value}`);
-        else if (value > 400) alerts.push(`WARNING: Poor air quality: ${value}`);
+        if (value > 600) alerts.push(`KRİTİK: Çok kötü hava kalitesi! Seviye: ${value}`);
+        else if (value > 400) alerts.push(`UYARI: Kötü hava kalitesi: ${value}`);
         break;
       case 'flammableGas':
-        if (value > 700) alerts.push(`CRITICAL: High flammable gas! Level: ${value}`);
-        else if (value > 400) alerts.push(`WARNING: Flammable gas detected: ${value}`);
+        if (value > 700) alerts.push(`KRİTİK: Yüksek yanıcı gaz! Seviye: ${value}`);
+        else if (value > 400) alerts.push(`UYARI: Yanıcı gaz tespit edildi: ${value}`);
         break;
       case 'humidity':
-        if (value > 80) alerts.push(`WARNING: High humidity: %${value}`);
-        else if (value < 30) alerts.push(`WARNING: Low humidity: %${value}`);
+        if (value > 80) alerts.push(`UYARI: Yüksek nem: %${value}`);
+        else if (value < 30) alerts.push(`UYARI: Düşük nem: %${value}`);
         break;
     }
 
     return alerts;
   }
 
-  
+  // Execute a test step (for test scenarios only)
   private async executeStep(step: TestStep): Promise<StepResult> {
-    const startValue = this.mockSensorData[step.sensorType];
+    const startValue = this.sensorData[step.sensorType];
     const targetValue = step.targetValue;
-    const steps = 20;
+    const steps = 20; // Animation steps
     const stepDuration = step.duration / steps;
 
     return new Promise((resolve) => {
@@ -270,7 +351,7 @@ class TestScenarioService {
             stepIndex: 0,
             action: step.action,
             success: false,
-            actualValue: this.mockSensorData[step.sensorType],
+            actualValue: this.sensorData[step.sensorType],
             expectedValue: targetValue,
             timestamp: new Date(),
             alertsTriggered: alerts
@@ -282,12 +363,12 @@ class TestScenarioService {
         const progress = currentStep / steps;
         const currentValue = startValue + (targetValue - startValue) * progress;
 
-        this.mockSensorData[step.sensorType] = Math.round(currentValue * 10) / 10;
-        this.mockSensorData.timestamp = new Date();
+        this.sensorData[step.sensorType] = Math.round(currentValue * 10) / 10;
+        this.sensorData.timestamp = new Date();
         this.notifyListeners();
 
-        
-        const newAlerts = this.checkThresholds(step.sensorType, this.mockSensorData[step.sensorType]);
+        // Check thresholds
+        const newAlerts = this.checkThresholds(step.sensorType, this.sensorData[step.sensorType]);
         newAlerts.forEach(alert => {
           if (!alerts.includes(alert)) {
             alerts.push(alert);
@@ -301,7 +382,7 @@ class TestScenarioService {
             stepIndex: 0,
             action: step.action,
             success: true,
-            actualValue: this.mockSensorData[step.sensorType],
+            actualValue: this.sensorData[step.sensorType],
             expectedValue: targetValue,
             timestamp: new Date(),
             alertsTriggered: alerts
@@ -311,13 +392,14 @@ class TestScenarioService {
     });
   }
 
-  
+  // Run test scenario
   async runScenario(scenario: TestScenario): Promise<TestResult> {
     if (this.isRunning) {
       throw new Error('A test is already running!');
     }
 
     this.isRunning = true;
+    this.isTestMode = true; // Enable test mode to prevent real data updates
     this.currentScenario = scenario;
     this.abortController = new AbortController();
 
@@ -335,12 +417,12 @@ class TestScenarioService {
       for (let i = 0; i < scenario.steps.length; i++) {
         const step = scenario.steps[i];
 
-        
+        // Delay ekle
         if (step.delay > 0) {
           await this.delay(step.delay);
         }
 
-        
+        // Adımı çalıştır
         const stepResult = await this.executeStep(step);
         stepResult.stepIndex = i + 1;
         result.steps.push(stepResult);
@@ -357,9 +439,10 @@ class TestScenarioService {
       this.currentResults = result;
     } catch (error) {
       result.success = false;
-      result.systemResponse.push(`Error: ${error}`);
+      result.systemResponse.push(`Hata: ${error}`);
     } finally {
       this.isRunning = false;
+      this.isTestMode = false;
       this.currentScenario = null;
       this.abortController = null;
     }
@@ -367,36 +450,28 @@ class TestScenarioService {
     return result;
   }
 
-  
+  // Stop test
   stopTest() {
     if (this.abortController) {
       this.abortController.abort();
     }
     this.isRunning = false;
+    this.isTestMode = false;
     this.currentScenario = null;
   }
 
-  
-  resetSensors() {
-    this.mockSensorData = {
-      temperature: 25,
-      humidity: 50,
-      co2: 400,
-      methane: 0,
-      co: 0,
-      airQuality: 100,
-      flammableGas: 0,
-      timestamp: new Date()
-    };
-    this.notifyListeners();
+  // Reset sensors (fetch fresh data from backend)
+  async resetSensors() {
+    this.isTestMode = false;
+    await this.fetchSensorData();
   }
 
-  
+  // Get current sensor data
   getCurrentSensorData(): SensorData {
-    return { ...this.mockSensorData };
+    return { ...this.sensorData };
   }
 
-  
+  // Test durumu
   getIsRunning(): boolean {
     return this.isRunning;
   }
