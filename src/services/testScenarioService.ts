@@ -53,7 +53,7 @@ export interface StepResult {
   alertsTriggered: string[];
 }
 
-// Önceden tanımlanmış test senaryoları
+// Predefined test scenarios
 export const TEST_SCENARIOS: TestScenario[] = [
   {
     id: 'fire-scenario',
@@ -196,7 +196,7 @@ class TestScenarioService {
   private pollingInterval: number | null = null;
   private isTestMode = false; // Flag to distinguish between real data and test scenarios
 
-  // Sensor verisi değişikliklerini dinle
+  // Listen to sensor data changes
   subscribe(callback: (data: SensorData) => void): () => void {
     this.listeners.push(callback);
     return () => {
@@ -204,7 +204,7 @@ class TestScenarioService {
     };
   }
 
-  // Alert dinleyicileri
+  // Alert listeners
   subscribeToAlerts(callback: (alert: string) => void): () => void {
     this.alertListeners.push(callback);
     return () => {
@@ -294,39 +294,39 @@ class TestScenarioService {
     this.alertListeners.forEach(callback => callback(message));
   }
 
-  // Sensör değerini kontrol et ve alert tetikle
+  // Check sensor value and trigger alert
   private checkThresholds(sensorType: string, value: number) {
     const alerts: string[] = [];
 
     switch (sensorType) {
       case 'temperature':
-        if (value > 50) alerts.push(`KRİTİK: Yüksek sıcaklık! ${value}°C`);
-        else if (value > 35) alerts.push(`UYARI: Sıcaklık yükseldi: ${value}°C`);
-        else if (value < 10) alerts.push(`UYARI: Düşük sıcaklık: ${value}°C`);
+        if (value > 50) alerts.push(`CRITICAL: High temperature! ${value}°C`);
+        else if (value > 35) alerts.push(`WARNING: Temperature increased: ${value}°C`);
+        else if (value < 10) alerts.push(`WARNING: Low temperature: ${value}°C`);
         break;
       case 'co2':
-        if (value > 2000) alerts.push(`KRİTİK: Yüksek CO2! ${value} ppm`);
-        else if (value > 1000) alerts.push(`UYARI: CO2 seviyesi yükseldi: ${value} ppm`);
+        if (value > 2000) alerts.push(`CRITICAL: High CO2! ${value} ppm`);
+        else if (value > 1000) alerts.push(`WARNING: CO2 level increased: ${value} ppm`);
         break;
       case 'methane':
-        if (value > 1500) alerts.push(`KRİTİK: Yüksek Methane! ${value} ppm`);
-        else if (value > 1000) alerts.push(`UYARI: Methane tespit edildi: ${value} ppm`);
+        if (value > 1500) alerts.push(`CRITICAL: High Methane! ${value} ppm`);
+        else if (value > 1000) alerts.push(`WARNING: Methane detected: ${value} ppm`);
         break;
       case 'co':
-        if (value > 70) alerts.push(`KRİTİK: Tehlikeli CO seviyesi! ${value} ppm`);
-        else if (value > 35) alerts.push(`UYARI: Yüksek CO seviyesi: ${value} ppm`);
+        if (value > 70) alerts.push(`CRITICAL: Dangerous CO level! ${value} ppm`);
+        else if (value > 35) alerts.push(`WARNING: High CO level: ${value} ppm`);
         break;
       case 'airQuality':
-        if (value > 600) alerts.push(`KRİTİK: Çok kötü hava kalitesi! Seviye: ${value}`);
-        else if (value > 400) alerts.push(`UYARI: Kötü hava kalitesi: ${value}`);
+        if (value > 600) alerts.push(`CRITICAL: Very poor air quality! Level: ${value}`);
+        else if (value > 400) alerts.push(`WARNING: Poor air quality: ${value}`);
         break;
       case 'flammableGas':
-        if (value > 700) alerts.push(`KRİTİK: Yüksek yanıcı gaz! Seviye: ${value}`);
-        else if (value > 400) alerts.push(`UYARI: Yanıcı gaz tespit edildi: ${value}`);
+        if (value > 700) alerts.push(`CRITICAL: High flammable gas! Level: ${value}`);
+        else if (value > 400) alerts.push(`WARNING: Flammable gas detected: ${value}`);
         break;
       case 'humidity':
-        if (value > 80) alerts.push(`UYARI: Yüksek nem: %${value}`);
-        else if (value < 30) alerts.push(`UYARI: Düşük nem: %${value}`);
+        if (value > 80) alerts.push(`WARNING: High humidity: ${value}%`);
+        else if (value < 30) alerts.push(`WARNING: Low humidity: ${value}%`);
         break;
     }
 
@@ -417,12 +417,12 @@ class TestScenarioService {
       for (let i = 0; i < scenario.steps.length; i++) {
         const step = scenario.steps[i];
 
-        // Delay ekle
+        // Add delay
         if (step.delay > 0) {
           await this.delay(step.delay);
         }
 
-        // Adımı çalıştır
+        // Execute step
         const stepResult = await this.executeStep(step);
         stepResult.stepIndex = i + 1;
         result.steps.push(stepResult);
@@ -439,7 +439,7 @@ class TestScenarioService {
       this.currentResults = result;
     } catch (error) {
       result.success = false;
-      result.systemResponse.push(`Hata: ${error}`);
+      result.systemResponse.push(`Error: ${error}`);
     } finally {
       this.isRunning = false;
       this.isTestMode = false;
@@ -471,7 +471,7 @@ class TestScenarioService {
     return { ...this.sensorData };
   }
 
-  // Test durumu
+  // Test status
   getIsRunning(): boolean {
     return this.isRunning;
   }

@@ -27,7 +27,7 @@ export const TestSimulationPage: React.FC = () => {
     console.log('🎯 TestSimulationPage mounted, starting polling...');
     testScenarioService.startPolling();
 
-    // Sensor verisi değişikliklerini dinle
+    // Listen for sensor data updates
     const unsubscribeSensor = testScenarioService.subscribe((data) => {
       console.log('📊 Sensor data updated in component:', data);
       setSensorData(data);
@@ -35,7 +35,7 @@ export const TestSimulationPage: React.FC = () => {
       setBackendStatus('connected');
     });
 
-    // Alert'leri dinle
+    // Listen for alerts
     const unsubscribeAlerts = testScenarioService.subscribeToAlerts((alert) => {
       setAlerts(prev => [...prev, alert]);
     });
@@ -47,12 +47,12 @@ export const TestSimulationPage: React.FC = () => {
     };
   }, []);
 
-  // Otomatik test çalıştırma
+  // Auto-run effect
   useEffect(() => {
     if (autoRunEnabled && !isRunning && autoRunIndex < TEST_SCENARIOS.length) {
       const timer = setTimeout(() => {
         handleRunScenario(TEST_SCENARIOS[autoRunIndex]);
-      }, 2000); // 2 saniye bekle
+      }, 2000); // 2 second delay before starting next test
 
       return () => clearTimeout(timer);
     } else if (autoRunEnabled && autoRunIndex >= TEST_SCENARIOS.length) {
@@ -76,8 +76,8 @@ export const TestSimulationPage: React.FC = () => {
         setAutoRunIndex(prev => prev + 1);
       }
     } catch (error) {
-      console.error('Test hatası:', error);
-      setAlerts(prev => [...prev, `❌ Test hatası: ${error}`]);
+      console.error('Test error:', error);
+      setAlerts(prev => [...prev, `❌ Test error: ${error}`]);
     } finally {
       setIsRunning(false);
       setCurrentScenario(null);
