@@ -8,12 +8,12 @@ export interface Sensor {
 export type UserRole = 'super_admin' | 'admin' | 'manager' | 'viewer';
 
 export interface User {
-  id: number;
+  username: string;
+  _id: string;
   email: string;
-  full_name: string;
   role: UserRole;
   is_active: boolean;
-  institution_id?: number;
+  company_id: string;
 }
 
 export interface LoginRequest {
@@ -22,19 +22,19 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
-  full_name: string;
-  institution_id: number;
+  password_confirm: string;
+  company_name: string;
 }
 
-export interface Institution {
-  id: number;
+export interface Company {
+  _id: string;
   name: string;
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  user: User;
 }

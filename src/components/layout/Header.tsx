@@ -1,21 +1,19 @@
 import React from 'react';
-import type { User } from '../../types/types';
 
 interface HeaderProps {
-    user: User | null;
+    isAuthed: boolean;
     onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout }) => {
+    if (!isAuthed) return null;
     return (
         <header className="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-20 p-4 shadow-md flex justify-between items-center border-b border-gray-700">
             <div className="flex items-center space-x-6">
                 <a href="#/" className="text-2xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
                     <h1>AirSense Dashboard</h1>
                 </a>
-                
                 {/* Navigation links only visible to authenticated users */}
-                {user && (
                     <nav className="flex space-x-4">
                         <a 
                             href="#/" 
@@ -33,16 +31,11 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
                             <span>Test Simulation</span>
                         </a>
                     </nav>
-                )}
             </div>
-            
-            {/* User Profile and Logout */}
+            {/*Logout */}
             <div className="flex items-center space-x-4">
-                {user && (
                     <>
                         <div className="text-right hidden sm:block">
-                            <div className="text-sm font-medium text-white">{user.full_name}</div>
-                            <div className="text-xs text-gray-400 uppercase">{user.role}</div>
                         </div>
                         <button 
                             onClick={onLogout}
@@ -54,7 +47,6 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
                             </svg>
                         </button>
                     </>
-                )}
             </div>
         </header>
     );
