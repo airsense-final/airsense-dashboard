@@ -125,6 +125,10 @@ export function getUsers(): Promise<User[]> {
   return apiFetch<User[]>('/users/');
 }
 
+export function getPendingUsers(): Promise<User[]> {
+  return apiFetch<User[]>('/users/pending');
+}
+
 export function updateUserRole(userId: string, role: string): Promise<{ message: string }> {
   return apiFetch<{ message: string }>(`/users/${userId}/role`, {
     method: 'PUT',

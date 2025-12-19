@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, updateUserRole, updateUserStatus, getCompanies, getCurrentUser } from '../services/apiService';
+import { getUsers, getPendingUsers, updateUserRole, updateUserStatus, getCompanies, getCurrentUser } from '../services/apiService';
 import type { User, Company } from '../types/types';
 
 export function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<'active' | 'pending'>('active');
 
   useEffect(() => {
     loadData();
@@ -19,13 +21,15 @@ export function AdminUsersPage() {
     try {
       setLoading(true);
       setError(null);
-      const [usersData, companiesData, userData] = await Promise.all([
+      const [usersData, pendingUsersData, companiesData, userData] = await Promise.all([
         getUsers(),
+        getPendingUsers(),
         getCompanies(),
         getCurrentUser()
       ]);
       setCurrentUser(userData);
       setUsers(usersData);
+      setPendingUsers(pendingUsersData);
       setCompanies(companiesData);
       
       // Auto-select company for companyadmin and manager
@@ -67,7 +71,7 @@ export function AdminUsersPage() {
       await updateUserStatus(userId, !currentStatus);
       setSuccessMessage(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       setTimeout(() => setSuccessMessage(null), 3000);
-      await loadUsers();
+      await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update user status');
     }
@@ -120,8 +124,40 @@ export function AdminUsersPage() {
           <p className="text-gray-400">Manage user roles and access permissions</p>
         </div>
 
-        {/* Company Filter - only for superadmin */}
-        {currentUser && currentUser.role === 'superadmin' && (
+        {/* Tab Navigation */}
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+              activeTab === 'active'
+                ? 'bg-cyan-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Active Users ({users.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors relative ${
+              activeTab === 'pending'
+                ? 'bg-cyan-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Pending Approvals ({pendingUsers.length})
+            {pendingUsers.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                {pendingUsers.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Active Users Tab */}
+        {activeTab === 'active' && (
+          <>
+            {/* Company Filter - only for superadmin */}
+            {currentUser && currentUser.role === 'superadmin' && (
           <div className="mb-6 flex items-center gap-4">
             <label className="text-sm font-medium text-gray-300">Filter by Company:</label>
             <select
@@ -252,6 +288,90 @@ export function AdminUsersPage() {
           <div className="text-center py-12 text-gray-400">
             {selectedCompany === 'all' ? 'No users found.' : 'No users found for this company.'}
           </div>
+        )}
+          </>
+        )}
+
+        {/* Pending Users Tab */}
+        {activeTab === 'pending' && (
+          <>
+            {/* Company info display */}
+            {currentUser && currentUser.role !== 'superadmin' && (
+              <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+                <span className="text-gray-400">Viewing pending users from: </span>
+                <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id)}</span>
+              </div>
+            )}
+
+            <div className="bg-gray-800 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Username
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Company
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {pendingUsers.map((user) => (
+                      <tr key={user._id} className="hover:bg-gray-750">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium">{user.username}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-400">{user.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">
+                            {getCompanyName(user.company_id)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleStatusToggle(user._id, user.is_active)}
+                              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded transition-colors"
+                            >
+                              ✓ Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Reject user "${user.username}"? This cannot be undone.`)) {
+                                  handleStatusToggle(user._id, user.is_active);
+                                }
+                              }}
+                              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                            >
+                              ✗ Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {pendingUsers.length === 0 && !loading && (
+              <div className="text-center py-12 text-gray-400">
+                <svg className="mx-auto h-12 w-12 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>No pending approvals</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

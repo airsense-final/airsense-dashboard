@@ -79,14 +79,24 @@ function App() {
   }, [isAuthed, authLoading]);
 
   // CHANGE: Login success means "token is stored in localStorage" (apiService.setToken)
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
     setIsAuthed(true);
+    
+    // Load user data after login
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    } catch (err) {
+      console.error('Failed to load user after login:', err);
+    }
+    
     window.location.hash = '#/'; // Redirect after login
   };
 
   const handleLogout = () => {
     removeToken();
     setIsAuthed(false);
+    setCurrentUser(null);
     window.location.hash = '#/login';
   };
 

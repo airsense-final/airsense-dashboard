@@ -9,6 +9,12 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser }) => {
     if (!isAuthed || !currentUser) return null;
+    
+    // Debug: Check current user role
+    console.log('Current User:', currentUser);
+    console.log('User Role:', currentUser.role);
+    console.log('Is Superadmin?', currentUser.role === 'superadmin');
+    
     return (
         <header className="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-20 p-4 shadow-md flex justify-between items-center border-b border-gray-700">
             <div className="flex items-center space-x-6">
