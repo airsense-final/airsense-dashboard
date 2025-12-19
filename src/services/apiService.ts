@@ -143,6 +143,12 @@ export function updateUserStatus(userId: string, is_active: boolean): Promise<{ 
   });
 }
 
+export function deleteUser(userId: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/users/${userId}`, {
+    method: 'DELETE',
+  });
+}
+
 // --- Company Management Endpoints ---
 
 export function createCompany(name: string): Promise<{ message: string; company_id: string }> {

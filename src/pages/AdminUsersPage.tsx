@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, getPendingUsers, updateUserRole, updateUserStatus, getCompanies, getCurrentUser } from '../services/apiService';
+import { getUsers, getPendingUsers, updateUserRole, updateUserStatus, deleteUser, getCompanies, getCurrentUser } from '../services/apiService';
 import type { User, Company } from '../types/types';
 
 export function AdminUsersPage() {
@@ -74,6 +74,18 @@ export function AdminUsersPage() {
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update user status');
+    }
+  };
+
+  const handleRejectUser = async (userId: string, username: string) => {
+    try {
+      setError(null);
+      await deleteUser(userId);
+      setSuccessMessage(`User "${username}" has been permanently deleted`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete user');
     }
   };
 
@@ -346,8 +358,8 @@ export function AdminUsersPage() {
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm(`Reject user "${user.username}"? This cannot be undone.`)) {
-                                  handleStatusToggle(user._id, user.is_active);
+                                if (confirm(`Reject user "${user.username}"? This user will be permanently deleted from the database.`)) {
+                                  handleRejectUser(user._id, user.username);
                                 }
                               }}
                               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
