@@ -1,7 +1,7 @@
 export interface Sensor {
   id?: number;
   sensor_id: string;
-  type: 'dht11' | 'mq3' | 'mq4' | 'mq7' | 'mq135';
+  type: 'dht11' | 'mq3' | 'mq4' | 'mq7' | 'mq135' | 'scd40' | 'mq9';
   description: string;
 }
 
@@ -38,3 +38,39 @@ export interface AuthResponse {
   access_token: string;
   token_type: string;
 }
+
+export interface SensorCreate {
+  sensor_id: string;
+  type: 'dht11' | 'mq3' | 'mq4' | 'mq7' | 'mq135' | 'scd40' | 'mq9';
+  description: string;
+}
+
+export interface SensorData {
+  sensor_id: string;
+  timestamp: string;
+  temperature?: number;
+  humidity?: number;
+  alcohol_level?: number;
+  methane_level?: number;
+  co_level?: number;
+  air_quality?: number;
+  co2?: number;
+  flammable_gas?: number;
+  [key: string]: any;
+}
+
+export interface WebSocketMessage {
+  type: 'new_sensor_data' | 'alarm' | 'connection' | 'error';
+  data?: SensorData | any;
+  sensor_id?: string;
+  message?: string;
+}
+
+export interface DataPoint {
+  timestamp: string;
+  value: number;
+  alarm?: boolean;
+  time?: Date;
+}
+
+export type SensorDataHistory = Record<string, Record<string, DataPoint[]>>
