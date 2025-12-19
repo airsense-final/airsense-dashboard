@@ -1,10 +1,10 @@
-import { API_BASE_URL } from '../constants';
-import type { 
-    LoginRequest, 
-    RegisterRequest, 
-    AuthResponse, 
-    User, 
-    Institution 
+import { BASE_URL } from '../constants';
+import type {
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse, 
+  User,
+  Company
 } from '../types/types';
 
 const TOKEN_KEY = 'iot_dashboard_access_token';
@@ -30,7 +30,7 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
       headers,
     });
@@ -89,31 +89,32 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 
 // --- Auth Endpoints ---
 
-export function login(data: LoginRequest): Promise<AuthResponse> {
-    const formData = new URLSearchParams();
-    formData.append('username', data.email);
-    formData.append('password', data.password);
-
-    return apiFetch<AuthResponse>('/auth/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
-    });
+export async function login(data: LoginRequest): Promise<AuthResponse> {
+  const res = await apiFetch<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: data.email,
+      password: data.password,
+    }),
+  });
+  if (!res?.access_token) throw new Error('Login response missing access_token.'); // Guarding if no token is returned
+  setToken(res.access_token);
+  return res;
 }
 
-export function register(data: RegisterRequest): Promise<User> {
-    return apiFetch<User>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-    });
+export function register(data: RegisterRequest): Promise<string> {
+  return apiFetch<string>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      username: data.username,
+      email: data.email,
+      password: data.password,
+      password_confirm: data.password_confirm,
+      company_name: data.company_name,
+    }),
+  });
 }
 
-export function getInstitutions(): Promise<Institution[]> {
-    return apiFetch<Institution[]>('/institutions'); 
-}
-
-export function getCurrentUser(): Promise<User> {
-    return apiFetch<User>('/auth/me'); 
+export function getCompanies(): Promise<Company[]> {
+  return apiFetch<Company[]>('/companies/');
 }

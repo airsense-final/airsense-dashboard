@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { login, setToken } from '../services/apiService';
-import type { User } from '../types/types';
+import { login } from '../services/apiService';
 
 interface LoginPageProps {
-    onLoginSuccess: (user: User) => void;
+    onLoginSuccess: () => void;
 }
 
 const EyeIcon = () => (
@@ -32,11 +31,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         setError('');
 
         try {
-            const response = await login({ email, password });
-            
-            setToken(response.access_token);
-            
-            onLoginSuccess(response.user);
+            await login({ email, password }); // token is saved inside apiService
+            onLoginSuccess();
         } catch (err) {
             console.error(err);
             const errorMessage = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
@@ -80,13 +76,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                             onInput={handleInput}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                             placeholder="you@example.com"
+                            autoComplete="username"
                         />
                     </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
                         <div className="relative">
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type={showPassword ? 'text' : 'password'}
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -94,6 +92,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                                 onInput={handleInput}
                                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 pr-10 text-white focus:outline-none focus:border-cyan-500"
                                 placeholder="••••••••"
+                                autoComplete="current-password"
                             />
                             <button
                                 type="button"
@@ -112,9 +111,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         {loading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
-                
                 <div className="mt-6 text-center text-sm text-gray-400">
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <a href="#/register" className="text-cyan-400 hover:text-cyan-300">
                         Register here
                     </a>

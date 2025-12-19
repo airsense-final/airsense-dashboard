@@ -1,41 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { getToken, removeToken, getCurrentUser } from './services/apiService';
+import { getToken, removeToken } from './services/apiService';
 import { Header } from './components/layout/Header';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { TestSimulationPage } from './pages/TestSimulationPage';
-import type { User } from './types/types';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
-  const [user, setUser] = useState<User | null>(null);
+  const [isAuthed, setIsAuthed] = useState<boolean>(!!getToken());
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-      const checkAuth = async () => {
-          const token = getToken();
-          if (token) {
-              try {
-                  const userData = await getCurrentUser();
-                  setUser(userData);
-              } catch (e) {
-                  console.error("Token invalid or expired", e);
-                  removeToken();
-                  setUser(null);
-              }
-          }
-          setAuthLoading(false);
-      };
+    // CHANGE: Auth is token-based
+    setIsAuthed(!!getToken());
+    setAuthLoading(false);
 
-      checkAuth();
+    // If apiFetch gets 401, it dispatches auth:unauthorized
+    const handleUnauthorized = () => {
+      removeToken();
+      setIsAuthed(false);
+      window.location.hash = '#/login';
+    };
 
-      const handleUnauthorized = () => {
-          setUser(null);
-          window.location.hash = '#/login';
-      };
-      window.addEventListener('auth:unauthorized', handleUnauthorized);
-      return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
   useEffect(() => {
@@ -44,14 +33,16 @@ function App() {
 
       if (authLoading) return;
 
-      if (!user && !hash.includes('login') && !hash.includes('register')) {
-         window.location.hash = '#/login';
-         return;
+      // Guard: if not logged in, block protected routes
+      if (!isAuthed && !hash.includes('login') && !hash.includes('register')) {
+        window.location.hash = '#/login';
+        return;
       }
 
-      if (user && (hash.includes('login') || hash.includes('register'))) {
-          window.location.hash = '#/';
-          return;
+      // Guard: if logged in, prevent navigating to login/register
+      if (isAuthed && (hash.includes('login') || hash.includes('register'))) {
+        window.location.hash = '#/';
+        return;
       }
 
       setCurrentRoute(hash);
@@ -63,49 +54,55 @@ function App() {
     return () => {
       window.removeEventListener('hashchange', checkAuthAndRoute);
     };
-  }, [user, authLoading]);
+  }, [isAuthed, authLoading]);
 
-  const handleLoginSuccess = (userData: User) => {
-      setUser(userData);
+  // CHANGE: Login success means "token is stored in localStorage" (apiService.setToken)
+  const handleLoginSuccess = () => {
+    setIsAuthed(true);
+    window.location.hash = '#/'; // Redirect after login
   };
 
   const handleLogout = () => {
-      removeToken();
-      setUser(null);
+    removeToken();
+    setIsAuthed(false);
+    window.location.hash = '#/login';
   };
 
   if (authLoading) {
-      return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        Loading...
+      </div>
+    );
   }
 
-  let content;
+  let content: React.ReactNode = null;
 
   if (currentRoute.includes('login')) {
-      return <LoginPage onLoginSuccess={handleLoginSuccess} />;
-  } 
-  else if (currentRoute.includes('register')) {
-      return <RegisterPage />;
-  } 
-  else if (user) {
-      if (currentRoute === '#/' || currentRoute === '') {
-          content = <DashboardPage />;
-      } 
-      else if (currentRoute === '#/test-simulation') {
-          content = <TestSimulationPage />;
-      } 
-      else {
-          content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
-      }
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  if (currentRoute.includes('register')) {
+    return <RegisterPage />;
+  }
+
+  if (isAuthed) {
+    if (currentRoute === '#/' || currentRoute === '') {
+      content = <DashboardPage />;
+    } else if (currentRoute === '#/test-simulation') {
+      content = <TestSimulationPage />;
+    } else {
+      content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
+    }
   } else {
-      return null;
+    return null;
   }
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
-      <Header user={user} onLogout={handleLogout} />
-      <main className="container mx-auto p-6">
-        {content}
-      </main>
+      {/* NOTE: Backend doesn't provide user profile right now, so user is unknown. */}
+      <Header isAuthed={isAuthed} onLogout={handleLogout} />
+      <main className="container mx-auto p-6">{content}</main>
     </div>
   );
 }

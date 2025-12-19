@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { register, getInstitutions } from '../services/apiService';
-import type { Institution } from '../types/types';
+import { register, getCompanies } from '../services/apiService';
+import type { Company } from '../types/types';
 
 export const RegisterPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [fullName, setFullName] = useState('');
-    const [institutionId, setInstitutionId] = useState<number | ''>('');
-    const [institutions, setInstitutions] = useState<Institution[]>([]);
-    
+    const [username, setUsername] = useState('');
+    const [companyName, setCompanyName] = useState<string | ''>('');
+    const [companies, setCompanies] = useState<Company[]>([]);
+
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -17,12 +17,12 @@ export const RegisterPage: React.FC = () => {
     useEffect(() => {
         const fetchInst = async () => {
             try {
-                const data = await getInstitutions();
-                setInstitutions(data);
-                if (data.length > 0) setInstitutionId(data[0].id);
+                const data = await getCompanies();
+                setCompanies(data);
+                if (data.length > 0) setCompanyName(data[0].name);
             } catch (err) {
-                console.error("Failed to load institutions", err);
-                setError("Could not load institutions list.");
+                console.error("Failed to load companies", err);
+                setError("Could not load companies list.");
             }
         };
         fetchInst();
@@ -38,6 +38,12 @@ export const RegisterPage: React.FC = () => {
         setLoading(true);
         setError('');
 
+        if (username.trim().length < 3) {
+            setError("Username must be at least 3 characters long.");
+            setLoading(false);
+            return;
+        }
+
         if (!validateEmail(email)) {
             setError("Please enter a valid email address format.");
             setLoading(false);
@@ -50,18 +56,25 @@ export const RegisterPage: React.FC = () => {
             return;
         }
 
-        if (!institutionId) {
-            setError("Please select an institution.");
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters long.");
+            setLoading(false);
+            return;
+        }
+
+        if (!companyName) {
+            setError("Please select a company.");
             setLoading(false);
             return;
         }
 
         try {
             await register({
-                email,
+                username: username.trim(),
+                email: email.trim(),
                 password,
-                full_name: fullName,
-                institution_id: Number(institutionId)
+                password_confirm: confirmPassword,
+                company_name: companyName, // string
             });
             setSuccess(true);
         } catch (err) {
@@ -84,15 +97,15 @@ export const RegisterPage: React.FC = () => {
     if (success) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-                 <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md border border-green-500 text-center">
+                <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md border border-green-500 text-center">
                     <h2 className="text-2xl font-bold text-white mb-2">Registration Successful!</h2>
                     <p className="text-gray-300 mb-6">
-                        Your account has been created successfully. It is currently pending approval.
+                        Your account has been created successfully. It is currently pending approval by admin.
                     </p>
                     <a href="#/login" className="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
                         Return to Login
                     </a>
-                 </div>
+                </div>
             </div>
         );
     }
@@ -113,15 +126,17 @@ export const RegisterPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Username</label>
                         <input
                             type="text"
                             required
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            onInvalid={(e) => handleInvalid(e, 'Please enter your full name.')}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            onInvalid={(e) => handleInvalid(e, 'Please enter a username.')}
                             onInput={handleInput}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            placeholder="your_username"
+                            autoComplete="username"
                         />
                     </div>
                     <div>
@@ -134,6 +149,8 @@ export const RegisterPage: React.FC = () => {
                             onInvalid={(e) => handleInvalid(e, 'Please enter a valid email address.')}
                             onInput={handleInput}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            placeholder="you@example.com"
+                            autoComplete="email"
                         />
                     </div>
                     <div>
@@ -146,6 +163,8 @@ export const RegisterPage: React.FC = () => {
                             onInvalid={(e) => handleInvalid(e, 'Please choose a password.')}
                             onInput={handleInput}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            placeholder="••••••••"
+                            autoComplete="new-password"
                         />
                     </div>
                     <div>
@@ -158,21 +177,25 @@ export const RegisterPage: React.FC = () => {
                             onInvalid={(e) => handleInvalid(e, 'Please confirm your password.')}
                             onInput={handleInput}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            placeholder="••••••••"
+                            autoComplete="new-password"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Institution</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Company</label>
                         <select
                             required
-                            value={institutionId}
-                            onChange={(e) => setInstitutionId(Number(e.target.value))}
-                            onInvalid={(e) => handleInvalid(e, 'Please select an institution.')}
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            onInvalid={(e) => handleInvalid(e, 'Please select a company.')}
                             onInput={handleInput}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                         >
-                            {institutions.length === 0 && <option value="">Loading institutions...</option>}
-                            {institutions.map(inst => (
-                                <option key={inst.id} value={inst.id}>{inst.name}</option>
+                            {companies.length === 0 && <option value="">Loading companies...</option>}
+                            {companies.map((company) => (
+                                <option key={company._id} value={company.name}>
+                                    {company.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -185,7 +208,7 @@ export const RegisterPage: React.FC = () => {
                         {loading ? 'Registering...' : 'Register'}
                     </button>
                 </form>
-                
+
                 <div className="mt-6 text-center text-sm text-gray-400">
                     Already have an account?{' '}
                     <a href="#/login" className="text-cyan-400 hover:text-cyan-300">
