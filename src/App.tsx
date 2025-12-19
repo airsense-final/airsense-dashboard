@@ -1,25 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { getToken, removeToken } from './services/apiService';
+import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { TestSimulationPage } from './pages/TestSimulationPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
+import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
+import type { User } from './types/types';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
   const [isAuthed, setIsAuthed] = useState<boolean>(!!getToken());
   const [authLoading, setAuthLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // CHANGE: Auth is token-based
-    setIsAuthed(!!getToken());
-    setAuthLoading(false);
+    const loadUser = async () => {
+      const token = getToken();
+      setIsAuthed(!!token);
+      
+      if (token) {
+        try {
+          const user = await getCurrentUser();
+          setCurrentUser(user);
+        } catch (err) {
+          console.error('Failed to load user:', err);
+          removeToken();
+          setIsAuthed(false);
+          setCurrentUser(null);
+        }
+      }
+      
+      setAuthLoading(false);
+    };
+
+    loadUser();
 
     // If apiFetch gets 401, it dispatches auth:unauthorized
     const handleUnauthorized = () => {
       removeToken();
       setIsAuthed(false);
+      setCurrentUser(null);
       window.location.hash = '#/login';
     };
 
@@ -86,22 +108,37 @@ function App() {
     return <RegisterPage />;
   }
 
-  if (isAuthed) {
+  if (isAuthed && currentUser) {
     if (currentRoute === '#/' || currentRoute === '') {
       content = <DashboardPage />;
     } else if (currentRoute === '#/test-simulation') {
       content = <TestSimulationPage />;
+    } else if (currentRoute === '#/admin/users') {
+      // Viewer can't access users page
+      if (currentUser.role === 'viewer') {
+        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+      } else {
+        content = <AdminUsersPage />;
+      }
+    } else if (currentRoute === '#/admin/companies') {
+      // Only superadmin can access companies page
+      if (currentUser.role !== 'superadmin') {
+        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+      } else {
+        content = <AdminCompaniesPage />;
+      }
     } else {
       content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
     }
+  } else if (isAuthed) {
+    content = <div className="text-white text-center mt-10">Loading user data...</div>;
   } else {
     return null;
   }
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
-      {/* NOTE: Backend doesn't provide user profile right now, so user is unknown. */}
-      <Header isAuthed={isAuthed} onLogout={handleLogout} />
+      <Header isAuthed={isAuthed} onLogout={handleLogout} currentUser={currentUser} />
       <main className="container mx-auto p-6">{content}</main>
     </div>
   );

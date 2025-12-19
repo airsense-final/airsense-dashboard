@@ -118,3 +118,55 @@ export function register(data: RegisterRequest): Promise<string> {
 export function getCompanies(): Promise<Company[]> {
   return apiFetch<Company[]>('/companies/');
 }
+
+// --- User Management Endpoints ---
+
+export function getUsers(): Promise<User[]> {
+  return apiFetch<User[]>('/users/');
+}
+
+export function updateUserRole(userId: string, role: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/users/${userId}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role }),
+  });
+}
+
+export function updateUserStatus(userId: string, is_active: boolean): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/users/${userId}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ is_active }),
+  });
+}
+
+// --- Company Management Endpoints ---
+
+export function createCompany(name: string): Promise<{ message: string; company_id: string }> {
+  return apiFetch<{ message: string; company_id: string }>('/companies/', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function createCompanyAdmin(data: {
+  username: string;
+  email: string;
+  password: string;
+  company_name: string;
+}): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/auth/create-company-admin', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCompany(companyId: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/companies/${companyId}`, {
+    method: 'DELETE',
+  });
+}
+
+// --- Get Current User ---
+export function getCurrentUser(): Promise<User> {
+  return apiFetch<User>('/auth/me');
+}
