@@ -223,57 +223,27 @@ class TestScenarioService {
       
       const response = await fetch(`${API_BASE_URL}/sensors/latest`);
       if (!response.ok) {
-        console.error('❌ Failed to fetch sensor data:', response.status, response.statusText);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.error('Failed to fetch sensor data:', response.status, response.statusText);
+        return;
       }
       
       const data = await response.json();
-      console.log('✅ [Sensor Data Received]', data);
+      console.log('[Sensor Data Received]', data);
       
       // Only update if not in test mode (running a scenario)
       if (!this.isTestMode) {
-        // Backend returns an array of sensor documents
-        // We need to map each sensor by its sensor_id to our interface
-        const sensorMap: Record<string, number> = {};
-        
-        if (Array.isArray(data)) {
-          data.forEach((doc: any) => {
-            if (doc.metadata && doc.metadata.sensor_id) {
-              const sensorId = doc.metadata.sensor_id;
-              const value = doc.value || 0;
-              
-              // Map hardware sensor IDs to semantic names
-              if (sensorId.includes('dht11_temp')) {
-                sensorMap.temperature = value;
-              } else if (sensorId.includes('dht11_hum')) {
-                sensorMap.humidity = value;
-              } else if (sensorId.includes('scd40')) {
-                sensorMap.co2 = value;
-              } else if (sensorId.includes('mq4')) {
-                sensorMap.methane = value;
-              } else if (sensorId.includes('mq7')) {
-                sensorMap.co = value;
-              } else if (sensorId.includes('mq135')) {
-                sensorMap.airQuality = value;
-              } else if (sensorId.includes('mq9')) {
-                sensorMap.flammableGas = value;
-              }
-            }
-          });
-        }
-        
         this.sensorData = {
-          temperature: sensorMap.temperature || 0,
-          humidity: sensorMap.humidity || 0,
-          co2: sensorMap.co2 || 400,
-          methane: sensorMap.methane || 0,
-          co: sensorMap.co || 0,
-          airQuality: sensorMap.airQuality || 0,
-          flammableGas: sensorMap.flammableGas || 0,
-          timestamp: new Date()
+          temperature: data.temperature,
+          humidity: data.humidity,
+          co2: data.co2,
+          methane: data.methane,
+          co: data.co,
+          airQuality: data.airQuality,
+          flammableGas: data.flammableGas,
+          timestamp: new Date(data.timestamp)
         };
         
-        console.log('✅ [Sensor Data Updated]', this.sensorData);
+        console.log('[Sensor Data Updated]', this.sensorData);
         this.notifyListeners();
         
         // Check thresholds for real data
