@@ -1,8 +1,25 @@
 export interface Sensor {
-  id?: number;
+  _id?: string;
   sensor_id: string;
-  type: 'dht11' | 'mq3' | 'mq4' | 'mq7' | 'mq135' | 'scd40' | 'mq9';
-  description: string;
+  sensor_name: string;
+  sensor_type: string;
+  parent_device_id: string;
+  company_id: string;
+  location?: string;
+  created_at?: string;
+}
+
+export interface LatestSensorData {
+  _id: string;
+  timestamp: string;
+  value: number;
+  status: string;
+  metadata: {
+    sensor_id: string;
+    parent_device: string;
+    type: string;
+    unit: string;
+  };
 }
 
 export type UserRole = 'superadmin' | 'companyadmin' | 'manager' | 'viewer';

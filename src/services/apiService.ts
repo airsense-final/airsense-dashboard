@@ -180,3 +180,27 @@ export function deleteCompany(companyId: string): Promise<{ message: string }> {
 export function getCurrentUser(): Promise<User> {
   return apiFetch<User>('/auth/me');
 }
+
+// --- Sensor Data Endpoints ---
+
+export function getLatestSensorData(companyName?: string): Promise<any[]> {
+  const params = companyName ? `?target_company_name=${encodeURIComponent(companyName)}` : '';
+  return apiFetch<any[]>(`/api/v1/sensors/latest${params}`);
+}
+
+export function getSensorHistory(
+  filterKey: string,
+  filterValue: string,
+  limit: number = 100,
+  companyName?: string
+): Promise<any[]> {
+  const params = new URLSearchParams({
+    filter_key: filterKey,
+    filter_value: filterValue,
+    limit: limit.toString(),
+  });
+  if (companyName) {
+    params.append('target_company_name', companyName);
+  }
+  return apiFetch<any[]>(`/api/v1/sensors/history?${params.toString()}`);
+}
