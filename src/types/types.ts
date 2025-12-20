@@ -5,7 +5,7 @@ export interface Sensor {
   description: string;
 }
 
-export type UserRole = 'super_admin' | 'admin' | 'manager' | 'viewer';
+export type UserRole = 'superadmin' | 'companyadmin' | 'manager' | 'viewer';
 
 export interface User {
   username: string;

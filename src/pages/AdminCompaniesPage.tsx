@@ -1,0 +1,286 @@
+import React, { useState, useEffect } from 'react';
+import { getCompanies, createCompany, createCompanyAdmin, deleteCompany } from '../services/apiService';
+import type { Company } from '../types/types';
+
+export function AdminCompaniesPage() {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getCompanies();
+      setCompanies(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load companies');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newCompanyName.trim()) {
+      setError('Company name is required');
+      return;
+    }
+
+    if (!adminUsername.trim() || !adminEmail.trim() || !adminPassword.trim()) {
+      setError('All admin fields are required');
+      return;
+    }
+
+    if (adminPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      // Step 1: Create company
+      await createCompany(newCompanyName.trim());
+      
+      // Step 2: Create company admin
+      await createCompanyAdmin({
+        username: adminUsername.trim(),
+        email: adminEmail.trim(),
+        password: adminPassword,
+        company_name: newCompanyName.trim(),
+      });
+      
+      setSuccessMessage('Company and admin created successfully');
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+      // Reset form
+      setNewCompanyName('');
+      setAdminUsername('');
+      setAdminEmail('');
+      setAdminPassword('');
+      setShowAddForm(false);
+      
+      await loadCompanies();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create company');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setError(null);
+      await deleteCompany(companyId);
+      setSuccessMessage('Company deleted successfully');
+      setTimeout(() => setSuccessMessage(null), 3000);
+      await loadCompanies();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete company');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-xl">Loading companies...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Company Management</h1>
+            <p className="text-gray-400">Manage companies and their access</p>
+          </div>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            {showAddForm ? 'Cancel' : '+ Add Company'}
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500">
+            {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-500/10 border border-green-500 rounded-lg text-green-500">
+            {successMessage}
+          </div>
+        )}
+
+        {showAddForm && (
+          <div className="mb-6 bg-gray-800 p-6 rounded-lg border border-gray-700">
+            <h2 className="text-xl font-semibold mb-4">Add New Company & Admin</h2>
+            <form onSubmit={handleCreateCompany} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Company Name *
+                </label>
+                <input
+                  type="text"
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  placeholder="e.g. Acme Corporation"
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  disabled={submitting}
+                  required
+                />
+              </div>
+
+              <div className="border-t border-gray-700 pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-3 text-gray-300">Company Admin Details</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Admin Username *
+                    </label>
+                    <input
+                      type="text"
+                      value={adminUsername}
+                      onChange={(e) => setAdminUsername(e.target.value)}
+                      placeholder="admin.john"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                      disabled={submitting}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Admin Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={adminEmail}
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      placeholder="admin@company.com"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                      disabled={submitting}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Admin Password *
+                    </label>
+                    <input
+                      type="password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      placeholder="Min. 6 characters"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                      disabled={submitting}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Creating...' : 'Create Company & Admin'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setNewCompanyName('');
+                    setAdminUsername('');
+                    setAdminEmail('');
+                    setAdminPassword('');
+                    setError(null);
+                  }}
+                  disabled={submitting}
+                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div className="bg-gray-800 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Company ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Company Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {companies.map((company) => (
+                  <tr key={company._id} className="hover:bg-gray-750">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-400 font-mono">{company._id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium">{company.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleDeleteCompany(company._id, company.name)}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {companies.length === 0 && !loading && (
+          <div className="text-center py-12 text-gray-400">
+            No companies found. Click "Add Company" to create one.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
