@@ -490,10 +490,20 @@ class TestScenarioService {
     this.currentScenario = null;
   }
 
-  // Reset sensors (fetch fresh data from backend)
-  async resetSensors() {
+  // Reset sensors to initial state
+  resetSensors() {
     this.isTestMode = false;
-    await this.fetchSensorData();
+    this.sensorData = {
+      temperature: 22,
+      humidity: 45,
+      co2: 450,
+      methane: 200,
+      co: 5,
+      airQuality: 350,
+      flammableGas: 50,
+      timestamp: new Date()
+    };
+    this.notifyListeners();
   }
 
   // Get current sensor data

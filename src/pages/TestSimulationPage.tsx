@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getLatestSensorData, getCompanies } from '../services/apiService';
+import type { User, Company, LatestSensorData } from '../types/types';
 import {
   testScenarioService,
   TEST_SCENARIOS,
@@ -11,10 +13,16 @@ import { LiveSensorDisplay } from '../components/simulation/LiveSensorDisplay';
 import { TestResultsDisplay } from '../components/simulation/TestResultsDisplay';
 import { AlertBanner } from '../components/simulation/AlertBanner';
 
-export const TestSimulationPage: React.FC = () => {
+interface TestSimulationPageProps {
+  currentUser: User | null;
+}
+
+export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentUser }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentScenario, setCurrentScenario] = useState<TestScenario | null>(null);
   const [sensorData, setSensorData] = useState<SensorData>(testScenarioService.getCurrentSensorData());
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [lastResult, setLastResult] = useState<TestResult | null>(null);
   const [alerts, setAlerts] = useState<string[]>([]);
   const [autoRunEnabled, setAutoRunEnabled] = useState(false);
@@ -23,29 +31,100 @@ export const TestSimulationPage: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
-    // Start polling for real-time sensor data from backend
-    console.log('🎯 TestSimulationPage mounted, starting polling...');
-    testScenarioService.startPolling();
-
-    // Listen for sensor data updates
-    const unsubscribeSensor = testScenarioService.subscribe((data) => {
-      console.log('📊 Sensor data updated in component:', data);
-      setSensorData(data);
+    loadInitialData();
+    
+    // Listen for test scenario sensor data updates
+    const unsubscribeSensor = testScenarioService.subscribe((testData) => {
+      // When test is running, use test data
+      setSensorData(testData);
       setLastUpdate(new Date());
-      setBackendStatus('connected');
     });
-
+    
     // Listen for alerts
     const unsubscribeAlerts = testScenarioService.subscribeToAlerts((alert) => {
       setAlerts(prev => [...prev, alert]);
     });
 
     return () => {
-      testScenarioService.stopPolling();
       unsubscribeSensor();
       unsubscribeAlerts();
     };
-  }, []);
+  }, [currentUser?.role]);
+
+  useEffect(() => {
+    // Only load real sensor data when no test is running
+    if (!isRunning && (selectedCompany || currentUser?.role !== 'superadmin')) {
+      loadRealSensorData();
+      const interval = setInterval(() => {
+        if (!isRunning) {
+          loadRealSensorData();
+        }
+      }, 5000); // Refresh every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [selectedCompany, currentUser?.role, isRunning]);
+
+  const loadInitialData = async () => {
+    try {
+      if (currentUser?.role === 'superadmin') {
+        const companiesData = await getCompanies();
+        setCompanies(companiesData);
+        if (!selectedCompany && companiesData.length > 0) {
+          setSelectedCompany(companiesData[0].name);
+        }
+      }
+      await loadRealSensorData();
+    } catch (err) {
+      console.error('Failed to load initial data:', err);
+      setBackendStatus('error');
+    }
+  };
+
+  const loadRealSensorData = async () => {
+    try {
+      const companyName = currentUser?.role === 'superadmin' ? selectedCompany : undefined;
+      const data = await getLatestSensorData(companyName);
+      
+      // Convert real sensor data to SensorData format for display
+      // Map sensor_id patterns to expected SensorData keys
+      const convertedData: SensorData = {
+        temperature: 0,
+        humidity: 0,
+        co2: 0,
+        methane: 0,
+        co: 0,
+        airQuality: 0,
+        flammableGas: 0,
+        timestamp: new Date()
+      };
+      data.forEach((sensor) => {
+        const sensorId = sensor.metadata.sensor_id.toLowerCase();
+        
+        // Extract sensor type from sensor_id (format: device_sensor_number)
+        if (sensorId.includes('dht11_temp')) {
+          convertedData.temperature = sensor.value;
+        } else if (sensorId.includes('dht11_hum')) {
+          convertedData.humidity = sensor.value;
+        } else if (sensorId.includes('scd40') || sensorId.includes('co2')) {
+          convertedData.co2 = sensor.value;
+        } else if (sensorId.includes('mq4')) {
+          convertedData.methane = sensor.value;
+        } else if (sensorId.includes('mq7')) {
+          convertedData.co = sensor.value;
+        } else if (sensorId.includes('mq135')) {
+          convertedData.airQuality = sensor.value;
+        } else if (sensorId.includes('mq9')) {
+          convertedData.flammableGas = sensor.value;
+        }
+      });
+      setSensorData(convertedData);
+      setLastUpdate(new Date());
+      setBackendStatus('connected');
+    } catch (err) {
+      console.error('Failed to load sensor data:', err);
+      setBackendStatus('error');
+    }
+  };
 
   // Auto-run effect
   useEffect(() => {
@@ -92,10 +171,12 @@ export const TestSimulationPage: React.FC = () => {
   };
 
   const handleResetSensors = () => {
-    testScenarioService.resetSensors();
     setAlerts([]);
     setLastResult(null);
-    setSensorData(testScenarioService.getCurrentSensorData());
+    // Reset test service to initial values
+    testScenarioService.resetSensors();
+    // Also reload real sensor data
+    loadRealSensorData();
   };
 
   const handleStartAutoRun = () => {
@@ -141,7 +222,27 @@ export const TestSimulationPage: React.FC = () => {
             )}
           </p>
         </div>
-        <div className="flex space-x-3">
+
+        {/* Company Selector for Superadmin */}
+        <div className="flex items-center gap-4">
+          {currentUser?.role === 'superadmin' && companies.length > 0 && (
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-300">Company:</label>
+              <select
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+                className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                {companies.map((company) => (
+                  <option key={company._id} value={company.name}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          <div className="flex space-x-3">
           {autoRunEnabled ? (
             <button
               onClick={handleStopAutoRun}
@@ -193,6 +294,7 @@ export const TestSimulationPage: React.FC = () => {
             </svg>
             <span>Reset</span>
           </button>
+          </div>
         </div>
       </div>
 
