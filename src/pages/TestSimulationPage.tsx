@@ -21,7 +21,6 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
   const [isRunning, setIsRunning] = useState(false);
   const [currentScenario, setCurrentScenario] = useState<TestScenario | null>(null);
   const [sensorData, setSensorData] = useState<SensorData>(testScenarioService.getCurrentSensorData());
-  const [realSensorData, setRealSensorData] = useState<LatestSensorData[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [lastResult, setLastResult] = useState<TestResult | null>(null);
@@ -85,11 +84,19 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
     try {
       const companyName = currentUser?.role === 'superadmin' ? selectedCompany : undefined;
       const data = await getLatestSensorData(companyName);
-      setRealSensorData(data);
       
       // Convert real sensor data to SensorData format for display
       // Map sensor_id patterns to expected SensorData keys
-      const convertedData: SensorData = {};
+      const convertedData: SensorData = {
+        temperature: 0,
+        humidity: 0,
+        co2: 0,
+        methane: 0,
+        co: 0,
+        airQuality: 0,
+        flammableGas: 0,
+        timestamp: new Date()
+      };
       data.forEach((sensor) => {
         const sensorId = sensor.metadata.sensor_id.toLowerCase();
         

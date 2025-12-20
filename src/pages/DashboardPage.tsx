@@ -78,7 +78,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: number;
 
     const continuousLoad = async () => {
       if (!isMounted) return;

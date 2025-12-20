@@ -501,8 +501,9 @@ class TestScenarioService {
       co: 5,
       airQuality: 350,
       flammableGas: 50,
+      timestamp: new Date()
     };
-    this.notifySubscribers();
+    this.notifyListeners();
   }
 
   // Get current sensor data
