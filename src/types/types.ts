@@ -31,6 +31,7 @@ export interface User {
   role: UserRole;
   is_active: boolean;
   company_id: string;
+  company_name?: string;
 }
 
 export interface LoginRequest {
