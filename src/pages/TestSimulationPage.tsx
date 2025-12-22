@@ -193,8 +193,6 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
 
   return (
     <div className="space-y-6">
-      <AlertBanner alerts={alerts} />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -400,6 +398,9 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
           </li>
         </ul>
       </div>
+
+      {/* Alert Toast Notifications - Rendered at bottom for proper z-index */}
+      <AlertBanner alerts={alerts} />
     </div>
   );
 };
