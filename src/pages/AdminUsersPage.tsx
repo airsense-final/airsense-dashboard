@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getUsers, getPendingUsers, updateUserRole, updateUserStatus, deleteUser, getCompanies, getCurrentUser } from '../services/apiService';
+import { DeleteUserModal } from '../components/DeleteUserModal';
 import type { User, Company } from '../types/types';
 
 export function AdminUsersPage() {
@@ -12,6 +13,7 @@ export function AdminUsersPage() {
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'pending'>('active');
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   useEffect(() => {
     loadData();
@@ -31,7 +33,7 @@ export function AdminUsersPage() {
       setUsers(usersData);
       setPendingUsers(pendingUsersData);
       setCompanies(companiesData);
-      
+
       // Auto-select company for companyadmin and manager
       if (userData.role === 'companyadmin' || userData.role === 'manager') {
         setSelectedCompany(userData.company_id);
@@ -77,17 +79,7 @@ export function AdminUsersPage() {
     }
   };
 
-  const handleRejectUser = async (userId: string, username: string) => {
-    try {
-      setError(null);
-      await deleteUser(userId);
-      setSuccessMessage(`User "${username}" has been permanently deleted`);
-      setTimeout(() => setSuccessMessage(null), 3000);
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete user');
-    }
-  };
+  // Deletion is handled via DeleteUserModal's onConfirm
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -109,8 +101,8 @@ export function AdminUsersPage() {
     return company ? company.name : 'Unknown';
   };
 
-  const filteredUsers = selectedCompany === 'all' 
-    ? users 
+  const filteredUsers = selectedCompany === 'all'
+    ? users
     : users.filter(user => user.company_id === selectedCompany);
 
   const usersByCompany = companies.reduce((acc, company) => {
@@ -140,21 +132,19 @@ export function AdminUsersPage() {
         <div className="mb-6 flex gap-2">
           <button
             onClick={() => setActiveTab('active')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-              activeTab === 'active'
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${activeTab === 'active'
                 ? 'bg-cyan-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
+              }`}
           >
             Active Users ({users.length})
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors relative ${
-              activeTab === 'pending'
+            className={`px-6 py-3 rounded-lg font-medium transition-colors relative ${activeTab === 'pending'
                 ? 'bg-cyan-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
+              }`}
           >
             Pending Approvals ({pendingUsers.length})
             {pendingUsers.length > 0 && (
@@ -170,137 +160,148 @@ export function AdminUsersPage() {
           <>
             {/* Company Filter - only for superadmin */}
             {currentUser && currentUser.role === 'superadmin' && (
-          <div className="mb-6 flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-300">Filter by Company:</label>
-            <select
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-              className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="all">All Companies ({users.length} users)</option>
-              {companies.map((company) => (
-                <option key={company._id} value={company._id}>
-                  {company.name} ({usersByCompany[company._id] || 0} users)
-                </option>
-              ))}
-            </select>
-            {selectedCompany !== 'all' && (
-              <button
-                onClick={() => setSelectedCompany('all')}
-                className="text-sm text-blue-400 hover:text-blue-300 underline"
-              >
-                Clear filter
-              </button>
+              <div className="mb-6 flex items-center gap-4">
+                <label className="text-sm font-medium text-gray-300">Filter by Company:</label>
+                <select
+                  value={selectedCompany}
+                  onChange={(e) => setSelectedCompany(e.target.value)}
+                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="all">All Companies ({users.length} users)</option>
+                  {companies.map((company) => (
+                    <option key={company._id} value={company._id}>
+                      {company.name} ({usersByCompany[company._id] || 0} users)
+                    </option>
+                  ))}
+                </select>
+                {selectedCompany !== 'all' && (
+                  <button
+                    onClick={() => setSelectedCompany('all')}
+                    className="text-sm text-blue-400 hover:text-blue-300 underline"
+                  >
+                    Clear filter
+                  </button>
+                )}
+              </div>
             )}
-          </div>
-        )}
-        
-        {/* Company info display for non-superadmin */}
-        {currentUser && currentUser.role !== 'superadmin' && (
-          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <span className="text-gray-400">Viewing users from: </span>
-            <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id)}</span>
-          </div>
-        )}
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500">
-            {error}
-          </div>
-        )}
+            {/* Company info display for non-superadmin */}
+            {currentUser && currentUser.role !== 'superadmin' && (
+              <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+                <span className="text-gray-400">Viewing users from: </span>
+                <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id)}</span>
+              </div>
+            )}
 
-        {successMessage && (
-          <div className="mb-4 p-4 bg-green-500/10 border border-green-500 rounded-lg text-green-500">
-            {successMessage}
-          </div>
-        )}
+            {error && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500">
+                {error}
+              </div>
+            )}
 
-        <div className="bg-gray-800 rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Username
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Company
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-750">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium">{user.username}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-400">{user.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">
-                        {getCompanyName(user.company_id)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                        className={`${getRoleBadgeColor(user.role)} px-3 py-1 rounded-full text-xs font-semibold`}
-                      >
-                        <option value="superadmin">Super Admin</option>
-                        <option value="companyadmin">Company Admin</option>
-                        <option value="manager">Manager</option>
-                        <option value="viewer">Viewer</option>
-                      </select>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          user.is_active
-                            ? 'bg-green-500/20 text-green-500'
-                            : 'bg-red-500/20 text-red-500'
-                        }`}
-                      >
-                        {user.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleStatusToggle(user._id, user.is_active)}
-                        className={`px-4 py-2 rounded ${
-                          user.is_active
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-green-600 hover:bg-green-700'
-                        } transition-colors`}
-                      >
-                        {user.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            {successMessage && (
+              <div className="mb-4 p-4 bg-green-500/10 border border-green-500 rounded-lg text-green-500">
+                {successMessage}
+              </div>
+            )}
 
-        {filteredUsers.length === 0 && !loading && (
-          <div className="text-center py-12 text-gray-400">
-            {selectedCompany === 'all' ? 'No users found.' : 'No users found for this company.'}
-          </div>
-        )}
+            <div className="bg-gray-800 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Username
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Company
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {filteredUsers.map((user) => (
+                      <tr key={user._id} className="hover:bg-gray-750">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium">{user.username}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-400">{user.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">
+                            {getCompanyName(user.company_id)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                            className={`${getRoleBadgeColor(user.role)} px-3 py-1 rounded-full text-xs font-semibold`}
+                          >
+                            <option value="superadmin">Super Admin</option>
+                            <option value="companyadmin">Company Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${user.is_active
+                                ? 'bg-green-500/20 text-green-500'
+                                : 'bg-red-500/20 text-red-500'
+                              }`}
+                          >
+                            {user.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleStatusToggle(user._id, user.is_active)}
+                              className={`px-4 py-2 rounded ${user.is_active
+                                  ? 'bg-red-600 hover:bg-red-700'
+                                  : 'bg-green-600 hover:bg-green-700'
+                                } transition-colors`}
+                            >
+                              {user.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            {currentUser && (
+                              (currentUser.role === 'superadmin') ||
+                              (currentUser.role === 'companyadmin' && currentUser.company_id === user.company_id)
+                            ) && currentUser._id !== user._id && (
+                                <button
+                                  onClick={() => setDeleteTarget(user)}
+                                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {filteredUsers.length === 0 && !loading && (
+              <div className="text-center py-12 text-gray-400">
+                {selectedCompany === 'all' ? 'No users found.' : 'No users found for this company.'}
+              </div>
+            )}
           </>
         )}
 
@@ -357,11 +358,7 @@ export function AdminUsersPage() {
                               ✓ Approve
                             </button>
                             <button
-                              onClick={() => {
-                                if (confirm(`Reject user "${user.username}"? This user will be permanently deleted from the database.`)) {
-                                  handleRejectUser(user._id, user.username);
-                                }
-                              }}
+                              onClick={() => setDeleteTarget(user)}
                               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
                             >
                               ✗ Reject
@@ -386,6 +383,21 @@ export function AdminUsersPage() {
           </>
         )}
       </div>
+      <DeleteUserModal
+        isOpen={!!deleteTarget}
+        user={deleteTarget}
+        companyName={deleteTarget ? getCompanyName(deleteTarget.company_id) : undefined}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await deleteUser(deleteTarget._id);
+          setSuccessMessage(`User "${deleteTarget.username}" has been permanently deleted`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+          setDeleteTarget(null);
+          await loadData();
+        }}
+      />
     </div>
   );
 }
+
