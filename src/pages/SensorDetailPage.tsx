@@ -130,7 +130,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                             time: point.time ? point.time.getTime() : new Date(point.timestamp).getTime(),
                                             value: point.value,
                                         }))}
-                                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                        margin={{ top: 5, right: 30, left: 70, bottom: 5 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
                                         <XAxis
@@ -148,7 +148,8 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                         />
                                         <YAxis
                                             stroke="#A0AEC0"
-                                            label={{ value: unit, angle: -90, position: 'insideLeft', fill: '#A0AEC0' }}
+                                            width={90}
+                                            label={{ value: unit, angle: -90, position: 'left', fill: '#A0AEC0', offset: 10 }}
                                             tickFormatter={(value) => value.toFixed(4)}
                                         />
                                         <Tooltip content={<CustomTooltip unit={unit} />} />
