@@ -7,6 +7,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { TestSimulationPage } from './pages/TestSimulationPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
+import { SensorDetailPage } from './pages/SensorDetailPage';
 import type { User } from './types/types';
 
 function App() {
@@ -19,7 +20,7 @@ function App() {
     const loadUser = async () => {
       const token = getToken();
       setIsAuthed(!!token);
-      
+
       if (token) {
         try {
           const user = await getCurrentUser();
@@ -31,7 +32,7 @@ function App() {
           setCurrentUser(null);
         }
       }
-      
+
       setAuthLoading(false);
     };
 
@@ -81,7 +82,7 @@ function App() {
   // CHANGE: Login success means "token is stored in localStorage" (apiService.setToken)
   const handleLoginSuccess = async () => {
     setIsAuthed(true);
-    
+
     // Load user data after login
     try {
       const user = await getCurrentUser();
@@ -89,7 +90,7 @@ function App() {
     } catch (err) {
       console.error('Failed to load user after login:', err);
     }
-    
+
     window.location.hash = '#/'; // Redirect after login
   };
 
@@ -123,6 +124,25 @@ function App() {
       content = <DashboardPage currentUser={currentUser} />;
     } else if (currentRoute === '#/test-simulation') {
       content = <TestSimulationPage currentUser={currentUser} />;
+    } else if (currentRoute.startsWith('#/sensor/')) {
+      // Extract sensor details from hash
+      const searchParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      const sensorId = searchParams.get('id') || '';
+      const sensorName = searchParams.get('name') || '';
+      const sensorType = searchParams.get('type') || '';
+      const unit = searchParams.get('unit') || '';
+      const company = searchParams.get('company');
+      const companyName = currentUser.role === 'superadmin' && company ? company : undefined;
+
+      content = (
+        <SensorDetailPage
+          sensorId={sensorId}
+          sensorName={sensorName}
+          sensorType={sensorType}
+          unit={unit}
+          companyName={companyName}
+        />
+      );
     } else if (currentRoute === '#/admin/users') {
       // Viewer can't access users page
       if (currentUser.role === 'viewer') {

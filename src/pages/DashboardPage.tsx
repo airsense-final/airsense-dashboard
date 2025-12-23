@@ -13,13 +13,30 @@ const SensorCard: React.FC<{
   unit: string;
   isOnline: boolean;
   historyData: DataPoint[];
-}> = ({ sensor, latestValue, unit, isOnline, historyData }) => {
+  companyName?: string;
+}> = ({ sensor, latestValue, unit, isOnline, historyData, companyName }) => {
   const statusColor = isOnline ? 'border-gray-700 hover:border-cyan-400' : 'border-red-500';
   const statusDotColor = isOnline ? 'bg-green-500' : 'bg-gray-500';
 
+  const handleClick = () => {
+    const params = new URLSearchParams({
+      id: sensor.sensor_id,
+      name: sensor.sensor_name,
+      type: sensor.sensor_type,
+      unit: unit,
+    });
+
+    if (companyName) {
+      params.append('company', companyName);
+    }
+
+    window.location.hash = `#/sensor/?${params.toString()}`;
+  };
+
   return (
     <div
-      className={`bg-gray-800 rounded-lg p-4 shadow-lg transition-all duration-200 border-2 ${statusColor} flex flex-col`}
+      onClick={handleClick}
+      className={`bg-gray-800 rounded-lg p-4 shadow-lg transition-all duration-200 border-2 ${statusColor} flex flex-col cursor-pointer hover:shadow-xl hover:scale-105`}
     >
       <div className="flex justify-between items-start">
         <div>
@@ -30,7 +47,7 @@ const SensorCard: React.FC<{
         <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${statusDotColor}`}></div>
       </div>
 
-      <div className="mt-4 h-24">
+      <div className="mt-4 h-28">
         {historyData.length > 0 ? (
           <LineChartWidget
             title=""
@@ -48,7 +65,7 @@ const SensorCard: React.FC<{
 
       <div className="mt-4 text-center">
         <span className="text-3xl font-semibold">
-          {latestValue !== null ? latestValue.toFixed(1) : '--'}
+          {latestValue !== null ? latestValue.toFixed(4) : '--'}
         </span>
         <span className="text-md ml-1 text-gray-400">{unit}</span>
       </div>
@@ -82,7 +99,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
     const continuousLoad = async () => {
       if (!isMounted) return;
-      
+
       if (selectedCompany || currentUser?.role !== 'superadmin') {
         await loadSensorData();
         if (isMounted) {
@@ -122,12 +139,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   const loadSensorData = async () => {
     if (isLoadingData) return; // Skip if already loading
-    
+
     try {
       setIsLoadingData(true);
       const companyName = currentUser?.role === 'superadmin' ? selectedCompany : undefined;
       const data = await getLatestSensorData(companyName);
-      
+
       // Load history for each unique sensor
       const uniqueSensors = new Set(data.map(d => d.metadata.sensor_id));
       const historyPromises = Array.from(uniqueSensors).map(async (sensorId) => {
@@ -139,7 +156,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           return { sensorId, history: [] };
         }
       });
-      
+
       const historyResults = await Promise.all(historyPromises);
       const historyMap: Record<string, DataPoint[]> = {};
       historyResults.forEach(({ sensorId, history }) => {
@@ -150,7 +167,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           alarm: false,
         }));
       });
-      
+
       // Batch state updates together
       setSensorData(data);
       setSensorHistory(historyMap);
@@ -234,6 +251,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 unit={data.metadata.unit}
                 isOnline={data.status === 'active'}
                 historyData={sensorHistory[data.metadata.sensor_id] || []}
+                companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
               />
             ))}
         </div>
