@@ -161,6 +161,18 @@ export function createCompany(name: string): Promise<{ message: string; company_
   });
 }
 
+export function createCompanyWithAdmin(data: {
+  company_name: string;
+  admin_username: string;
+  admin_email: string;
+  admin_password: string;
+}): Promise<{ success: boolean; company_id: string; company_name: string; admin_username: string; message: string }> {
+  return apiFetch<{ success: boolean; company_id: string; company_name: string; admin_username: string; message: string }>('/companies/with-admin', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export function createCompanyAdmin(data: {
   username: string;
   email: string;
