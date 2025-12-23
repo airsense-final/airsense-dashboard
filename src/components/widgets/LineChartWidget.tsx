@@ -28,7 +28,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, u
         return (
             <div className="bg-gray-700 p-2 border border-gray-600 rounded">
                 <p className="label">{`${new Date(label as number).toLocaleString()}`}</p>
-                <p className="intro" style={{ color: payload[0].color }}>{`${payload[0].name} : ${(payload[0].value as number).toFixed(2)} ${unit}`}</p>
+                <p className="intro" style={{ color: payload[0].color }}>{`${payload[0].name} : ${(payload[0].value as number).toFixed(4)} ${unit}`}</p>
             </div>
         );
     }
@@ -102,17 +102,17 @@ export const LineChartWidget: React.FC<LineChartWidgetProps> = ({ title, metric,
                         });
                     }}
                     tickCount={compact ? 3 : undefined}
-                    tick={compact ? { fontSize: 10 } : undefined}
-                    height={compact ? 20 : undefined}
+                    tick={compact ? { fontSize: 9 } : undefined}
+                    height={compact ? 18 : undefined}
                     allowDataOverflow={!!filterApplied} // Allow zooming in strictly on data if filtered
                 />
                 <YAxis
                     stroke="#A0AEC0"
                     unit={compact ? undefined : unit}
-                    width={compact ? 45 : undefined}
-                    tickCount={compact ? 4 : undefined}
-                    tick={compact ? { fontSize: 10, dx: -2 } : undefined}
-                    tickFormatter={compact ? undefined : (value) => value.toFixed(1)}
+                    width={compact ? 70 : undefined}
+                    tickCount={compact ? 3 : undefined}
+                    tick={compact ? { fontSize: 9, dx: -2 } : undefined}
+                    tickFormatter={(value) => value.toFixed(4)}
                     domain={yAxisDomain}
                 />
 

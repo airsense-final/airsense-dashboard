@@ -25,7 +25,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, u
             <div className="bg-gray-700 p-3 border border-gray-600 rounded shadow-lg">
                 <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleString()}`}</p>
                 <p className="font-semibold" style={{ color: payload[0].color }}>
-                    {`${payload[0].name}: ${(payload[0].value as number).toFixed(2)} ${unit}`}
+                    {`${payload[0].name}: ${(payload[0].value as number).toFixed(4)} ${unit}`}
                 </p>
             </div>
         );
@@ -43,6 +43,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     const [historyData, setHistoryData] = useState<DataPoint[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const currentValue = historyData.length > 0 ? historyData[historyData.length - 1].value : null;
 
     useEffect(() => {
         loadSensorHistory();
@@ -98,9 +99,19 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             </button>
 
             <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-                <h1 className="text-3xl font-bold mb-2">{sensorName}</h1>
-                <p className="text-gray-400 mb-1">Sensor ID: {sensorId}</p>
-                <p className="text-gray-400 mb-6">Type: {sensorType}</p>
+                <div className="flex items-start justify-between mb-4">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-2">{sensorName}</h1>
+                        <p className="text-gray-400 mb-1">Sensor ID: {sensorId}</p>
+                        <p className="text-gray-400">Type: {sensorType}</p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-3xl font-semibold">
+                            {currentValue !== null ? currentValue.toFixed(4) : '--'}
+                            <span className="text-md ml-1 text-gray-400">{unit}</span>
+                        </div>
+                    </div>
+                </div>
 
                 {error && (
                     <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
@@ -138,7 +149,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                         <YAxis
                                             stroke="#A0AEC0"
                                             label={{ value: unit, angle: -90, position: 'insideLeft', fill: '#A0AEC0' }}
-                                            tickFormatter={(value) => value.toFixed(1)}
+                                            tickFormatter={(value) => value.toFixed(4)}
                                         />
                                         <Tooltip content={<CustomTooltip unit={unit} />} />
                                         <Legend />

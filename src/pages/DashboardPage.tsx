@@ -47,7 +47,7 @@ const SensorCard: React.FC<{
         <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${statusDotColor}`}></div>
       </div>
 
-      <div className="mt-4 h-24">
+      <div className="mt-4 h-28">
         {historyData.length > 0 ? (
           <LineChartWidget
             title=""
@@ -65,7 +65,7 @@ const SensorCard: React.FC<{
 
       <div className="mt-4 text-center">
         <span className="text-3xl font-semibold">
-          {latestValue !== null ? latestValue.toFixed(1) : '--'}
+          {latestValue !== null ? latestValue.toFixed(4) : '--'}
         </span>
         <span className="text-md ml-1 text-gray-400">{unit}</span>
       </div>
