@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { User } from '../types/types';
 
 interface DeleteUserModalProps {
@@ -7,15 +7,37 @@ interface DeleteUserModalProps {
     onConfirm: () => Promise<void> | void;
     user: User | null;
     companyName?: string;
+    canDelete?: boolean;
+    permissionMessage?: string;
 }
 
-export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClose, onConfirm, user, companyName }) => {
+export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    user,
+    companyName,
+    canDelete = true,
+    permissionMessage,
+}) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            // Clear stale state when opening/switching user; keep permission info if blocked.
+            setError(null);
+            setIsLoading(false);
+        }
+    }, [isOpen, user, canDelete, permissionMessage]);
 
     if (!isOpen || !user) return null;
 
     const handleConfirm = async () => {
+        if (!canDelete) {
+            setError(permissionMessage || 'You do not have permission to perform this action.');
+            return;
+        }
         try {
             setError(null);
             setIsLoading(true);
@@ -25,6 +47,12 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClos
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleClose = () => {
+        setError(null);
+        setIsLoading(false);
+        onClose();
     };
 
     const statusBadge = user.is_active
@@ -50,7 +78,7 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClos
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-2xl font-bold text-white">Confirm User Deletion</h3>
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="text-2xl text-gray-400 hover:text-white"
                         disabled={isLoading}
                     >
@@ -58,8 +86,8 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClos
                     </button>
                 </div>
 
-                {error && (
-                    <div className="mb-4 rounded border border-red-500 bg-red-500/10 p-3 text-red-200">{error}</div>
+                {(error || (!canDelete && permissionMessage)) && (
+                    <div className="mb-4 rounded border border-red-500 bg-red-500/10 p-3 text-red-200">{error || permissionMessage}</div>
                 )}
 
                 <div className="mb-6 space-y-3 rounded-lg bg-gray-700 p-4">
@@ -93,7 +121,7 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClos
 
                 <div className="flex gap-3">
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-gray-100 hover:bg-gray-700"
                         disabled={isLoading}
                     >
@@ -102,7 +130,7 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClos
                     <button
                         onClick={handleConfirm}
                         className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                        disabled={isLoading}
+                        disabled={isLoading || !canDelete}
                     >
                         {isLoading ? 'Deleting...' : 'Yes, Delete'}
                     </button>

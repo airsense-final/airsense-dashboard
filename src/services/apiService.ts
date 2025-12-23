@@ -2,7 +2,7 @@ import { BASE_URL } from '../constants';
 import type {
   LoginRequest,
   RegisterRequest,
-  AuthResponse, 
+  AuthResponse,
   User,
   Company
 } from '../types/types';
@@ -18,7 +18,7 @@ export const removeToken = () => localStorage.removeItem(TOKEN_KEY);
  */
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -37,14 +37,14 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 
     if (!response.ok) {
       let errorMessage = 'An unexpected error occurred.';
-      
+
       try {
         const errorBody = await response.json();
         if (errorBody.detail) {
           if (Array.isArray(errorBody.detail)) {
-             errorMessage = errorBody.detail[0].msg || 'Validation error.';
+            errorMessage = errorBody.detail[0].msg || 'Validation error.';
           } else {
-             errorMessage = errorBody.detail;
+            errorMessage = errorBody.detail;
           }
         }
       } catch {
@@ -53,13 +53,16 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
       if (response.status === 401) {
         removeToken();
         window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        
+
         if (errorMessage === 'Unauthorized' || errorMessage === 'An unexpected error occurred.') {
-            errorMessage = 'Incorrect email or password.';
+          errorMessage = 'Incorrect email or password.';
         }
-      } 
+      }
       else if (response.status === 403) {
-        errorMessage = 'You do not have permission to perform this action.';
+        // Preserve backend-provided detail when available; only fall back to generic if missing.
+        if (!errorMessage || errorMessage === 'An unexpected error occurred.') {
+          errorMessage = 'You do not have permission to perform this action.';
+        }
       }
       else if (response.status === 404) {
         errorMessage = 'Requested resource not found.';
@@ -72,15 +75,15 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     }
 
     if (response.status === 204 || response.headers.get('Content-Length') === '0') {
-      return undefined as T; 
+      return undefined as T;
     }
 
     return response.json() as Promise<T>;
 
   } catch (error) {
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        console.error(`Network Error [${endpoint}]:`, error);
-        throw new Error('Connection failed. Please check your internet connection and try again.');
+      console.error(`Network Error [${endpoint}]:`, error);
+      throw new Error('Connection failed. Please check your internet connection and try again.');
     }
 
     throw error;

@@ -96,9 +96,11 @@ export function AdminUsersPage() {
     }
   };
 
-  const getCompanyName = (companyId: string) => {
+  const getCompanyName = (companyId: string, fallbackName?: string) => {
     const company = companies.find(c => c._id === companyId);
-    return company ? company.name : 'Unknown';
+    if (company) return company.name;
+    if (fallbackName && fallbackName.trim()) return fallbackName;
+    return 'Unknown';
   };
 
   const filteredUsers = selectedCompany === 'all'
@@ -133,8 +135,8 @@ export function AdminUsersPage() {
           <button
             onClick={() => setActiveTab('active')}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${activeTab === 'active'
-                ? 'bg-cyan-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
           >
             Active Users ({users.length})
@@ -142,8 +144,8 @@ export function AdminUsersPage() {
           <button
             onClick={() => setActiveTab('pending')}
             className={`px-6 py-3 rounded-lg font-medium transition-colors relative ${activeTab === 'pending'
-                ? 'bg-cyan-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
           >
             Pending Approvals ({pendingUsers.length})
@@ -189,7 +191,7 @@ export function AdminUsersPage() {
             {currentUser && currentUser.role !== 'superadmin' && (
               <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
                 <span className="text-gray-400">Viewing users from: </span>
-                <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id)}</span>
+                <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id, currentUser.company_name)}</span>
               </div>
             )}
 
@@ -241,7 +243,7 @@ export function AdminUsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">
-                            {getCompanyName(user.company_id)}
+                            {getCompanyName(user.company_id, user.company_name)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -259,8 +261,8 @@ export function AdminUsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-semibold ${user.is_active
-                                ? 'bg-green-500/20 text-green-500'
-                                : 'bg-red-500/20 text-red-500'
+                              ? 'bg-green-500/20 text-green-500'
+                              : 'bg-red-500/20 text-red-500'
                               }`}
                           >
                             {user.is_active ? 'Active' : 'Inactive'}
@@ -271,8 +273,8 @@ export function AdminUsersPage() {
                             <button
                               onClick={() => handleStatusToggle(user._id, user.is_active)}
                               className={`px-4 py-2 rounded ${user.is_active
-                                  ? 'bg-red-600 hover:bg-red-700'
-                                  : 'bg-green-600 hover:bg-green-700'
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-green-600 hover:bg-green-700'
                                 } transition-colors`}
                             >
                               {user.is_active ? 'Deactivate' : 'Activate'}
@@ -312,7 +314,7 @@ export function AdminUsersPage() {
             {currentUser && currentUser.role !== 'superadmin' && (
               <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
                 <span className="text-gray-400">Viewing pending users from: </span>
-                <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id)}</span>
+                <span className="text-cyan-400 font-semibold">{getCompanyName(currentUser.company_id, currentUser.company_name)}</span>
               </div>
             )}
 
@@ -346,7 +348,7 @@ export function AdminUsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">
-                            {getCompanyName(user.company_id)}
+                            {getCompanyName(user.company_id, user.company_name)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -386,7 +388,7 @@ export function AdminUsersPage() {
       <DeleteUserModal
         isOpen={!!deleteTarget}
         user={deleteTarget}
-        companyName={deleteTarget ? getCompanyName(deleteTarget.company_id) : undefined}
+        companyName={deleteTarget ? getCompanyName(deleteTarget.company_id, deleteTarget.company_name) : undefined}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return;
