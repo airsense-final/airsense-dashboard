@@ -41,13 +41,13 @@ const SENSOR_METRICS_CONFIG: Record<string, { metric: string, unit: string, max:
 };
 
 export const WidgetGrid: React.FC<WidgetGridProps> = ({ sensor, latestData, dataHistory, thresholds, filterApplied, startDate, endDate }) => {
-    const metricsConfig = SENSOR_METRICS_CONFIG[sensor.type] || [];
+    const metricsConfig = SENSOR_METRICS_CONFIG[sensor.sensor_type] || [];
     const latestSensorData = (latestData?.type === 'new_sensor_data' && latestData.sensor_id === sensor.sensor_id) ? latestData.data : {};
 
     if (metricsConfig.length === 0) {
         return (
             <div className="text-center py-10 bg-gray-800 rounded-lg">
-                <p className="text-gray-400">No metric configuration found for sensor type: {sensor.type}</p>
+                <p className="text-gray-400">No metric configuration found for sensor type: {sensor.sensor_type}</p>
             </div>
         );
     }

@@ -110,9 +110,9 @@ export const DeleteSensorsModal: React.FC<DeleteSensorsModalProps> = ({
                                         className="mr-3"
                                     />
                                     <div className="flex-1">
-                                        <p className="font-semibold text-white">{sensor.description}</p>
+                                        <p className="font-semibold text-white">{sensor.sensor_name}</p>
                                         <p className="text-xs text-gray-400">
-                                            {sensor.sensor_id} • {sensor.type.toUpperCase()}
+                                            {sensor.sensor_id} • {sensor.sensor_type.toUpperCase()}
                                         </p>
                                     </div>
                                 </label>
