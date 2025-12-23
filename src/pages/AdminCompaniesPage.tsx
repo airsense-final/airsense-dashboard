@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCompanies, createCompany, createCompanyAdmin, deleteCompany } from '../services/apiService';
+import { getCompanies, createCompanyWithAdmin, deleteCompany } from '../services/apiService';
 import type { Company } from '../types/types';
 
 export function AdminCompaniesPage() {
@@ -53,15 +53,12 @@ export function AdminCompaniesPage() {
       setSubmitting(true);
       setError(null);
       
-      // Step 1: Create company
-      await createCompany(newCompanyName.trim());
-      
-      // Step 2: Create company admin
-      await createCompanyAdmin({
-        username: adminUsername.trim(),
-        email: adminEmail.trim(),
-        password: adminPassword,
+      // Single transactional API call - both company and admin created atomically
+      await createCompanyWithAdmin({
         company_name: newCompanyName.trim(),
+        admin_username: adminUsername.trim(),
+        admin_email: adminEmail.trim(),
+        admin_password: adminPassword,
       });
       
       setSuccessMessage('Company and admin created successfully');
@@ -75,8 +72,9 @@ export function AdminCompaniesPage() {
       setShowAddForm(false);
       
       await loadCompanies();
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create company');
+      setError(err instanceof Error ? err.message : 'Failed to create company and admin');
     } finally {
       setSubmitting(false);
     }
