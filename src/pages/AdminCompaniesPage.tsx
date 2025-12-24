@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getCompanies, createCompanyWithAdmin, deleteCompany } from '../services/apiService';
-import type { Company } from '../types/types';
+import { getCompanies, createCompanyWithAdmin, deleteCompany, getCurrentUser, getUsers } from '../services/apiService';
+import type { Company, User } from '../types/types';
+import { DeleteCompanyModal } from '../components/DeleteCompanyModal';
 
 export function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -13,10 +14,24 @@ export function AdminCompaniesPage() {
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [companyAdmins, setCompanyAdmins] = useState<User[]>([]);
+  const [adminsLoading, setAdminsLoading] = useState(false);
 
   useEffect(() => {
+    loadCurrentUser();
     loadCompanies();
   }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    } catch (err) {
+      console.error('Failed to load current user:', err);
+    }
+  };
 
   const loadCompanies = async () => {
     try {
@@ -33,7 +48,7 @@ export function AdminCompaniesPage() {
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newCompanyName.trim()) {
       setError('Company name is required');
       return;
@@ -52,7 +67,7 @@ export function AdminCompaniesPage() {
     try {
       setSubmitting(true);
       setError(null);
-      
+
       // Single transactional API call - both company and admin created atomically
       await createCompanyWithAdmin({
         company_name: newCompanyName.trim(),
@@ -60,19 +75,19 @@ export function AdminCompaniesPage() {
         admin_email: adminEmail.trim(),
         admin_password: adminPassword,
       });
-      
+
       setSuccessMessage('Company and admin created successfully');
       setTimeout(() => setSuccessMessage(null), 3000);
-      
+
       // Reset form
       setNewCompanyName('');
       setAdminUsername('');
       setAdminEmail('');
       setAdminPassword('');
       setShowAddForm(false);
-      
+
       await loadCompanies();
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create company and admin');
     } finally {
@@ -81,18 +96,21 @@ export function AdminCompaniesPage() {
   };
 
   const handleDeleteCompany = async (companyId: string, companyName: string) => {
-    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
-      return;
-    }
+    const company = companies.find(c => c._id === companyId);
+    if (!company) return;
+
+    setDeleteTarget(company);
+    setCompanyAdmins([]);
+    setAdminsLoading(true);
 
     try {
-      setError(null);
-      await deleteCompany(companyId);
-      setSuccessMessage('Company deleted successfully');
-      setTimeout(() => setSuccessMessage(null), 3000);
-      await loadCompanies();
+      const users = await getUsers();
+      const admins = users.filter((u) => u.role === 'companyadmin' && u.company_id === companyId);
+      setCompanyAdmins(admins);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete company');
+      setError(err instanceof Error ? err.message : 'Failed to load company admins');
+    } finally {
+      setAdminsLoading(false);
     }
   };
 
@@ -155,7 +173,7 @@ export function AdminCompaniesPage() {
 
               <div className="border-t border-gray-700 pt-4 mt-4">
                 <h3 className="text-lg font-medium mb-3 text-gray-300">Company Admin Details</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -279,6 +297,33 @@ export function AdminCompaniesPage() {
           </div>
         )}
       </div>
+
+      <DeleteCompanyModal
+        isOpen={!!deleteTarget}
+        company={deleteTarget}
+        canDelete={
+          currentUser?.role === 'superadmin' &&
+          deleteTarget?._id !== currentUser?.company_id
+        }
+        permissionMessage={
+          currentUser?.role !== 'superadmin'
+            ? 'Only superadmin can delete companies.'
+            : deleteTarget?._id === currentUser?.company_id
+              ? 'You cannot delete your own company.'
+              : ''
+        }
+        companyAdmins={companyAdmins}
+        adminsLoading={adminsLoading}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await deleteCompany(deleteTarget._id);
+          setSuccessMessage(`Company "${deleteTarget.name}" has been permanently deleted`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+          setDeleteTarget(null);
+          await loadCompanies();
+        }}
+      />
     </div>
   );
 }
