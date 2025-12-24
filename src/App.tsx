@@ -8,6 +8,7 @@ import { TestSimulationPage } from './pages/TestSimulationPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
 import { SensorDetailPage } from './pages/SensorDetailPage';
+import SensorManagementPage from './pages/SensorManagementPage';
 import type { User } from './types/types';
 
 function App() {
@@ -156,6 +157,13 @@ function App() {
         content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
       } else {
         content = <AdminCompaniesPage />;
+      }
+    } else if (currentRoute === '#/sensors') {
+      // Only admins can access sensor management
+      if (currentUser.role !== 'superadmin' && currentUser.role !== 'companyadmin') {
+        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+      } else {
+        content = <SensorManagementPage />;
       }
     } else {
       content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
