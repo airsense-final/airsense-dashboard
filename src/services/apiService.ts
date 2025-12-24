@@ -219,3 +219,40 @@ export function getSensorHistory(
   }
   return apiFetch<any[]>(`/api/v1/sensors/history?${params.toString()}`);
 }
+
+// --- Sensor Management Endpoints ---
+
+export function listSensors(companyName?: string): Promise<any[]> {
+  const params = companyName ? `?target_company_name=${encodeURIComponent(companyName)}` : '';
+  return apiFetch<any[]>(`/api/v1/sensors${params}`);
+}
+
+export function createSensor(data: {
+  sensor_id: string;
+  sensor_name: string;
+  sensor_type: string;
+  location?: string;
+  company_name?: string;
+}): Promise<{ message: string; sensor: any }> {
+  return apiFetch<{ message: string; sensor: any }>('/api/v1/sensors', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateSensor(sensorId: string, data: {
+  sensor_name?: string;
+  sensor_type?: string;
+  location?: string;
+}): Promise<{ message: string; sensor: any }> {
+  return apiFetch<{ message: string; sensor: any }>(`/api/v1/sensors/${sensorId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteSensor(sensorId: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/api/v1/sensors/${sensorId}`, {
+    method: 'DELETE',
+  });
+}
