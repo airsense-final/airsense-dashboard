@@ -27,7 +27,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, u
     if (active && payload && payload.length) {
         return (
             <div className="bg-gray-700 p-2 border border-gray-600 rounded">
-                <p className="label">{`${new Date(label as number).toLocaleString()}`}</p>
+                <p className="label">{`${new Date(label as number).toLocaleTimeString()}`}</p>
                 <p className="intro" style={{ color: payload[0].color }}>{`${payload[0].name} : ${(payload[0].value as number).toFixed(4)} ${unit}`}</p>
             </div>
         );
@@ -96,7 +96,7 @@ export const LineChartWidget: React.FC<LineChartWidgetProps> = ({ title, metric,
                     stroke="#A0AEC0"
                     tickFormatter={(unixTime) => {
                         // Display time in user's local timezone for better readability
-                        return new Date(unixTime).toLocaleString(undefined, {
+                        return new Date(unixTime).toLocaleTimeString(undefined, {
                             hour: 'numeric',
                             minute: '2-digit',
                         });
