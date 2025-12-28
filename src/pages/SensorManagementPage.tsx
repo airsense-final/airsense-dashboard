@@ -224,13 +224,11 @@ const SensorManagementPage: React.FC = () => {
   };
 
   const openThresholdModal = async (sensor: any) => {
-    const resolvedCompanyId = currentUser?.role === 'superadmin'
-      ? (selectedCompany ? companies.find(c => c.name === selectedCompany)?._id ?? null : null)
-      : currentUser?.company_id ?? null;
 
     setThresholdSensor(sensor);
     setThresholdScenario('indoor_small');
-    setThresholdCompanyId(resolvedCompanyId ?? null);
+    // Lock the context to the sensor's company directly, no more dynamic switching here
+    setThresholdCompanyId(sensor.company_id || null);
     setThresholdError(null);
     setThresholdSuccess(null);
     setEffectiveThreshold(null);
@@ -312,11 +310,25 @@ const SensorManagementPage: React.FC = () => {
       return;
     }
 
-    // IMPORTANT: Customize mode should NEVER modify global config (company_id = null)
+    // Redundancy check: If company-specific values match global exactly, don't save
+    if (thresholdCompanyId && globalThreshold) {
+      const isRedundant =
+        parsedWarningMin === globalThreshold.warning_min &&
+        parsedCriticalMin === globalThreshold.critical_min &&
+        parsedWarningMax === globalThreshold.warning_max &&
+        parsedCriticalMax === globalThreshold.critical_max &&
+        (thresholdUnit || getSensorUnit(thresholdSensor.sensor_type)) === (globalThreshold.unit || getSensorUnit(thresholdSensor.sensor_type));
+
+      if (isRedundant) {
+        setThresholdError('These values match Global Defaults. A separate customization is not needed.');
+        return;
+      }
+    }
+
+    // For SuperAdmin: can edit global (null company_id)
     // For CompanyAdmin: must have a company_id
-    // For SuperAdmin: must explicitly choose a company or prevent global modification
-    if (!thresholdCompanyId) {
-      setThresholdError('Cannot save custom values without a company assignment. This would modify global defaults.');
+    if (!thresholdCompanyId && currentUser?.role !== 'superadmin') {
+      setThresholdError('Only Super Admins can modify Global Defaults.');
       return;
     }
 
@@ -328,7 +340,7 @@ const SensorManagementPage: React.FC = () => {
       warning_max: parsedWarningMax,
       critical_max: parsedCriticalMax,
       unit: thresholdUnit || undefined,
-      company_id: thresholdCompanyId,  // Never null in customize mode
+      company_id: thresholdCompanyId || undefined, // Allow null/undefined for Global (Super Admin)
     };
 
     try {
@@ -392,20 +404,50 @@ const SensorManagementPage: React.FC = () => {
 
   const handleDeleteThreshold = async () => {
     if (!effectiveThreshold?._id) return;
-    const confirmed = window.confirm('Delete this threshold configuration?');
+
+    const isGlobalDelete = !thresholdCompanyId;
+    const message = isGlobalDelete
+      ? 'WARNING: You are about to delete a GLOBAL threshold configuration. This will affect all companies using defaults. Proceed?'
+      : 'Delete your custom threshold settings and revert to system defaults?';
+
+    const confirmed = window.confirm(message);
     if (!confirmed) return;
 
     try {
       setThresholdLoading(true);
       setThresholdError(null);
       await deleteThreshold(effectiveThreshold._id);
-      setEffectiveThreshold(null);
-      setWarningMin('');
-      setCriticalMin('');
-      setWarningMax('');
-      setCriticalMax('');
-      setThresholdUnit('');
-      setThresholdSuccess('Threshold deleted.');
+
+      if (isGlobalDelete) {
+        // Super Admin deleted the Global Baseline
+        setGlobalThreshold(null);
+        setEffectiveThreshold(null);
+        setWarningMin('');
+        setCriticalMin('');
+        setWarningMax('');
+        setCriticalMax('');
+        setThresholdUnit(getSensorUnit(thresholdSensor.sensor_type));
+        setThresholdSuccess('Global threshold configuration deleted successfully.');
+      } else {
+        // Company customization deleted, revert to global
+        setEffectiveThreshold(globalThreshold);
+        if (globalThreshold) {
+          setWarningMin(globalThreshold.warning_min != null ? String(globalThreshold.warning_min) : '');
+          setCriticalMin(globalThreshold.critical_min != null ? String(globalThreshold.critical_min) : '');
+          setWarningMax(globalThreshold.warning_max != null ? String(globalThreshold.warning_max) : '');
+          setCriticalMax(globalThreshold.critical_max != null ? String(globalThreshold.critical_max) : '');
+          setThresholdUnit(globalThreshold.unit ?? getSensorUnit(thresholdSensor.sensor_type));
+        } else {
+          setWarningMin('');
+          setCriticalMin('');
+          setWarningMax('');
+          setCriticalMax('');
+          setThresholdUnit(getSensorUnit(thresholdSensor.sensor_type));
+        }
+        setThresholdSuccess('Customization deleted. Reverted to global defaults.');
+      }
+
+      setIsCustomizing(false); // Reset to Global view mode
     } catch (err: any) {
       setThresholdError(err?.message || 'Failed to delete threshold');
     } finally {
@@ -632,7 +674,7 @@ const SensorManagementPage: React.FC = () => {
                   <p className="text-xs text-gray-500 mt-1">Choose the environment scenario for this sensor's thresholds.</p>
                 </div>
 
-                {effectiveThreshold && (
+                {effectiveThreshold && currentUser?.role !== 'viewer' && (
                   <>
                     {/* Mode Selection Buttons */}
                     <div className="flex gap-3 mb-4">
@@ -654,11 +696,11 @@ const SensorManagementPage: React.FC = () => {
                           }
                         }}
                         className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${!isCustomizing
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                           }`}
                       >
-                        Global Threshold Values
+                        View Baseline
                       </button>
                       <button
                         type="button"
@@ -673,11 +715,13 @@ const SensorManagementPage: React.FC = () => {
                           }
                         }}
                         className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${isCustomizing
-                          ? 'bg-amber-600 text-white'
+                          ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                           }`}
                       >
-                        Customize
+                        {!thresholdCompanyId
+                          ? 'Edit Global Defaults'
+                          : `Customize for ${companies.find(c => c._id === thresholdCompanyId)?.name || 'Company'}`}
                       </button>
                     </div>
 
@@ -707,22 +751,6 @@ const SensorManagementPage: React.FC = () => {
                   </>
                 )}
 
-                {currentUser?.role === 'superadmin' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Target Company</label>
-                    <select
-                      value={thresholdCompanyId ?? ''}
-                      onChange={(e) => setThresholdCompanyId(e.target.value || null)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-                    >
-                      <option value="">Global Default (applies to all)</option>
-                      {companies.map((company) => (
-                        <option key={company._id} value={company._id}>{company.name}</option>
-                      ))}
-                    </select>b
-                    <p className="text-xs text-gray-500 mt-1">Leave blank to set a global default; choose a company to override.</p>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Unit</label>
@@ -813,11 +841,11 @@ const SensorManagementPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
-                  {effectiveThreshold?._id && isCustomizing ? (
+                  {currentUser?.role !== 'viewer' && effectiveThreshold?._id && isCustomizing && !!thresholdCompanyId ? (
                     <button
                       type="button"
                       onClick={handleDeleteThreshold}
-                      className="text-red-400 hover:text-red-300"
+                      className="text-red-400 hover:text-red-300 font-medium transition"
                       disabled={thresholdLoading}
                     >
                       Delete
@@ -828,16 +856,16 @@ const SensorManagementPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={closeThresholdModal}
-                      className="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700"
+                      className="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition"
                     >
-                      Close
+                      {currentUser?.role === 'viewer' ? 'Close' : 'Cancel'}
                     </button>
-                    {!isCustomizing && (
+                    {currentUser?.role !== 'viewer' && !isCustomizing && !!thresholdCompanyId && (
                       <button
                         type="button"
                         onClick={handleSetGlobalDefaults}
                         disabled={thresholdLoading || !effectiveThreshold || effectiveThreshold.company_id !== thresholdCompanyId}
-                        className={`px-4 py-2 rounded-lg text-white font-medium ${thresholdLoading || !effectiveThreshold || effectiveThreshold.company_id !== thresholdCompanyId
+                        className={`px-4 py-2 rounded-lg text-white font-medium transition ${thresholdLoading || !effectiveThreshold || effectiveThreshold.company_id !== thresholdCompanyId
                           ? 'bg-gray-600 cursor-not-allowed hidden'
                           : 'bg-cyan-600 hover:bg-cyan-700'
                           }`}
@@ -845,16 +873,16 @@ const SensorManagementPage: React.FC = () => {
                         {thresholdLoading ? 'Processing...' : 'Use Global Thresholds'}
                       </button>
                     )}
-                    {isCustomizing && (
+                    {currentUser?.role !== 'viewer' && isCustomizing && (
                       <button
                         type="submit"
                         disabled={thresholdLoading}
-                        className={`px-4 py-2 rounded-lg text-white ${thresholdLoading
-                          ? 'bg-cyan-800 cursor-not-allowed'
-                          : 'bg-cyan-600 hover:bg-cyan-700'
+                        className={`px-6 py-2 rounded-lg text-white font-medium transition ${thresholdLoading
+                          ? 'bg-emerald-800 cursor-not-allowed'
+                          : 'bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-900/20'
                           }`}
                       >
-                        {thresholdLoading ? 'Saving...' : 'Use Customized Thresholds'}
+                        {thresholdLoading ? 'Saving...' : (!thresholdCompanyId ? 'Save Global Defaults' : 'Use Customized Thresholds')}
                       </button>
                     )}
                   </div>
