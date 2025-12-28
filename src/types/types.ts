@@ -92,3 +92,19 @@ export interface DataPoint {
 }
 
 export type SensorDataHistory = Record<string, Record<string, DataPoint[]>>
+
+export interface ThresholdConfig {
+  _id?: string;
+  scenario: string;
+  sensor_type: string;
+  warning_min?: number | null;
+  critical_min?: number | null;
+  warning_max?: number | null;
+  critical_max?: number | null;
+  unit?: string | null;
+  company_id?: string | null;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+export type ThresholdUpsert = Omit<ThresholdConfig, '_id' | 'updated_at' | 'updated_by'>;

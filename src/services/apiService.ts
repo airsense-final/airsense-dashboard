@@ -4,7 +4,9 @@ import type {
   RegisterRequest,
   AuthResponse,
   User,
-  Company
+  Company,
+  ThresholdConfig,
+  ThresholdUpsert
 } from '../types/types';
 
 const TOKEN_KEY = 'iot_dashboard_access_token';
@@ -253,6 +255,26 @@ export function updateSensor(sensorId: string, data: {
 
 export function deleteSensor(sensorId: string): Promise<{ message: string }> {
   return apiFetch<{ message: string }>(`/api/v1/sensors/${sensorId}`, {
+    method: 'DELETE',
+  });
+}
+
+// --- Threshold Configuration Endpoints ---
+
+export function listThresholds(scenario?: string): Promise<ThresholdConfig[]> {
+  const params = scenario ? `?scenario=${encodeURIComponent(scenario)}` : '';
+  return apiFetch<ThresholdConfig[]>(`/api/v1/thresholds${params}`);
+}
+
+export function saveThreshold(data: ThresholdUpsert): Promise<ThresholdConfig> {
+  return apiFetch<ThresholdConfig>('/api/v1/thresholds', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteThreshold(thresholdId: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/api/v1/thresholds/${thresholdId}`, {
     method: 'DELETE',
   });
 }
