@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getLatestSensorData, getCompanies } from '../services/apiService';
-import type { User, Company, LatestSensorData } from '../types/types';
+import type { User, Company } from '../types/types';
 import {
   testScenarioService,
   TEST_SCENARIOS,
@@ -32,14 +32,14 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
 
   useEffect(() => {
     loadInitialData();
-    
+
     // Listen for test scenario sensor data updates
     const unsubscribeSensor = testScenarioService.subscribe((testData) => {
       // When test is running, use test data
       setSensorData(testData);
       setLastUpdate(new Date());
     });
-    
+
     // Listen for alerts
     const unsubscribeAlerts = testScenarioService.subscribeToAlerts((alert) => {
       setAlerts(prev => [...prev, alert]);
@@ -84,7 +84,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
     try {
       const companyName = currentUser?.role === 'superadmin' ? selectedCompany : undefined;
       const data = await getLatestSensorData(companyName);
-      
+
       // Convert real sensor data to SensorData format for display
       // Map sensor_id patterns to expected SensorData keys
       const convertedData: SensorData = {
@@ -99,7 +99,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       };
       data.forEach((sensor) => {
         const sensorId = sensor.metadata.sensor_id.toLowerCase();
-        
+
         // Extract sensor type from sensor_id (format: device_sensor_number)
         if (sensorId.includes('dht11_temp')) {
           convertedData.temperature = sensor.value;
@@ -150,7 +150,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
     try {
       const result = await testScenarioService.runScenario(scenario);
       setLastResult(result);
-      
+
       if (autoRunEnabled) {
         setAutoRunIndex(prev => prev + 1);
       }
@@ -239,59 +239,57 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
               </select>
             </div>
           )}
-          
+
           <div className="flex space-x-3">
-          {autoRunEnabled ? (
-            <button
-              onClick={handleStopAutoRun}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <span>Stop Auto Test</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleStartAutoRun}
-              disabled={isRunning}
-              className={`px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all ${
-                isRunning
+            {autoRunEnabled ? (
+              <button
+                onClick={handleStopAutoRun}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span>Stop Auto Test</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleStartAutoRun}
+                disabled={isRunning}
+                className={`px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all ${isRunning
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   : 'bg-purple-600 hover:bg-purple-700 text-white'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-              </svg>
-              <span>Run All Tests</span>
-            </button>
-          )}
-          {isRunning && (
+                  }`}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+                <span>Run All Tests</span>
+              </button>
+            )}
+            {isRunning && (
+              <button
+                onClick={handleStopTest}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
+                </svg>
+                <span>Stop</span>
+              </button>
+            )}
             <button
-              onClick={handleStopTest}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
-              </svg>
-              <span>Stop</span>
-            </button>
-          )}
-          <button
-            onClick={handleResetSensors}
-            disabled={isRunning}
-            className={`px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all ${
-              isRunning
+              onClick={handleResetSensors}
+              disabled={isRunning}
+              className={`px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all ${isRunning
                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-700 hover:bg-gray-600 text-white'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>Reset</span>
-          </button>
+                }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Reset</span>
+            </button>
           </div>
         </div>
       </div>

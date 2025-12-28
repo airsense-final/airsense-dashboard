@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getSensorHistory } from '../services/apiService';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { DataPoint } from '../types/types';
+import { getSensorHistory, listThresholds, getCurrentUser, getSensor } from '../services/apiService';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import type { DataPoint, ThresholdConfig } from '../types/types';
+import { resolveHwKey } from '../types/types';
+import { ThresholdModal } from '../components/ThresholdModal';
 import type { ValueType, NameType, Payload } from 'recharts/types/component/DefaultTooltipContent';
 
 interface SensorDetailPageProps {
@@ -10,6 +12,7 @@ interface SensorDetailPageProps {
     sensorType: string;
     unit: string;
     companyName?: string;
+    companyId?: string;
 }
 
 interface CustomTooltipProps {
@@ -43,22 +46,94 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     const [historyData, setHistoryData] = useState<DataPoint[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showThresholdModal, setShowThresholdModal] = useState(false);
+    const [thresholds, setThresholds] = useState<ThresholdConfig | null>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [sensorMetadata, setSensorMetadata] = useState<any>(null);
+    const [scenario, setScenario] = useState('indoor_small');
     const currentValue = historyData.length > 0 ? historyData[historyData.length - 1].value : null;
 
-    useEffect(() => {
-        loadSensorHistory();
+    // Use fetched metadata preferred, fallback to props
+    const displayTitle = sensorMetadata?.sensor_name || sensorName;
+    const displayType = sensorMetadata?.sensor_type === 'Temperature' ? 'DHT11 Temperature' :
+        (sensorMetadata?.sensor_name || sensorType);
 
-        // Auto-refresh every 3 seconds
+    // Robust hardware key resolution:
+    // 1. Try resolving from metadata or prop type
+    // 2. If that fails (returns simple unit/name), try resolving from sensorId (which usually contains keys like mq3, dht11)
+    let displayHwKey = resolveHwKey(sensorMetadata?.sensor_type || sensorType);
+    const validKeys = ['dht11_temp', 'dht11_hum', 'scd40', 'mq4', 'mq7', 'mq3', 'mq135', 'mq9', 'bh1750'];
+
+    if (!validKeys.includes(displayHwKey)) {
+        const fromId = resolveHwKey(sensorId);
+        if (validKeys.includes(fromId)) {
+            displayHwKey = fromId;
+        }
+    }
+
+    useEffect(() => {
+        loadData();
+
+        // Auto-refresh history every 3 seconds
         const intervalId = setInterval(loadSensorHistory, 3000);
         return () => clearInterval(intervalId);
-    }, [sensorId, companyName]);
+    }, [sensorId, companyName, scenario]);
+
+    const loadData = async () => {
+        setLoading(true);
+        // Fetch metadata first as it's needed for thresholds
+        const metadata = await loadSensorMetadata();
+        await Promise.all([loadSensorHistory(), loadThresholds(metadata), loadUser()]);
+        setLoading(false);
+    };
+
+    const loadSensorMetadata = async () => {
+        try {
+            const meta = await getSensor(sensorId);
+            setSensorMetadata(meta);
+            return meta;
+        } catch (err) {
+            console.error('Failed to load sensor metadata', err);
+            return null;
+        }
+    };
+
+    const loadUser = async () => {
+        try {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+        } catch (err) {
+            console.error('Failed to load user', err);
+        }
+    };
+
+
+    const loadThresholds = async (metadata?: any) => {
+        try {
+            const configs = await listThresholds(scenario);
+            const hwKey = resolveHwKey(metadata?.sensor_type || sensorMetadata?.sensor_type || sensorType);
+
+            // Find effective threshold (specific to THIS company or global)
+            const matches = configs.filter(c => c.sensor_type === hwKey);
+
+            // Priority:
+            // 1. Threshold for the current user's company
+            // 2. Global threshold (company_id is null/undefined)
+            const companyId = currentUser?.company_id;
+            const custom = matches.find(c => c.company_id === companyId);
+            const global = matches.find(c => !c.company_id);
+
+            setThresholds(custom || global || null);
+        } catch (err) {
+            console.error('Failed to load thresholds for graph', err);
+        }
+    };
 
     const loadSensorHistory = async () => {
         try {
             const history = await getSensorHistory('sensor_id', sensorId, 100, companyName);
 
             const transformedData: DataPoint[] = history.map((item: any) => {
-                // Backend sends UTC timestamp without 'Z' suffix, add it to parse as UTC
                 const utcTimestamp = item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z';
                 return {
                     timestamp: item.timestamp,
@@ -68,7 +143,6 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 };
             });
 
-            console.log('Loaded sensor history:', transformedData.length, 'points');
             setHistoryData(transformedData);
             setError(null);
         } catch (err) {
@@ -105,15 +179,23 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">{sensorName}</h1>
+                        <h1 className="text-3xl font-bold mb-2">{displayTitle}</h1>
                         <p className="text-gray-400 mb-1">Sensor ID: {sensorId}</p>
-                        <p className="text-gray-400">Type: {sensorType}</p>
+                        <p className="text-gray-400">Type: {displayType}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-2">
                         <div className="text-3xl font-semibold">
                             {currentValue !== null ? currentValue.toFixed(4) : '--'}
                             <span className="text-md ml-1 text-gray-400">{unit}</span>
                         </div>
+                        {currentUser?.role !== 'viewer' && (
+                            <button
+                                onClick={() => setShowThresholdModal(true)}
+                                className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-600/50 rounded-lg text-sm transition-all duration-200 flex items-center gap-2"
+                            >
+                                ⚙️ Configure Threshold
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -127,11 +209,25 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 <div className="bg-gray-800 rounded-lg p-6 shadow-lg" style={{ height: '600px' }}>
                     {historyData.length > 0 ? (
                         <>
-                            <h2 className="text-xl font-semibold mb-4">{sensorName} - Real-Time Data</h2>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-semibold text-cyan-400">{sensorName} - Real-Time Data</h2>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-gray-400">Environment:</span>
+                                    <select
+                                        value={scenario}
+                                        onChange={(e) => setScenario(e.target.value)}
+                                        className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white"
+                                    >
+                                        <option value="indoor_small">Indoor Small</option>
+                                        <option value="indoor_large">Indoor Large</option>
+                                        <option value="outdoor">Outdoor</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div style={{ width: '100%', height: '520px' }}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart
-                                        data={historyData.map(point => ({
+                                        data={historyData.map((point: DataPoint) => ({
                                             time: point.time ? point.time.getTime() : new Date(point.timestamp).getTime(),
                                             value: point.value,
                                         }))}
@@ -154,6 +250,20 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                         />
                                         <Tooltip content={<CustomTooltip unit={unit} />} />
                                         <Legend />
+
+                                        {/* Threshold Reference Lines */}
+                                        {thresholds?.warning_min != null && (
+                                            <ReferenceLine y={thresholds.warning_min} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'Warn Min', position: 'right', fill: '#ECC94B', fontSize: 10 }} />
+                                        )}
+                                        {thresholds?.warning_max != null && (
+                                            <ReferenceLine y={thresholds.warning_max} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'Warn Max', position: 'right', fill: '#ECC94B', fontSize: 10 }} />
+                                        )}
+                                        {thresholds?.critical_min != null && (
+                                            <ReferenceLine y={thresholds.critical_min} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'Crit Min', position: 'right', fill: '#F56565', fontSize: 10 }} />
+                                        )}
+                                        {thresholds?.critical_max != null && (
+                                            <ReferenceLine y={thresholds.critical_max} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'Crit Max', position: 'right', fill: '#F56565', fontSize: 10 }} />
+                                        )}
                                         <Line
                                             type="monotone"
                                             dataKey="value"
@@ -174,6 +284,17 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                     )}
                 </div>
             </div>
+
+            <ThresholdModal
+                isOpen={showThresholdModal}
+                onClose={() => setShowThresholdModal(false)}
+                sensorId={sensorId}
+                sensorName={displayTitle}
+                sensorType={displayHwKey}
+                companyId={currentUser?.company_id || undefined}
+                scenario={scenario}
+                onSuccess={() => loadThresholds()}
+            />
         </div>
     );
 };

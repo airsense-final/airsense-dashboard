@@ -8,12 +8,12 @@ const SensorManagementPage: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedSensor, setSelectedSensor] = useState<any>(null);
-  
+
   // Form states
   const [formData, setFormData] = useState({
     sensor_id: '',
@@ -44,10 +44,10 @@ const SensorManagementPage: React.FC = () => {
 
       // Find existing sensors of this type for this company
       const pattern = `${formData.company_name}_${sensorType.key}_`;
-      const existingSensors = sensors.filter(s => 
+      const existingSensors = sensors.filter(s =>
         s.sensor_id.startsWith(pattern)
       );
-      
+
       // Find the highest index
       let maxIndex = 0;
       existingSensors.forEach(s => {
@@ -308,8 +308,8 @@ const SensorManagementPage: React.FC = () => {
                     onChange={(e) => {
                       const selectedType = e.target.value;
                       const sensor = sensorTypes.find(s => s.type === selectedType);
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         sensor_type: selectedType,
                         sensor_name: sensor ? sensor.name : ''
                       });
@@ -388,8 +388,8 @@ const SensorManagementPage: React.FC = () => {
                     onChange={(e) => {
                       const selectedType = e.target.value;
                       const sensor = sensorTypes.find(s => s.type === selectedType);
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         sensor_type: selectedType,
                         sensor_name: sensor ? sensor.name : formData.sensor_name
                       });

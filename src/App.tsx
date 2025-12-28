@@ -9,6 +9,7 @@ import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
 import { SensorDetailPage } from './pages/SensorDetailPage';
 import SensorManagementPage from './pages/SensorManagementPage';
+import ThresholdManagementPage from './pages/ThresholdManagementPage';
 import type { User } from './types/types';
 
 function App() {
@@ -164,6 +165,13 @@ function App() {
         content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
       } else {
         content = <SensorManagementPage />;
+      }
+    } else if (currentRoute === '#/admin/thresholds') {
+      // Only superadmin can access global threshold management
+      if (currentUser.role !== 'superadmin') {
+        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+      } else {
+        content = <ThresholdManagementPage />;
       }
     } else {
       content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;

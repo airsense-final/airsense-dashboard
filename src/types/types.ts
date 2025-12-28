@@ -92,3 +92,39 @@ export interface DataPoint {
 }
 
 export type SensorDataHistory = Record<string, Record<string, DataPoint[]>>
+
+export interface ThresholdConfig {
+  _id?: string;
+  scenario: string;
+  sensor_type: string;
+  warning_min?: number | null;
+  critical_min?: number | null;
+  warning_max?: number | null;
+  critical_max?: number | null;
+  unit?: string | null;
+  company_id?: string | null;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+export type ThresholdUpsert = Omit<ThresholdConfig, '_id' | 'updated_at' | 'updated_by'>;
+
+/**
+ * Utility to resolve hardware keys from display names.
+ */
+export const resolveHwKey = (type: string): string => {
+  if (!type) return type;
+  const t = type.toLowerCase();
+
+  if (t.includes('temp') || t === 'temperature') return 'dht11_temp';
+  if (t.includes('hum') || t === 'humidity') return 'dht11_hum';
+  if (t.includes('co2') || t === 'scd' || t === 'co2 sensor') return 'scd40';
+  if (t.includes('mq4') || t.includes('methane')) return 'mq4';
+  if (t.includes('mq7') || t === 'co sensor') return 'mq7';
+  if (t.includes('mq3') || t.includes('alcohol')) return 'mq3';
+  if (t.includes('mq135') || t.includes('air quality')) return 'mq135';
+  if (t.includes('mq9') || t.includes('flammable')) return 'mq9';
+  if (t.includes('bh1750') || t.includes('light')) return 'bh1750';
+
+  return type;
+};
