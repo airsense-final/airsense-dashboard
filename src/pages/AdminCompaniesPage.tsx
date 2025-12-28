@@ -95,7 +95,7 @@ export function AdminCompaniesPage() {
     }
   };
 
-  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+  const handleDeleteCompany = async (companyId: string) => {
     const company = companies.find(c => c._id === companyId);
     if (!company) return;
 
@@ -278,7 +278,7 @@ export function AdminCompaniesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button
-                        onClick={() => handleDeleteCompany(company._id, company.name)}
+                        onClick={() => handleDeleteCompany(company._id)}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
                       >
                         Delete

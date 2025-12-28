@@ -259,6 +259,10 @@ export function deleteSensor(sensorId: string): Promise<{ message: string }> {
   });
 }
 
+export function getSensor(sensorId: string): Promise<any> {
+  return apiFetch<any>(`/api/v1/sensors/${sensorId}`);
+}
+
 // --- Threshold Configuration Endpoints ---
 
 export function listThresholds(scenario?: string): Promise<ThresholdConfig[]> {
