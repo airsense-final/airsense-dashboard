@@ -23,7 +23,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, u
     if (active && payload && payload.length) {
         return (
             <div className="bg-gray-700 p-3 border border-gray-600 rounded shadow-lg">
-                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleString()}`}</p>
+                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}</p>
                 <p className="font-semibold" style={{ color: payload[0].color }}>
                     {`${payload[0].name}: ${(payload[0].value as number).toFixed(4)} ${unit}`}
                 </p>
@@ -57,12 +57,16 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
         try {
             const history = await getSensorHistory('sensor_id', sensorId, 100, companyName);
 
-            const transformedData: DataPoint[] = history.map((item: any) => ({
-                timestamp: item.timestamp,
-                value: item.value,
-                alarm: false,
-                time: new Date(item.timestamp),
-            }));
+            const transformedData: DataPoint[] = history.map((item: any) => {
+                // Backend sends UTC timestamp without 'Z' suffix, add it to parse as UTC
+                const utcTimestamp = item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z';
+                return {
+                    timestamp: item.timestamp,
+                    value: item.value,
+                    alarm: false,
+                    time: new Date(utcTimestamp),
+                };
+            });
 
             console.log('Loaded sensor history:', transformedData.length, 'points');
             setHistoryData(transformedData);
@@ -113,6 +117,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                     </div>
                 </div>
 
+
                 {error && (
                     <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
                         {error}
@@ -139,12 +144,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                             scale="time"
                                             domain={['dataMin', 'dataMax']}
                                             stroke="#A0AEC0"
-                                            tickFormatter={(unixTime) => {
-                                                return new Date(unixTime).toLocaleString(undefined, {
-                                                    hour: 'numeric',
-                                                    minute: '2-digit',
-                                                });
-                                            }}
+                                            tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
                                         />
                                         <YAxis
                                             stroke="#A0AEC0"

@@ -161,11 +161,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       const historyMap: Record<string, DataPoint[]> = {};
       historyResults.forEach(({ sensorId, history }) => {
         // Transform backend response to DataPoint format
-        historyMap[sensorId] = history.map((item: any) => ({
-          timestamp: item.timestamp,
-          value: item.value,
-          alarm: false,
-        }));
+        historyMap[sensorId] = history.map((item: any) => {
+          // Backend sends UTC timestamp without 'Z' suffix, add it to parse as UTC
+          const utcTimestamp = item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z';
+          return {
+            timestamp: item.timestamp,
+            value: item.value,
+            alarm: false,
+            time: new Date(utcTimestamp),
+          };
+        });
       });
 
       // Batch state updates together
