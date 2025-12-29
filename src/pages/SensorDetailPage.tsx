@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSensorHistory, listThresholds, getCurrentUser, getSensor } from '../services/apiService';
+import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor } from '../services/apiService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { DataPoint, ThresholdConfig } from '../types/types';
 import { resolveHwKey } from '../types/types';
@@ -77,21 +77,36 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
         // Auto-refresh history every 3 seconds
         const intervalId = setInterval(loadSensorHistory, 3000);
         return () => clearInterval(intervalId);
-    }, [sensorId, companyName, scenario]);
+    }, [sensorId, companyName]);
 
     const loadData = async () => {
         setLoading(true);
         // Fetch metadata first as it's needed for thresholds
         const metadata = await loadSensorMetadata();
-        await Promise.all([loadSensorHistory(), loadThresholds(metadata), loadUser()]);
+
+        let currentScenario = scenario;
+        if (metadata?.scenario) {
+            currentScenario = metadata.scenario;
+            setScenario(currentScenario);
+        }
+
+        await Promise.all([loadSensorHistory(), loadThresholds(metadata, currentScenario), loadUser()]);
         setLoading(false);
     };
 
     const loadSensorMetadata = async () => {
         try {
-            const meta = await getSensor(sensorId);
-            setSensorMetadata(meta);
-            return meta;
+            // Backend does not support GET /sensors/{id} (405 error), 
+            // so we list all sensors and find the one we need.
+            const allSensors = await listSensors(companyName); // Pass companyName to optimize if possible, or empty
+            const meta = allSensors.find((s: any) => s.sensor_id === sensorId);
+
+            if (meta) {
+                setSensorMetadata(meta);
+                return meta;
+            }
+            console.warn('Sensor not found in list:', sensorId);
+            return null;
         } catch (err) {
             console.error('Failed to load sensor metadata', err);
             return null;
@@ -108,9 +123,10 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     };
 
 
-    const loadThresholds = async (metadata?: any) => {
+    const loadThresholds = async (metadata?: any, overrideScenario?: string) => {
         try {
-            const configs = await listThresholds(scenario);
+            const currentScenario = overrideScenario || scenario;
+            const configs = await listThresholds(currentScenario);
             const hwKey = resolveHwKey(metadata?.sensor_type || sensorMetadata?.sensor_type || sensorType);
 
             // Find effective threshold (specific to THIS company or global)
@@ -150,6 +166,36 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             setError(err instanceof Error ? err.message : 'Failed to load sensor data');
         } finally {
             setLoading(false);
+        }
+    };
+
+
+    const handleScenarioChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newScenario = e.target.value;
+        setScenario(newScenario);
+
+        try {
+            // Prepare full payload to satisfy PUT requirement
+            // We use 'null' for missing thresholds, not 0, to denote 'no threshold'
+            const fullUpdatePayload = {
+                ...sensorMetadata,
+                scenario: newScenario,
+                custom_threshold_warning_max: sensorMetadata?.custom_threshold_warning_max ?? null,
+                custom_threshold_critical_max: sensorMetadata?.custom_threshold_critical_max ?? null,
+                custom_threshold_warning_min: sensorMetadata?.custom_threshold_warning_min ?? null,
+                custom_threshold_critical_min: sensorMetadata?.custom_threshold_critical_min ?? null,
+            };
+
+            // Clean up internal fields that shouldn't be sent back
+            delete fullUpdatePayload._id;
+            delete fullUpdatePayload.created_at;
+
+            await updateSensor(sensorId, fullUpdatePayload);
+
+            // Reload thresholds for the new scenario
+            await loadThresholds(sensorMetadata, newScenario);
+        } catch (err) {
+            console.error('Failed to update sensor scenario', err);
         }
     };
 
@@ -211,18 +257,20 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                         <>
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-xl font-semibold text-cyan-400">{sensorName} - Real-Time Data</h2>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs text-gray-400">Environment:</span>
-                                    <select
-                                        value={scenario}
-                                        onChange={(e) => setScenario(e.target.value)}
-                                        className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white"
-                                    >
-                                        <option value="indoor_small">Indoor Small</option>
-                                        <option value="indoor_large">Indoor Large</option>
-                                        <option value="outdoor">Outdoor</option>
-                                    </select>
-                                </div>
+                                {currentUser?.role !== 'viewer' && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs text-gray-400">Environment:</span>
+                                        <select
+                                            value={scenario}
+                                            onChange={handleScenarioChange}
+                                            className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white"
+                                        >
+                                            <option value="indoor_small">Indoor Small</option>
+                                            <option value="indoor_large">Indoor Large</option>
+                                            <option value="outdoor">Outdoor</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <div style={{ width: '100%', height: '520px' }}>
                                 <ResponsiveContainer width="100%" height="100%">

@@ -246,6 +246,7 @@ export function updateSensor(sensorId: string, data: {
   sensor_name?: string;
   sensor_type?: string;
   location?: string;
+  scenario?: string;
 }): Promise<{ message: string; sensor: any }> {
   return apiFetch<{ message: string; sensor: any }>(`/api/v1/sensors/${sensorId}`, {
     method: 'PUT',
