@@ -6,6 +6,7 @@ export interface Sensor {
   parent_device_id: string;
   company_id: string;
   location?: string;
+  scenario?: string; // e.g. 'indoor_small', 'outdoor'
   created_at?: string;
 }
 
