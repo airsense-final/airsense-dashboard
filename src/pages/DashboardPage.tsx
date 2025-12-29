@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getLatestSensorData, getSensorHistory, getCompanies } from '../services/apiService';
 import type { Sensor, LatestSensorData, User, Company, DataPoint } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
@@ -83,17 +83,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [sensorData, setSensorData] = useState<LatestSensorData[]>([]);
   const [sensorHistory, setSensorHistory] = useState<Record<string, DataPoint[]>>({});
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedCompany, setSelectedCompany] = useState<string>(localStorage.getItem('dashboard_selected_company') || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Ref to track the latest selected company to prevent race conditions
+  const selectedCompanyRef = useRef(selectedCompany);
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
   useEffect(() => {
+    selectedCompanyRef.current = selectedCompany;
+    
+    // Clear data immediately when company changes to prevent ghost data
+    if (currentUser?.role === 'superadmin') {
+        setSensorData([]);
+        setSensorHistory({});
+    }
+
     let isMounted = true;
     let timeoutId: number;
 
@@ -124,8 +135,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       if (currentUser?.role === 'superadmin') {
         const companiesData = await getCompanies();
         setCompanies(companiesData);
-        if (!selectedCompany && companiesData.length > 0) {
-          setSelectedCompany(companiesData[0].name);
+        
+        // Check if the stored/current company is valid (exists in the fetched list)
+        const isValidSelection = selectedCompany && companiesData.some(c => c.name === selectedCompany);
+        
+        if (!isValidSelection && companiesData.length > 0) {
+          const defaultCompany = companiesData[0].name;
+          setSelectedCompany(defaultCompany);
+          localStorage.setItem('dashboard_selected_company', defaultCompany);
         }
       }
 
@@ -140,15 +157,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const loadSensorData = async () => {
     if (isLoadingData) return; // Skip if already loading
 
+    const currentCompany = selectedCompanyRef.current;
+
     try {
       setIsLoadingData(true);
-      const companyName = currentUser?.role === 'superadmin' ? selectedCompany : undefined;
+      const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
       const data = await getLatestSensorData(companyName);
+
+      // Race condition check: If company changed while fetching, discard result
+      if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
+        return;
+      }
 
       // Load history for each unique sensor
       const uniqueSensors = new Set(data.map(d => d.metadata.sensor_id));
       const historyPromises = Array.from(uniqueSensors).map(async (sensorId) => {
         try {
+          // Double check before each history call (optional optimization)
+          if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
+             return null;
+          }
           const history = await getSensorHistory('sensor_id', sensorId, 50, companyName);
           return { sensorId, history };
         } catch (err) {
@@ -158,8 +186,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       });
 
       const historyResults = await Promise.all(historyPromises);
+
+      // Final Race condition check before updating state
+      if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
+        return;
+      }
+
       const historyMap: Record<string, DataPoint[]> = {};
-      historyResults.forEach(({ sensorId, history }) => {
+      historyResults.forEach((result) => {
+        if (!result) return;
+        const { sensorId, history } = result;
         // Transform backend response to DataPoint format
         historyMap[sensorId] = history.map((item: any) => {
           // Backend sends UTC timestamp without 'Z' suffix, add it to parse as UTC
@@ -209,7 +245,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
             <label className="text-sm font-medium text-gray-300">Company:</label>
             <select
               value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setSelectedCompany(newValue);
+                localStorage.setItem('dashboard_selected_company', newValue);
+              }}
               className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
               {companies.map((company) => (
