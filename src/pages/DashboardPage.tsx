@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getLatestSensorData, getSensorHistory, getCompanies } from '../services/apiService';
-import type { Sensor, LatestSensorData, User, Company, DataPoint } from '../types/types';
+import { getLatestSensorData, getSensorHistory, getCompanies, getDashboardSummary } from '../services/apiService';
+import type { Sensor, LatestSensorData, User, Company, DataPoint, SensorDashboardView } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
 
 interface DashboardPageProps {
@@ -162,55 +162,44 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     try {
       setIsLoadingData(true);
       const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
-      const data = await getLatestSensorData(companyName);
+      
+      // OPTIMIZED: Fetch everything in one go
+      const summaryData = await getDashboardSummary(companyName);
 
       // Race condition check: If company changed while fetching, discard result
       if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
         return;
       }
 
-      // Load history for each unique sensor
-      const uniqueSensors = new Set(data.map(d => d.metadata.sensor_id));
-      const historyPromises = Array.from(uniqueSensors).map(async (sensorId) => {
-        try {
-          // Double check before each history call (optional optimization)
-          if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
-             return null;
-          }
-          const history = await getSensorHistory('sensor_id', sensorId, 50, companyName);
-          return { sensorId, history };
-        } catch (err) {
-          console.error(`Failed to load history for ${sensorId}:`, err);
-          return { sensorId, history: [] };
+      // Transform to match existing state structure
+      const latestDataFormatted: LatestSensorData[] = summaryData.map(item => ({
+        _id: item.sensor_id, 
+        timestamp: item.latest_timestamp || new Date().toISOString(),
+        value: item.latest_value ?? 0,
+        status: item.status,
+        metadata: {
+          sensor_id: item.sensor_id,
+          parent_device: "ESP32", 
+          type: item.sensor_name, // Dashboard displays metadata.type as name
+          unit: item.unit
         }
-      });
-
-      const historyResults = await Promise.all(historyPromises);
-
-      // Final Race condition check before updating state
-      if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
-        return;
-      }
+      }));
 
       const historyMap: Record<string, DataPoint[]> = {};
-      historyResults.forEach((result) => {
-        if (!result) return;
-        const { sensorId, history } = result;
-        // Transform backend response to DataPoint format
-        historyMap[sensorId] = history.map((item: any) => {
-          // Backend sends UTC timestamp without 'Z' suffix, add it to parse as UTC
-          const utcTimestamp = item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z';
-          return {
-            timestamp: item.timestamp,
-            value: item.value,
-            alarm: false,
-            time: new Date(utcTimestamp),
-          };
+      summaryData.forEach(item => {
+        historyMap[item.sensor_id] = item.history.map(h => {
+             const ts = h.timestamp.endsWith('Z') ? h.timestamp : h.timestamp + 'Z';
+             return {
+                timestamp: h.timestamp,
+                value: h.value,
+                alarm: false,
+                time: new Date(ts)
+             };
         });
       });
 
-      // Batch state updates together
-      setSensorData(data);
+      // Batch state updates
+      setSensorData(latestDataFormatted);
       setSensorHistory(historyMap);
       setLastUpdate(new Date());
     } catch (err) {

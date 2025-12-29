@@ -129,3 +129,15 @@ export const resolveHwKey = (type: string): string => {
 
   return type;
 };
+
+export interface SensorDashboardView {
+  sensor_id: string;
+  sensor_name: string;
+  sensor_type: string;
+  unit: string;
+  location?: string;
+  latest_value: number | null;
+  latest_timestamp: string | null;
+  status: string;
+  history: { timestamp: string; value: number }[];
+}
