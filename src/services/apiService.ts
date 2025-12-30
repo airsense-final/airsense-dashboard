@@ -6,7 +6,8 @@ import type {
   User,
   Company,
   ThresholdConfig,
-  ThresholdUpsert
+  ThresholdUpsert,
+  SensorDashboardView
 } from '../types/types';
 
 const TOKEN_KEY = 'iot_dashboard_access_token';
@@ -199,6 +200,11 @@ export function getCurrentUser(): Promise<User> {
 }
 
 // --- Sensor Data Endpoints ---
+
+export function getDashboardSummary(companyName?: string): Promise<SensorDashboardView[]> {
+  const params = companyName ? `?target_company_name=${encodeURIComponent(companyName)}` : '';
+  return apiFetch<SensorDashboardView[]>(`/api/v1/sensors/dashboard/summary${params}`);
+}
 
 export function getLatestSensorData(companyName?: string): Promise<any[]> {
   const params = companyName ? `?target_company_name=${encodeURIComponent(companyName)}` : '';
