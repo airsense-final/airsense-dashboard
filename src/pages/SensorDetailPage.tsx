@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor } from '../services/apiService';
+import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor, getLatestSensorData } from '../services/apiService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { DataPoint, ThresholdConfig } from '../types/types';
 import { resolveHwKey } from '../types/types';
 import { ThresholdModal } from '../components/ThresholdModal';
 import type { ValueType, NameType, Payload } from 'recharts/types/component/DefaultTooltipContent';
+import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 
 interface SensorDetailPageProps {
     sensorId: string;
@@ -51,7 +52,9 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [sensorMetadata, setSensorMetadata] = useState<any>(null);
     const [scenario, setScenario] = useState('indoor_small');
+    const [latestContext, setLatestContext] = useState<Record<string, number>>({});
     const currentValue = historyData.length > 0 ? historyData[historyData.length - 1].value : null;
+    const isError = currentValue !== null ? isSensorError(sensorId, currentValue, latestContext) : false;
 
     // Use fetched metadata preferred, fallback to props
     const displayTitle = sensorMetadata?.sensor_name || sensorName;
@@ -90,8 +93,19 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             setScenario(currentScenario);
         }
 
-        await Promise.all([loadSensorHistory(), loadThresholds(metadata, currentScenario), loadUser()]);
+        await Promise.all([loadSensorHistory(), loadThresholds(metadata, currentScenario), loadUser(), loadLatestContext()]);
         setLoading(false);
+    };
+
+    const loadLatestContext = async () => {
+        try {
+            const data = await getLatestSensorData(companyName);
+            const map: Record<string, number> = {};
+            data.forEach((d: any) => map[d.metadata.sensor_id] = d.value);
+            setLatestContext(map);
+        } catch (err) {
+            console.error('Failed to load latest context', err);
+        }
     };
 
     const loadSensorMetadata = async () => {
@@ -230,9 +244,9 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                         <p className="text-gray-400">Type: {displayType}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-2">
-                        <div className="text-3xl font-semibold">
-                            {currentValue !== null ? currentValue.toFixed(4) : '--'}
-                            <span className="text-md ml-1 text-gray-400">{unit}</span>
+                        <div className={`text-3xl font-semibold ${isError ? 'text-red-500 animate-pulse' : ''}`}>
+                            {getSensorDisplayValue(currentValue, isError)}
+                            {!isError && <span className="text-md ml-1 text-gray-400">{unit}</span>}
                         </div>
                         {currentUser?.role !== 'viewer' && (
                             <button

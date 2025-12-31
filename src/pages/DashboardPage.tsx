@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getLatestSensorData, getSensorHistory, getCompanies, getDashboardSummary } from '../services/apiService';
-import type { Sensor, LatestSensorData, User, Company, DataPoint, SensorDashboardView } from '../types/types';
+import { getCompanies, getDashboardSummary } from '../services/apiService';
+import type { Sensor, LatestSensorData, User, Company, DataPoint } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
+import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 
 interface DashboardPageProps {
   currentUser: User | null;
@@ -14,9 +15,14 @@ const SensorCard: React.FC<{
   isOnline: boolean;
   historyData: DataPoint[];
   companyName?: string;
-}> = ({ sensor, latestValue, unit, isOnline, historyData, companyName }) => {
-  const statusColor = isOnline ? 'border-gray-700 hover:border-cyan-400' : 'border-red-500';
-  const statusDotColor = isOnline ? 'bg-green-500' : 'bg-gray-500';
+  isError?: boolean;
+}> = ({ sensor, latestValue, unit, isOnline, historyData, companyName, isError }) => {
+  const statusColor = isError
+    ? 'border-red-600 animate-pulse' // Error styling
+    : isOnline ? 'border-gray-700 hover:border-cyan-400' : 'border-red-500';
+  const statusDotColor = isError
+    ? 'bg-red-600'
+    : isOnline ? 'bg-green-500' : 'bg-gray-500';
 
   const handleClick = () => {
     const params = new URLSearchParams({
@@ -65,9 +71,9 @@ const SensorCard: React.FC<{
 
       <div className="mt-4 text-center">
         <span className="text-3xl font-semibold">
-          {latestValue !== null ? latestValue.toFixed(4) : '--'}
+          {getSensorDisplayValue(latestValue, !!isError)}
         </span>
-        <span className="text-md ml-1 text-gray-400">{unit}</span>
+        {!isError && <span className="text-md ml-1 text-gray-400">{unit}</span>}
       </div>
 
       {sensor.location && sensor.location !== 'Unknown' && (
@@ -98,11 +104,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   useEffect(() => {
     selectedCompanyRef.current = selectedCompany;
-    
+
     // Clear data immediately when company changes to prevent ghost data
     if (currentUser?.role === 'superadmin') {
-        setSensorData([]);
-        setSensorHistory({});
+      setSensorData([]);
+      setSensorHistory({});
     }
 
     let isMounted = true;
@@ -135,10 +141,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       if (currentUser?.role === 'superadmin') {
         const companiesData = await getCompanies();
         setCompanies(companiesData);
-        
+
         // Check if the stored/current company is valid (exists in the fetched list)
         const isValidSelection = selectedCompany && companiesData.some(c => c.name === selectedCompany);
-        
+
         if (!isValidSelection && companiesData.length > 0) {
           const defaultCompany = companiesData[0].name;
           setSelectedCompany(defaultCompany);
@@ -162,7 +168,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     try {
       setIsLoadingData(true);
       const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
-      
+
       // OPTIMIZED: Fetch everything in one go
       const summaryData = await getDashboardSummary(companyName);
 
@@ -173,13 +179,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
       // Transform to match existing state structure
       const latestDataFormatted: LatestSensorData[] = summaryData.map(item => ({
-        _id: item.sensor_id, 
+        _id: item.sensor_id,
         timestamp: item.latest_timestamp || new Date().toISOString(),
         value: item.latest_value ?? 0,
         status: item.status,
         metadata: {
           sensor_id: item.sensor_id,
-          parent_device: "ESP32", 
+          parent_device: "ESP32",
           type: item.sensor_name, // Dashboard displays metadata.type as name
           unit: item.unit
         }
@@ -188,13 +194,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       const historyMap: Record<string, DataPoint[]> = {};
       summaryData.forEach(item => {
         historyMap[item.sensor_id] = item.history.map(h => {
-             const ts = h.timestamp.endsWith('Z') ? h.timestamp : h.timestamp + 'Z';
-             return {
-                timestamp: h.timestamp,
-                value: h.value,
-                alarm: false,
-                time: new Date(ts)
-             };
+          const ts = h.timestamp.endsWith('Z') ? h.timestamp : h.timestamp + 'Z';
+          return {
+            timestamp: h.timestamp,
+            value: h.value,
+            alarm: false,
+            time: new Date(ts)
+          };
         });
       });
 
@@ -259,35 +265,47 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
       {sensorData.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Object.values(
-            sensorData.reduce((acc, data) => {
-              // Keep only the latest data for each sensor_id
-              const sensorId = data.metadata.sensor_id;
-              if (!acc[sensorId] || new Date(data.timestamp) > new Date(acc[sensorId].timestamp)) {
-                acc[sensorId] = data;
-              }
-              return acc;
-            }, {} as Record<string, typeof sensorData[0]>)
-          )
-            .sort((a, b) => a.metadata.sensor_id.localeCompare(b.metadata.sensor_id))
-            .map((data) => (
-              <SensorCard
-                key={data.metadata.sensor_id}
-                sensor={{
-                  _id: data._id,
-                  sensor_id: data.metadata.sensor_id,
-                  sensor_name: data.metadata.type,
-                  sensor_type: data.metadata.unit,
-                  parent_device_id: data.metadata.parent_device,
-                  company_id: '',
-                }}
-                latestValue={data.value}
-                unit={data.metadata.unit}
-                isOnline={data.status === 'active'}
-                historyData={sensorHistory[data.metadata.sensor_id] || []}
-                companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
-              />
-            ))}
+          {(() => {
+            // Create context map for error checking
+            const sensorValueMap: Record<string, number> = {};
+            sensorData.forEach(d => {
+              sensorValueMap[d.metadata.sensor_id] = d.value;
+            });
+
+            return Object.values(
+              sensorData.reduce((acc, data) => {
+                // Keep only the latest data for each sensor_id
+                const sensorId = data.metadata.sensor_id;
+                if (!acc[sensorId] || new Date(data.timestamp) > new Date(acc[sensorId].timestamp)) {
+                  acc[sensorId] = data;
+                }
+                return acc;
+              }, {} as Record<string, typeof sensorData[0]>)
+            )
+              .sort((a, b) => a.metadata.sensor_id.localeCompare(b.metadata.sensor_id))
+              .map((data) => {
+                const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
+                return (
+                  <SensorCard
+                    key={data.metadata.sensor_id}
+                    sensor={{
+                      _id: data._id,
+                      sensor_id: data.metadata.sensor_id,
+                      sensor_name: data.metadata.type,
+                      sensor_type: data.metadata.unit,
+                      parent_device_id: data.metadata.parent_device,
+                      company_id: '',
+                    }}
+                    latestValue={data.value}
+                    unit={data.metadata.unit}
+                    isOnline={data.status === 'active'}
+                    historyData={sensorHistory[data.metadata.sensor_id] || []}
+                    companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
+                    isError={isError}
+                  />
+                );
+              })
+          })()}
         </div>
       ) : (
         <div className="text-center py-20 bg-gray-800/50 rounded-lg">

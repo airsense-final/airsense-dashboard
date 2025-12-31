@@ -1,5 +1,6 @@
 import React from 'react';
 import type { SensorData } from '../../services/testScenarioService';
+import { isSensorError, getSensorDisplayValue } from '../../utils/sensorUtils';
 
 interface LiveSensorDisplayProps {
   sensorData: SensorData;
@@ -103,7 +104,13 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       {sensors.map((sensor) => {
-        const status = getSensorStatus(sensor.type, sensor.value);
+        // Construct an ID that allows our utility to detect the sensor type/model
+        const idForCheck = sensor.model === 'DHT-11' ? `dht11_${sensor.type}` : sensor.type;
+        const isError = isSensorError(idForCheck, sensor.value, sensorData);
+        const status = isError
+          ? { color: 'text-red-500 animate-pulse', bg: 'bg-red-900/30', status: 'ERROR' }
+          : getSensorStatus(sensor.type, sensor.value);
+
         return (
           <div
             key={sensor.type}
@@ -117,9 +124,9 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
             <div className="text-gray-500 text-xs mb-2">{sensor.model}</div>
             <div className="flex items-baseline space-x-1">
               <span className={`text-2xl font-bold ${status.color}`}>
-                {sensor.value.toFixed(1)}
+                {getSensorDisplayValue(sensor.value, isError, 1)}
               </span>
-              <span className="text-sm text-gray-500">{sensor.unit}</span>
+              {!isError && <span className="text-sm text-gray-500">{sensor.unit}</span>}
             </div>
           </div>
         );
