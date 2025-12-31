@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { User } from '../../types/types';
+import { ChangePasswordModal } from '../ChangePasswordModal';
 
 interface HeaderProps {
     isAuthed: boolean;
@@ -8,6 +9,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser }) => {
+    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+
     if (!isAuthed || !currentUser) return null;
 
     // Debug: Check current user role
@@ -113,6 +116,16 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
                     </div>
 
                     <button
+                        onClick={() => setIsChangePasswordModalOpen(true)}
+                        className="text-gray-400 hover:text-cyan-400 transition-colors p-2 hover:bg-cyan-500/10 rounded-lg"
+                        title="Change Password"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                    </button>
+
+                    <button
                         onClick={onLogout}
                         className="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-red-500/10 rounded-lg"
                         title="Logout"
@@ -123,6 +136,11 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
                     </button>
                 </>
             </div>
+
+            <ChangePasswordModal
+                isOpen={isChangePasswordModalOpen}
+                onClose={() => setIsChangePasswordModalOpen(false)}
+            />
         </header>
     );
 };
