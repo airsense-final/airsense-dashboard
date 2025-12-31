@@ -7,7 +7,8 @@ import type {
   Company,
   ThresholdConfig,
   ThresholdUpsert,
-  SensorDashboardView
+  SensorDashboardView,
+  ChangePasswordRequest
 } from '../types/types';
 
 const TOKEN_KEY = 'iot_dashboard_access_token';
@@ -106,6 +107,13 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   if (!res?.access_token) throw new Error('Login response missing access_token.'); // Guarding if no token is returned
   setToken(res.access_token);
   return res;
+}
+
+export function changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 export function register(data: RegisterRequest): Promise<string> {

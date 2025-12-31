@@ -40,6 +40,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+  new_password_confirm: string;
+}
+
 export interface RegisterRequest {
   username: string;
   email: string;
