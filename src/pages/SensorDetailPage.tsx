@@ -147,10 +147,12 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             const matches = configs.filter(c => c.sensor_type === hwKey);
 
             // Priority:
-            // 1. Threshold for the current user's company
+            // 1. Threshold for the sensor's company
             // 2. Global threshold (company_id is null/undefined)
-            const companyId = currentUser?.company_id;
-            const custom = matches.find(c => c.company_id === companyId);
+            // Note: For superadmins viewing other companies, we must use the sensor's company_id, 
+            // not the currentUser's company_id.
+            const sensorCompanyId = metadata?.company_id || sensorMetadata?.company_id;
+            const custom = matches.find(c => c.company_id === sensorCompanyId);
             const global = matches.find(c => !c.company_id);
 
             setThresholds(custom || global || null);
@@ -353,7 +355,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 sensorId={sensorId}
                 sensorName={displayTitle}
                 sensorType={displayHwKey}
-                companyId={currentUser?.company_id || undefined}
+                companyId={sensorMetadata?.company_id || currentUser?.company_id || undefined}
                 scenario={scenario}
                 onSuccess={() => loadThresholds()}
             />
