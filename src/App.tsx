@@ -10,6 +10,7 @@ import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
 import { SensorDetailPage } from './pages/SensorDetailPage';
 import SensorManagementPage from './pages/SensorManagementPage';
 import ThresholdManagementPage from './pages/ThresholdManagementPage';
+import AlertHistoryPage from './pages/AlertHistoryPage';
 import type { User } from './types/types';
 
 function App() {
@@ -173,6 +174,8 @@ function App() {
       } else {
         content = <ThresholdManagementPage />;
       }
+    } else if (currentRoute === '#/alerts/history') {
+      content = <AlertHistoryPage />;
     } else {
       content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
     }

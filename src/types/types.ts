@@ -147,3 +147,26 @@ export interface SensorDashboardView {
   status: string;
   history: { timestamp: string; value: number }[];
 }
+
+export interface Alert {
+  _id: string;
+  sensor_id: string;
+  device_id: string;
+  company_id: string;
+  company_name: string;
+  alert_type: 'critical' | 'warning' | 'info';
+  sensor_type: string;
+  value: number;
+  threshold_value: number;
+  trigger_value?: number;
+  unit: string;
+  message: string;
+  timestamp: string;
+  created_at: string;
+  is_resolved: boolean;
+  resolved_at?: string;
+  scenario?: string;
+  resolution_note?: string;
+  is_read?: boolean;
+  read_at?: string;
+}

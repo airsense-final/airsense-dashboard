@@ -8,7 +8,8 @@ import type {
   ThresholdConfig,
   ThresholdUpsert,
   SensorDashboardView,
-  ChangePasswordRequest
+  ChangePasswordRequest,
+  Alert
 } from '../types/types';
 
 const TOKEN_KEY = 'iot_dashboard_access_token';
@@ -297,3 +298,72 @@ export function deleteThreshold(thresholdId: string): Promise<{ message: string 
     method: 'DELETE',
   });
 }
+
+// --- Alert Endpoints ---
+
+export function getAlerts(companyName?: string): Promise<Alert[]> {
+  const params = companyName ? `?target_company_name=${encodeURIComponent(companyName)}` : '';
+  return apiFetch<Alert[]>(`/api/v1/alerts${params}`);
+}
+
+export function getLatestAlerts(companyName?: string, isResolved?: boolean): Promise<Alert[]> {
+  const params = new URLSearchParams();
+  if (companyName) params.append('target_company_name', companyName);
+  if (isResolved !== undefined) params.append('is_resolved', isResolved.toString());
+
+  return apiFetch<Alert[]>(`/api/v1/alerts/latest?${params.toString()}`);
+}
+
+export interface AlertHistoryParams {
+  target_company_name?: string;
+  start_date?: string;
+  end_date?: string;
+  sensor_id?: string;
+  is_resolved?: boolean;
+  is_read?: boolean;
+  limit?: number;
+}
+
+export function getAlertHistory(params: AlertHistoryParams): Promise<Alert[]> {
+  const queryParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, value.toString());
+    }
+  });
+
+  return apiFetch<Alert[]>(`/api/v1/alerts/history?${queryParams.toString()}`);
+}
+
+export async function getAggregatedAlertHistory(companies: Company[], params: AlertHistoryParams): Promise<Alert[]> {
+  const promises = companies.map(company =>
+    getAlertHistory({
+      ...params,
+      target_company_name: company.name
+    }).catch(err => {
+      console.warn(`Failed to fetch alerts for company ${company.name}`, err);
+      return [];
+    })
+  );
+
+  const results = await Promise.all(promises);
+  const flatResults = results.flat();
+
+  // Sort by timestamp descending
+  return flatResults.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+export function markAlertAsRead(alertId: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/api/v1/alerts/${alertId}/read`, {
+    method: 'PUT',
+  });
+}
+
+export function markAllAlertsAsRead(targetCompanyName?: string): Promise<{ message: string }> {
+  const params = targetCompanyName ? `?target_company_name=${encodeURIComponent(targetCompanyName)}` : '';
+  return apiFetch<{ message: string }>(`/api/v1/alerts/mark-all-read${params}`, {
+    method: 'PUT',
+  });
+}
+
+

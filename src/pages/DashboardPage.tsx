@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getCompanies, getDashboardSummary } from '../services/apiService';
 import type { Sensor, LatestSensorData, User, Company, DataPoint } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
+import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 
 interface DashboardPageProps {
@@ -262,6 +263,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           {error}
         </div>
       )}
+
+      {/* Recent Alerts Widget */}
+      <div className="mb-8">
+        <RecentAlertsWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
+      </div>
 
       {sensorData.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
