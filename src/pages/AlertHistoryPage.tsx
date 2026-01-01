@@ -254,10 +254,9 @@ const AlertHistoryPage: React.FC = () => {
                 </div>
 
                 {/* Filters Bar */}
-                {/* Filters Bar */}
-                <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-12 gap-4">
                     {/* Date Inputs */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 xl:col-span-2">
                         <label className="text-xs font-semibold text-gray-400 uppercase">Start Date</label>
                         <DatePicker
                             selected={startDate ? new Date(startDate) : null}
@@ -266,7 +265,8 @@ const AlertHistoryPage: React.FC = () => {
                                 setStartDate(date ? date.toISOString() : '');
                             }}
                             showTimeSelect
-                            maxDate={endDate ? new Date(endDate) : undefined}
+                            maxDate={endDate ? new Date(endDate) : new Date()}
+                            filterTime={(date) => date.getTime() <= new Date().getTime()}
                             timeFormat="HH:mm"
                             timeIntervals={15}
                             dateFormat="dd-MM-yyyy HH:mm"
@@ -274,7 +274,7 @@ const AlertHistoryPage: React.FC = () => {
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 xl:col-span-2">
                         <label className="text-xs font-semibold text-gray-400 uppercase">End Date</label>
                         <DatePicker
                             selected={endDate ? new Date(endDate) : null}
@@ -284,6 +284,8 @@ const AlertHistoryPage: React.FC = () => {
                             }}
                             showTimeSelect
                             minDate={startDate ? new Date(startDate) : undefined}
+                            maxDate={new Date()}
+                            filterTime={(date) => date.getTime() <= new Date().getTime()}
                             timeFormat="HH:mm"
                             timeIntervals={15}
                             dateFormat="dd-MM-yyyy HH:mm"
@@ -293,7 +295,7 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
 
                     {/* Sensor Filter */}
-                    <div className="space-y-1">
+                    <div className={`space-y-1 ${currentUser?.role !== 'superadmin' ? 'xl:col-span-4' : 'xl:col-span-2'}`}>
                         <label className="text-xs font-semibold text-gray-400 uppercase">Sensor ID</label>
                         <input
                             type="text"
@@ -305,8 +307,8 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
 
                     {/* Company (Superadmin) */}
-                    {currentUser?.role === 'superadmin' ? (
-                        <div className="space-y-1">
+                    {currentUser?.role === 'superadmin' && (
+                        <div className="space-y-1 xl:col-span-2">
                             <label className="text-xs font-semibold text-gray-400 uppercase">Company</label>
                             <select
                                 value={selectedCompany}
@@ -317,12 +319,10 @@ const AlertHistoryPage: React.FC = () => {
                                 {companies.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                             </select>
                         </div>
-                    ) : (
-                        <div className="hidden xl:block"></div> /* Spacer for alignment if not superadmin? No, simpler to just let grid flow or leave empty */
                     )}
 
                     {/* Status Filter */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 xl:col-span-2">
                         <label className="text-xs font-semibold text-gray-400 uppercase">Status</label>
                         <select
                             value={statusFilter}
@@ -336,7 +336,7 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
 
                     {/* Read Status Filter */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 xl:col-span-2">
                         <label className="text-xs font-semibold text-gray-400 uppercase">Read Status</label>
                         <select
                             value={readFilter}
