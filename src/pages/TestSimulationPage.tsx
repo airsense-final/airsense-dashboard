@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getLatestSensorData, getCompanies } from '../services/apiService';
-import type { User, Company } from '../types/types';
+import { getLatestSensorData, getCompanies, getLatestAlerts } from '../services/apiService';
+import type { User, Company, Alert } from '../types/types';
 import {
   testScenarioService,
   TEST_SCENARIOS,
@@ -25,6 +25,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [lastResult, setLastResult] = useState<TestResult | null>(null);
   const [alerts, setAlerts] = useState<string[]>([]);
+  const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
   const [autoRunEnabled, setAutoRunEnabled] = useState(false);
   const [autoRunIndex, setAutoRunIndex] = useState(0);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'error'>('checking');
@@ -58,6 +59,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       const interval = setInterval(() => {
         if (!isRunning) {
           loadRealSensorData();
+          loadActiveAlerts();
         }
       }, 5000); // Refresh every 5 seconds
       return () => clearInterval(interval);
@@ -74,6 +76,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
         }
       }
       await loadRealSensorData();
+      await loadActiveAlerts();
     } catch (err) {
       console.error('Failed to load initial data:', err);
       setBackendStatus('error');
@@ -123,6 +126,17 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
     } catch (err) {
       console.error('Failed to load sensor data:', err);
       setBackendStatus('error');
+    }
+  };
+
+  const loadActiveAlerts = async () => {
+    try {
+      const companyName = currentUser?.role === 'superadmin' ? selectedCompany : undefined;
+      // Fetch only active alerts (is_resolved=false)
+      const data = await getLatestAlerts(companyName, false);
+      setActiveAlerts(data);
+    } catch (err) {
+      console.error('Failed to load active alerts:', err);
     }
   };
 
@@ -328,7 +342,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
           </svg>
           <span>Live Sensor Data</span>
         </h2>
-        <LiveSensorDisplay sensorData={sensorData} />
+        <LiveSensorDisplay sensorData={sensorData} activeAlerts={activeAlerts} />
       </div>
 
       {/* Test Results */}

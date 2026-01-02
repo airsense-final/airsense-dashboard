@@ -1,12 +1,14 @@
 import React from 'react';
 import type { SensorData } from '../../services/testScenarioService';
+import type { Alert } from '../../types/types';
 import { isSensorError, getSensorDisplayValue } from '../../utils/sensorUtils';
 
 interface LiveSensorDisplayProps {
   sensorData: SensorData;
+  activeAlerts?: Alert[];
 }
 
-export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData }) => {
+export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData, activeAlerts = [] }) => {
   const getSensorStatus = (type: string, value: number) => {
     switch (type) {
       case 'temperature':
@@ -107,9 +109,37 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
         // Construct an ID that allows our utility to detect the sensor type/model
         const idForCheck = sensor.model === 'DHT-11' ? `dht11_${sensor.type}` : sensor.type;
         const isError = isSensorError(idForCheck, sensor.value, sensorData);
-        const status = isError
-          ? { color: 'text-red-500 animate-pulse', bg: 'bg-red-900/30', status: 'ERROR' }
-          : getSensorStatus(sensor.type, sensor.value);
+        // Match active alerts for this sensor
+        // Try exact match on mapped ID ID (e.g. dht11_hum) or just type match
+        const latestAlert = activeAlerts
+          .filter(a => {
+            // Check if alert corresponds to this sensor type
+            // The API returns alert.sensor_type like 'dht11_hum'
+            // sensor.type here is 'temperature', 'humidity' etc.
+            // idForCheck is 'dht11_temperature', 'co2' etc. 
+
+            // Allow loose matching since we might not have exact ID in simulation
+            return a.sensor_type === sensor.type ||
+              a.sensor_type === idForCheck ||
+              (sensor.model === 'DHT-11' && a.sensor_type.includes(sensor.type.substring(0, 3)));
+          })
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+        let status;
+        if (isError) {
+          status = { color: 'text-red-500 animate-pulse', bg: 'bg-red-900/30', status: 'ERROR' };
+        } else if (latestAlert) {
+          if (latestAlert.alert_type === 'critical') {
+            status = { color: 'text-red-500 animate-pulse', bg: 'bg-red-900/30', status: 'CRITICAL' };
+          } else if (latestAlert.alert_type === 'warning') {
+            status = { color: 'text-yellow-500 animate-pulse', bg: 'bg-yellow-900/30', status: 'WARNING' };
+          } else {
+            // Fallback for info or others
+            status = getSensorStatus(sensor.type, sensor.value);
+          }
+        } else {
+          status = getSensorStatus(sensor.type, sensor.value);
+        }
 
         return (
           <div

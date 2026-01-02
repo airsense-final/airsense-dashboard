@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor, getLatestSensorData } from '../services/apiService';
+import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor, getLatestSensorData, getAlertHistory, markAlertAsRead } from '../services/apiService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import type { DataPoint, ThresholdConfig } from '../types/types';
+import type { DataPoint, ThresholdConfig, Alert } from '../types/types';
 import { resolveHwKey } from '../types/types';
 import { ThresholdModal } from '../components/ThresholdModal';
 import type { ValueType, NameType, Payload } from 'recharts/types/component/DefaultTooltipContent';
@@ -45,6 +45,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     companyName,
 }) => {
     const [historyData, setHistoryData] = useState<DataPoint[]>([]);
+    const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showThresholdModal, setShowThresholdModal] = useState(false);
@@ -55,6 +56,9 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     const [latestContext, setLatestContext] = useState<Record<string, number>>({});
     const currentValue = historyData.length > 0 ? historyData[historyData.length - 1].value : null;
     const isError = currentValue !== null ? isSensorError(sensorId, currentValue, latestContext) : false;
+
+    // Ref to hold the actual functional sensor_id (in case the URL ID is a Mongo ID)
+    const effectiveSensorIdRef = React.useRef(sensorId); // Default to prop
 
     // Use fetched metadata preferred, fallback to props
     const displayTitle = sensorMetadata?.sensor_name || sensorName;
@@ -75,11 +79,19 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     }
 
     useEffect(() => {
+        effectiveSensorIdRef.current = sensorId; // Reset on prop change
         loadData();
 
-        // Auto-refresh history every 3 seconds
-        const intervalId = setInterval(loadSensorHistory, 3000);
-        return () => clearInterval(intervalId);
+        // Auto-refresh sensor history every 3 seconds (Original Sensor Logic)
+        const sensorIntervalId = setInterval(() => loadSensorHistory(), 3000);
+
+        // Auto-refresh active alerts every 30 seconds (New Alert Logic)
+        const alertIntervalId = setInterval(() => loadActiveAlerts(), 30000);
+
+        return () => {
+            clearInterval(sensorIntervalId);
+            clearInterval(alertIntervalId);
+        };
     }, [sensorId, companyName]);
 
     const loadData = async () => {
@@ -93,8 +105,34 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             setScenario(currentScenario);
         }
 
-        await Promise.all([loadSensorHistory(), loadThresholds(metadata, currentScenario), loadUser(), loadLatestContext()]);
+        await Promise.all([loadSensorHistory(), loadActiveAlerts(), loadThresholds(metadata, currentScenario), loadUser(), loadLatestContext()]);
         setLoading(false);
+    };
+
+    const loadActiveAlerts = async () => {
+        try {
+            const targetId = effectiveSensorIdRef.current || sensorId;
+            const alerts = await getAlertHistory({
+                sensor_id: targetId,
+                is_resolved: false,
+                target_company_name: companyName
+            });
+            // Client-side deduping if necessary, but API should handle it. Only show unresolved.
+            setActiveAlerts(alerts);
+        } catch (err) {
+            console.error('Failed to load active alerts', err);
+        }
+    };
+
+    const handleMarkAsRead = async (alertId: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent card clicks if any
+        try {
+            await markAlertAsRead(alertId);
+            // Optimistic update
+            setActiveAlerts(prev => prev.map(a => a._id === alertId ? { ...a, is_read: true } : a));
+        } catch (err) {
+            console.error('Failed to mark alert as read', err);
+        }
     };
 
     const loadLatestContext = async () => {
@@ -113,10 +151,13 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             // Backend does not support GET /sensors/{id} (405 error), 
             // so we list all sensors and find the one we need.
             const allSensors = await listSensors(companyName); // Pass companyName to optimize if possible, or empty
-            const meta = allSensors.find((s: any) => s.sensor_id === sensorId);
+
+            // Try to find by functional ID first, then by Mongo _id
+            const meta = allSensors.find((s: any) => s.sensor_id === sensorId || s._id === sensorId);
 
             if (meta) {
                 setSensorMetadata(meta);
+                effectiveSensorIdRef.current = meta.sensor_id; // Capture functional ID
                 return meta;
             }
             console.warn('Sensor not found in list:', sensorId);
@@ -147,10 +188,12 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
             const matches = configs.filter(c => c.sensor_type === hwKey);
 
             // Priority:
-            // 1. Threshold for the current user's company
+            // 1. Threshold for the sensor's company
             // 2. Global threshold (company_id is null/undefined)
-            const companyId = currentUser?.company_id;
-            const custom = matches.find(c => c.company_id === companyId);
+            // Note: For superadmins viewing other companies, we must use the sensor's company_id, 
+            // not the currentUser's company_id.
+            const sensorCompanyId = metadata?.company_id || sensorMetadata?.company_id;
+            const custom = matches.find(c => c.company_id === sensorCompanyId);
             const global = matches.find(c => !c.company_id);
 
             setThresholds(custom || global || null);
@@ -161,7 +204,9 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
 
     const loadSensorHistory = async () => {
         try {
-            const history = await getSensorHistory('sensor_id', sensorId, 100, companyName);
+            // Use the authoritative functional ID if resolved, otherwise the prop
+            const targetId = effectiveSensorIdRef.current || sensorId;
+            const history = await getSensorHistory('sensor_id', targetId, 100, companyName);
 
             const transformedData: DataPoint[] = history.map((item: any) => {
                 const utcTimestamp = item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z';
@@ -266,7 +311,58 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                     </div>
                 )}
 
-                <div className="bg-gray-800 rounded-lg p-6 shadow-lg" style={{ height: '600px' }}>
+                <div className="bg-gray-800 rounded-lg p-6 shadow-lg min-h-[600px]">
+
+                    {/* Active Alerts Banner */}
+                    {activeAlerts.length > 0 && (
+                        <div className="mb-4 space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                            {activeAlerts.map(alert => (
+                                <div
+                                    key={alert._id}
+                                    className={`p-4 rounded-lg border grid grid-cols-[auto_1fr_auto] gap-4 items-center ${alert.alert_type === 'critical'
+                                        ? 'bg-red-900/20 border-red-500/30 text-red-200'
+                                        : 'bg-amber-900/20 border-amber-500/30 text-amber-200'
+                                        }`}
+                                >
+                                    <span className={`text-2xl ${alert.alert_type === 'critical' ? 'animate-pulse' : ''}`}>
+                                        {alert.alert_type === 'critical' ? '🚨' : '⚠️'}
+                                    </span>
+
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-bold text-sm uppercase tracking-wide">
+                                                {alert.alert_type} ALERT
+                                            </span>
+                                            {alert.is_read && (
+                                                <span className="text-[10px] bg-gray-700/80 px-1.5 py-0.5 rounded text-gray-300 uppercase tracking-wider">
+                                                    Read
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-sm font-medium opacity-90">{alert.message}</div>
+                                        <div className="text-xs opacity-60 mt-1 font-mono">
+                                            {new Date(alert.timestamp.endsWith('Z') ? alert.timestamp : alert.timestamp + 'Z').toLocaleString()}
+                                        </div>
+                                    </div>
+
+                                    {!alert.is_read ? (
+                                        <button
+                                            onClick={(e) => handleMarkAsRead(alert._id, e)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 whitespace-nowrap ${alert.alert_type === 'critical'
+                                                ? 'bg-red-600 hover:bg-red-500 text-white'
+                                                : 'bg-amber-600 hover:bg-amber-500 text-white'
+                                                }`}
+                                        >
+                                            Mark as Read
+                                        </button>
+                                    ) : (
+                                        <div className="w-[88px]"></div> // Spacer to keep layout consistent if needed, or just nothing
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     {historyData.length > 0 ? (
                         <>
                             <div className="flex items-center justify-between mb-4">
@@ -353,7 +449,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 sensorId={sensorId}
                 sensorName={displayTitle}
                 sensorType={displayHwKey}
-                companyId={currentUser?.company_id || undefined}
+                companyId={sensorMetadata?.company_id || currentUser?.company_id || undefined}
                 scenario={scenario}
                 onSuccess={() => loadThresholds()}
             />
