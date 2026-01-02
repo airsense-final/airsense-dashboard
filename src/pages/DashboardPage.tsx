@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getCompanies, getDashboardSummary } from '../services/apiService';
-import type { Sensor, LatestSensorData, User, Company, DataPoint } from '../types/types';
+import { getCompanies, getDashboardSummary, getLatestAlerts } from '../services/apiService';
+import type { Sensor, LatestSensorData, User, Company, DataPoint, Alert } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
 import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
@@ -17,13 +17,26 @@ const SensorCard: React.FC<{
   historyData: DataPoint[];
   companyName?: string;
   isError?: boolean;
-}> = ({ sensor, latestValue, unit, isOnline, historyData, companyName, isError }) => {
-  const statusColor = isError
-    ? 'border-red-600 animate-pulse' // Error styling
-    : isOnline ? 'border-gray-700 hover:border-cyan-400' : 'border-red-500';
-  const statusDotColor = isError
-    ? 'bg-red-600'
-    : isOnline ? 'bg-green-500' : 'bg-gray-500';
+  alertStatus?: 'critical' | 'warning' | null;
+}> = ({ sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus }) => {
+  let statusColor = 'border-gray-700 hover:border-cyan-400';
+  let statusDotColor = 'bg-gray-500';
+
+  if (isError) {
+    statusColor = 'border-red-600 animate-pulse';
+    statusDotColor = 'bg-red-600';
+  } else if (alertStatus === 'critical') {
+    statusColor = 'border-red-600 animate-pulse';
+    statusDotColor = 'bg-red-600';
+  } else if (alertStatus === 'warning') {
+    statusColor = 'border-yellow-500 animate-pulse';
+    statusDotColor = 'bg-yellow-500';
+  } else if (isOnline) {
+    statusDotColor = 'bg-green-500';
+  } else {
+    statusColor = 'border-red-500'; // Offline but no alert/error? Default offline styling
+    statusDotColor = 'bg-red-500';
+  }
 
   const handleClick = () => {
     const params = new URLSearchParams({
@@ -95,6 +108,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
 
   // Ref to track the latest selected company to prevent race conditions
   const selectedCompanyRef = useRef(selectedCompany);
@@ -114,6 +128,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
     let isMounted = true;
     let timeoutId: number;
+    let alertTimeoutId: number;
 
     const continuousLoad = async () => {
       if (!isMounted) return;
@@ -126,11 +141,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       }
     };
 
+    const continuousAlertLoad = async () => {
+      if (!isMounted) return;
+      if (selectedCompany || currentUser?.role !== 'superadmin') {
+        await loadAlerts();
+        if (isMounted) {
+          alertTimeoutId = setTimeout(continuousAlertLoad, 30000);
+        }
+      }
+    };
+
     continuousLoad();
+    continuousAlertLoad();
 
     return () => {
       isMounted = false;
       if (timeoutId) clearTimeout(timeoutId);
+      if (alertTimeoutId) clearTimeout(alertTimeoutId);
     };
   }, [selectedCompany]);
 
@@ -153,7 +180,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         }
       }
 
-      await loadSensorData();
+      await Promise.all([loadSensorData(), loadAlerts()]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -170,7 +197,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       setIsLoadingData(true);
       const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
 
-      // OPTIMIZED: Fetch everything in one go
+      // OPTIMIZED: Fetch only sensor summary here (2s loop)
       const summaryData = await getDashboardSummary(companyName);
 
       // Race condition check: If company changed while fetching, discard result
@@ -206,13 +233,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       });
 
       // Batch state updates
-      setSensorData(latestDataFormatted);
+      setSensorData(latestDataFormatted); // Triggers re-render for sensors
       setSensorHistory(historyMap);
       setLastUpdate(new Date());
     } catch (err) {
       console.error('Failed to load sensor data:', err);
     } finally {
       setIsLoadingData(false);
+    }
+  };
+
+  const loadAlerts = async () => {
+    const currentCompany = selectedCompanyRef.current;
+    const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
+    try {
+      const alertsData = await getLatestAlerts(companyName, false);
+      setActiveAlerts(alertsData); // Triggers re-render for alerts
+    } catch (err) {
+      console.error('Failed to auto-refresh alerts', err);
     }
   };
 
@@ -278,6 +316,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
               sensorValueMap[d.metadata.sensor_id] = d.value;
             });
 
+            // Create alert status map
+            const alertStatusMap: Record<string, 'critical' | 'warning'> = {};
+            activeAlerts.forEach(alert => {
+              if (!alert.is_resolved) {
+                const currentStatus = alertStatusMap[alert.sensor_id];
+                // Critical takes precedence over warning
+                if (currentStatus !== 'critical') {
+                  if (alert.alert_type === 'critical') {
+                    alertStatusMap[alert.sensor_id] = 'critical';
+                  } else if (alert.alert_type === 'warning') {
+                    alertStatusMap[alert.sensor_id] = 'warning';
+                  }
+                }
+              }
+            });
+
             return Object.values(
               sensorData.reduce((acc, data) => {
                 // Keep only the latest data for each sensor_id
@@ -308,6 +362,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                     historyData={sensorHistory[data.metadata.sensor_id] || []}
                     companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
                     isError={isError}
+                    alertStatus={alertStatusMap[data.metadata.sensor_id]}
                   />
                 );
               })

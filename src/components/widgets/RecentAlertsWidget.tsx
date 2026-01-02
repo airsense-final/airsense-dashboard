@@ -24,7 +24,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
         };
 
         fetchAlerts();
-        const intervalId = setInterval(fetchAlerts, 10000); // Poll every 10s
+        const intervalId = setInterval(fetchAlerts, 30000); // Poll every 30s
         return () => clearInterval(intervalId);
     }, [companyName]);
 
@@ -82,7 +82,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                             <div className="mt-2 text-xs text-gray-500 flex justify-between items-center">
                                 <span>{alert.company_name}</span>
                                 {/* Optional: Link to sensor detail */}
-                                <a href={`#/sensor/?id=${alert.sensor_id}&name=${alert.sensor_type}&type=${alert.sensor_type}&unit=${alert.unit}`} className="text-cyan-400 hover:underline">
+                                <a href={`#/sensor/?id=${alert.sensor_id}&name=${encodeURIComponent(alert.sensor_type)}&type=${encodeURIComponent(alert.sensor_type)}&unit=${encodeURIComponent(alert.unit)}&company=${encodeURIComponent(alert.company_name)}`} className="text-cyan-400 hover:underline">
                                     View Sensor →
                                 </a>
                             </div>

@@ -151,6 +151,18 @@ const AlertHistoryPage: React.FC = () => {
         loadAlerts();
     }, [startDate, endDate, selectedCompany, sensorFilter, statusFilter, readFilter, currentUser]);
 
+    // Auto-refresh every 30 seconds (Resets timer on filter change)
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            if (rangePreset !== 'custom') {
+                applyPreset(rangePreset); // This updates start/end date, which triggers loadAlerts via dependency
+            } else {
+                loadAlerts(); // Just reload for fixed custom range
+            }
+        }, 30000);
+        return () => clearInterval(intervalId);
+    }, [rangePreset, startDate, endDate, selectedCompany, sensorFilter, statusFilter, readFilter, currentUser]);
+
     const stats = useMemo(() => {
         return alerts.reduce((acc, alert) => {
             acc.total++;
