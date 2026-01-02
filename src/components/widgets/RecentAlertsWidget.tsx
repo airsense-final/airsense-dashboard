@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLatestAlerts } from '../../services/apiService';
+import { getLatestAlerts, listSensors } from '../../services/apiService';
 import type { Alert } from '../../types/types';
 
 interface RecentAlertsWidgetProps {
@@ -9,8 +9,24 @@ interface RecentAlertsWidgetProps {
 export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyName }) => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sensorMap, setSensorMap] = useState<Record<string, string>>({});
 
     useEffect(() => {
+        const fetchSensors = async () => {
+            try {
+                const sensors = await listSensors(companyName);
+                const map: Record<string, string> = {};
+                sensors.forEach((s: any) => {
+                    if (s._id) {
+                        map[s._id] = s.sensor_name || s.sensor_id;
+                    }
+                });
+                setSensorMap(map);
+            } catch (err) {
+                console.error('Failed to load sensors for map', err);
+            }
+        };
+
         const fetchAlerts = async () => {
             try {
                 // Fetch only active alerts (is_resolved=false)
@@ -23,6 +39,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
             }
         };
 
+        fetchSensors();
         fetchAlerts();
         const intervalId = setInterval(fetchAlerts, 30000); // Poll every 30s
         return () => clearInterval(intervalId);
@@ -74,7 +91,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                                 </span>
                             </div>
                             <div className="font-medium text-gray-200 mb-1">
-                                {alert.sensor_type} ({alert.value.toFixed(2)} {alert.unit})
+                                {sensorMap[alert.sensor_id] || alert.sensor_type} ({alert.value.toFixed(2)} {alert.unit})
                             </div>
                             <p className="text-gray-400 text-xs line-clamp-2" title={alert.message}>
                                 {alert.message}

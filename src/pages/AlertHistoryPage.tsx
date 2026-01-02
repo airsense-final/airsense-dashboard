@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { getAlertHistory, getAggregatedAlertHistory, getCompanies, getCurrentUser, markAlertAsRead, markAllAlertsAsRead } from '../services/apiService';
+import { getAlertHistory, getAggregatedAlertHistory, getCompanies, getCurrentUser, markAlertAsRead, markAllAlertsAsRead, listSensors } from '../services/apiService';
 import type { Alert, Company, User } from '../types/types';
 
 const AlertHistoryPage: React.FC = () => {
@@ -11,6 +11,7 @@ const AlertHistoryPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [companies, setCompanies] = useState<Company[]>([]);
+    const [sensorMap, setSensorMap] = useState<Record<string, string>>({});
 
     // Filters
     const [rangePreset, setRangePreset] = useState<'1h' | '24h' | '7d' | '30d' | 'custom'>('24h');
@@ -31,6 +32,25 @@ const AlertHistoryPage: React.FC = () => {
             }
         } catch (err) {
             console.error('Failed to load user info', err);
+        }
+    };
+
+
+    const loadSensorMap = async () => {
+        try {
+            // Fetch for current company scope or all if superadmin
+            // Note: Optimally we would refresh this when selectedCompany changes for superadmin
+            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : currentUser?.company_name;
+            const sensors = await listSensors(companyName);
+            const map: Record<string, string> = {};
+            sensors.forEach((s: any) => {
+                if (s._id) {
+                    map[s._id] = s.sensor_name || s.sensor_id;
+                }
+            });
+            setSensorMap(map);
+        } catch (err) {
+            console.error('Failed to load sensor map', err);
         }
     };
 
@@ -149,6 +169,7 @@ const AlertHistoryPage: React.FC = () => {
     useEffect(() => {
         // Debounce or just load on effective changes
         loadAlerts();
+        loadSensorMap();
     }, [startDate, endDate, selectedCompany, sensorFilter, statusFilter, readFilter, currentUser]);
 
     // Auto-refresh every 30 seconds (Resets timer on filter change)
@@ -411,7 +432,7 @@ const AlertHistoryPage: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className={`text-sm font-medium ${!alert.is_read ? 'text-white' : 'text-white'}`}>{alert.sensor_type}</div>
-                                                <div className="text-xs text-gray-500">{alert.sensor_id}</div>
+                                                <div className="text-xs text-gray-500">{sensorMap[alert.sensor_id] || alert.sensor_id}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className={`text-sm ${!alert.is_read ? 'text-white font-medium' : 'text-gray-300'}`}>

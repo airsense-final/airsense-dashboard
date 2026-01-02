@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getCompanies, getDashboardSummary, getLatestAlerts } from '../services/apiService';
+import { getCompanies, getDashboardSummary, getLatestAlerts, listSensors } from '../services/apiService';
 import type { Sensor, LatestSensorData, User, Company, DataPoint, Alert } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
 import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
@@ -107,8 +107,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [isLoadingData, setIsLoadingData] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
+  const [sensorIdMap, setSensorIdMap] = useState<Record<string, string>>({});
+  const isFetchingRef = useRef(false);
 
   // Ref to track the latest selected company to prevent race conditions
   const selectedCompanyRef = useRef(selectedCompany);
@@ -146,11 +147,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       if (selectedCompany || currentUser?.role !== 'superadmin') {
         await loadAlerts();
         if (isMounted) {
-          alertTimeoutId = setTimeout(continuousAlertLoad, 30000);
+          alertTimeoutId = setTimeout(continuousAlertLoad, 3000);
         }
       }
     };
 
+    loadSensorMap();
     continuousLoad();
     continuousAlertLoad();
 
@@ -159,7 +161,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       if (timeoutId) clearTimeout(timeoutId);
       if (alertTimeoutId) clearTimeout(alertTimeoutId);
     };
-  }, [selectedCompany]);
+  }, [selectedCompany, currentUser]);
 
   const loadInitialData = async () => {
     try {
@@ -188,17 +190,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     }
   };
 
+  const loadSensorMap = async () => {
+    const currentCompany = selectedCompanyRef.current;
+    const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
+    try {
+      const sensors = await listSensors(companyName);
+      const map: Record<string, string> = {};
+      sensors.forEach((s: any) => {
+        if (s._id && s.sensor_id) {
+          map[s._id] = s.sensor_id;
+        }
+      });
+      setSensorIdMap(map);
+    } catch (err) {
+      console.error('Failed to load sensor map', err);
+    }
+  };
+
   const loadSensorData = async () => {
-    if (isLoadingData) return; // Skip if already loading
+    if (isFetchingRef.current) return; // Skip if already loading
 
     const currentCompany = selectedCompanyRef.current;
 
     try {
-      setIsLoadingData(true);
+      isFetchingRef.current = true;
       const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
 
       // OPTIMIZED: Fetch only sensor summary here (2s loop)
       const summaryData = await getDashboardSummary(companyName);
+      console.log('Dashboard Summary loaded:', { company: companyName, count: summaryData?.length });
 
       // Race condition check: If company changed while fetching, discard result
       if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
@@ -239,7 +259,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     } catch (err) {
       console.error('Failed to load sensor data:', err);
     } finally {
-      setIsLoadingData(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -318,16 +338,29 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
             // Create alert status map
             const alertStatusMap: Record<string, 'critical' | 'warning'> = {};
+            // Refined Logic (Pre-computation for correctness):
+            // 1. Group active alerts by sensor (mapped ID)
+            const alertsBySensor: Record<string, Alert[]> = {};
             activeAlerts.forEach(alert => {
               if (!alert.is_resolved) {
-                const currentStatus = alertStatusMap[alert.sensor_id];
-                // Critical takes precedence over warning
-                if (currentStatus !== 'critical') {
-                  if (alert.alert_type === 'critical') {
-                    alertStatusMap[alert.sensor_id] = 'critical';
-                  } else if (alert.alert_type === 'warning') {
-                    alertStatusMap[alert.sensor_id] = 'warning';
-                  }
+                const readableId = sensorIdMap[alert.sensor_id] || alert.sensor_id;
+                if (!alertsBySensor[readableId]) alertsBySensor[readableId] = [];
+                alertsBySensor[readableId].push(alert);
+              }
+            });
+
+            // 2. For each sensor, find the latest alert and set status
+            Object.keys(alertsBySensor).forEach(sensorId => {
+              const sortedAlerts = alertsBySensor[sensorId].sort((a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+              );
+
+              if (sortedAlerts.length > 0) {
+                const latest = sortedAlerts[0];
+                if (latest.alert_type === 'critical') {
+                  alertStatusMap[sensorId] = 'critical';
+                } else if (latest.alert_type === 'warning') {
+                  alertStatusMap[sensorId] = 'warning';
                 }
               }
             });
