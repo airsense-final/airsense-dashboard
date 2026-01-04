@@ -39,6 +39,10 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
       case 'humidity':
         if (value > 80 || value < 30) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'WARNING' };
         return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+      case 'alcohol':
+        if (value > 500) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
+        if (value > 300) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'DETECTED' };
+        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
       default:
         return { color: 'text-gray-400', bg: 'bg-gray-900/30', status: 'UNKNOWN' };
     }
@@ -101,6 +105,14 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
       value: sensorData.flammableGas ?? 0,
       unit: '',
     },
+    {
+      type: 'alcohol',
+      label: 'Alcohol Sensor',
+      model: 'MQ-3',
+      icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>,
+      value: sensorData.alcohol ?? 0,
+      unit: 'ppm',
+    },
   ];
 
   return (
@@ -121,7 +133,8 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
             // Allow loose matching since we might not have exact ID in simulation
             return a.sensor_type === sensor.type ||
               a.sensor_type === idForCheck ||
-              (sensor.model === 'DHT-11' && a.sensor_type.includes(sensor.type.substring(0, 3)));
+              (sensor.model === 'DHT-11' && a.sensor_type.includes(sensor.type.substring(0, 3))) ||
+              (sensor.type === 'alcohol' && a.sensor_type.includes('mq3'));
           })
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
 
