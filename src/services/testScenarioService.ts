@@ -157,6 +157,17 @@ export const TEST_SCENARIOS: TestScenario[] = [
     ]
   },
   {
+    id: 'alcohol-detection',
+    name: 'Alcohol Detection Test',
+    description: 'Tests alcohol sensor - detects presence of alcohol vapors',
+    duration: 6000,
+    expectedResult: 'Alcohol warning and critical alerts should trigger',
+    steps: [
+      { action: 'Alcohol Level 350ppm', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 350, duration: 3000, delay: 0 },
+      { action: 'Alcohol Level 600ppm', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 600, duration: 2000, delay: 3000 }
+    ]
+  },
+  {
     id: 'multi-sensor-stress',
     name: 'Multi-Sensor Stress Test',
     description: 'Tests all sensors simultaneously',
@@ -169,7 +180,8 @@ export const TEST_SCENARIOS: TestScenario[] = [
       { action: 'Add Methane', sensorType: 'methane', sensorModel: 'MQ-4', targetValue: 1500, duration: 2000, delay: 6000 },
       { action: 'Add CO', sensorType: 'co', sensorModel: 'MQ-7', targetValue: 80, duration: 2000, delay: 8000 },
       { action: 'Increase Flammable Gas', sensorType: 'flammableGas', sensorModel: 'MQ-9', targetValue: 800, duration: 2000, delay: 10000 },
-      { action: 'Maximum Humidity', sensorType: 'humidity', sensorModel: 'DHT-11', targetValue: 90, duration: 2000, delay: 12000 }
+      { action: 'Maximum Humidity', sensorType: 'humidity', sensorModel: 'DHT-11', targetValue: 90, duration: 2000, delay: 12000 },
+      { action: 'Add Alcohol', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 550, duration: 2000, delay: 14000 }
     ]
   }
 ];
