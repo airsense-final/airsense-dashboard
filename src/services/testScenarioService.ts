@@ -12,6 +12,7 @@ export interface SensorData {
   co: number;
   airQuality: number; // NH3, NOx, Benzene, Smoke combination
   flammableGas: number;
+  alcohol: number;
   timestamp: Date;
 }
 
@@ -26,7 +27,7 @@ export interface TestScenario {
 
 export interface TestStep {
   action: string;
-  sensorType: 'temperature' | 'humidity' | 'co2' | 'methane' | 'co' | 'airQuality' | 'flammableGas';
+  sensorType: 'temperature' | 'humidity' | 'co2' | 'methane' | 'co' | 'airQuality' | 'flammableGas' | 'alcohol';
   sensorModel?: string;
   targetValue: number;
   duration: number;
@@ -156,6 +157,17 @@ export const TEST_SCENARIOS: TestScenario[] = [
     ]
   },
   {
+    id: 'alcohol-detection',
+    name: 'Alcohol Detection Test',
+    description: 'Tests alcohol sensor - detects presence of alcohol vapors',
+    duration: 6000,
+    expectedResult: 'Alcohol warning and critical alerts should trigger',
+    steps: [
+      { action: 'Alcohol Level 350ppm', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 350, duration: 3000, delay: 0 },
+      { action: 'Alcohol Level 600ppm', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 600, duration: 2000, delay: 3000 }
+    ]
+  },
+  {
     id: 'multi-sensor-stress',
     name: 'Multi-Sensor Stress Test',
     description: 'Tests all sensors simultaneously',
@@ -168,7 +180,8 @@ export const TEST_SCENARIOS: TestScenario[] = [
       { action: 'Add Methane', sensorType: 'methane', sensorModel: 'MQ-4', targetValue: 1500, duration: 2000, delay: 6000 },
       { action: 'Add CO', sensorType: 'co', sensorModel: 'MQ-7', targetValue: 80, duration: 2000, delay: 8000 },
       { action: 'Increase Flammable Gas', sensorType: 'flammableGas', sensorModel: 'MQ-9', targetValue: 800, duration: 2000, delay: 10000 },
-      { action: 'Maximum Humidity', sensorType: 'humidity', sensorModel: 'DHT-11', targetValue: 90, duration: 2000, delay: 12000 }
+      { action: 'Maximum Humidity', sensorType: 'humidity', sensorModel: 'DHT-11', targetValue: 90, duration: 2000, delay: 12000 },
+      { action: 'Add Alcohol', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 550, duration: 2000, delay: 14000 }
     ]
   }
 ];
@@ -188,6 +201,7 @@ class TestScenarioService {
     co: 0,
     airQuality: 100, // 0-1000 range, higher value = worse quality
     flammableGas: 0,
+    alcohol: 0,
     timestamp: new Date()
   };
 
@@ -220,28 +234,28 @@ class TestScenarioService {
   private async fetchSensorData(): Promise<void> {
     try {
       console.log(`[${new Date().toLocaleTimeString()}] Fetching sensor data from: ${API_BASE_URL}/sensors/latest`);
-      
+
       const response = await fetch(`${API_BASE_URL}/sensors/latest`);
       if (!response.ok) {
         console.error('❌ Failed to fetch sensor data:', response.status, response.statusText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('✅ [Sensor Data Received]', data);
-      
+
       // Only update if not in test mode (running a scenario)
       if (!this.isTestMode) {
         // Backend returns an array of sensor documents
         // We need to map each sensor by its sensor_id to our interface
         const sensorMap: Record<string, number> = {};
-        
+
         if (Array.isArray(data)) {
           data.forEach((doc: any) => {
             if (doc.metadata && doc.metadata.sensor_id) {
               const sensorId = doc.metadata.sensor_id;
               const value = doc.value || 0;
-              
+
               // Map hardware sensor IDs to semantic names
               if (sensorId.includes('dht11_temp')) {
                 sensorMap.temperature = value;
@@ -257,11 +271,13 @@ class TestScenarioService {
                 sensorMap.airQuality = value;
               } else if (sensorId.includes('mq9')) {
                 sensorMap.flammableGas = value;
+              } else if (sensorId.includes('mq3')) {
+                sensorMap.alcohol = value;
               }
             }
           });
         }
-        
+
         this.sensorData = {
           temperature: sensorMap.temperature || 0,
           humidity: sensorMap.humidity || 0,
@@ -270,12 +286,13 @@ class TestScenarioService {
           co: sensorMap.co || 0,
           airQuality: sensorMap.airQuality || 0,
           flammableGas: sensorMap.flammableGas || 0,
+          alcohol: sensorMap.alcohol || 0,
           timestamp: new Date()
         };
-        
+
         console.log('✅ [Sensor Data Updated]', this.sensorData);
         this.notifyListeners();
-        
+
         // Check thresholds for real data
         Object.keys(this.sensorData).forEach(key => {
           if (key !== 'timestamp') {
@@ -298,14 +315,14 @@ class TestScenarioService {
       console.log('⚠️ Polling already active');
       return; // Already polling
     }
-    
+
     console.log('🚀 Starting real-time sensor polling...');
     console.log(`📡 Polling interval: ${POLLING_INTERVAL}ms`);
     console.log(`🔗 Backend URL: ${API_BASE_URL}`);
-    
+
     // Fetch immediately
     this.fetchSensorData();
-    
+
     // Then poll at intervals
     this.pollingInterval = window.setInterval(() => {
       this.fetchSensorData();
@@ -357,6 +374,10 @@ class TestScenarioService {
       case 'humidity':
         if (value > 80) alerts.push(`WARNING: High humidity: ${value}%`);
         else if (value < 30) alerts.push(`WARNING: Low humidity: ${value}%`);
+        break;
+      case 'alcohol':
+        if (value > 500) alerts.push(`CRITICAL: High Alcohol levels! ${value} ppm`);
+        else if (value > 300) alerts.push(`WARNING: Alcohol detected: ${value} ppm`);
         break;
     }
 
@@ -501,6 +522,7 @@ class TestScenarioService {
       co: 5,
       airQuality: 350,
       flammableGas: 50,
+      alcohol: 20,
       timestamp: new Date()
     };
     this.notifyListeners();

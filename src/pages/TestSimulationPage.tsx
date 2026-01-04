@@ -98,6 +98,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
         co: 0,
         airQuality: 0,
         flammableGas: 0,
+        alcohol: 0,
         timestamp: new Date()
       };
       data.forEach((sensor) => {
@@ -118,6 +119,8 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
           convertedData.airQuality = sensor.value;
         } else if (sensorId.includes('mq9')) {
           convertedData.flammableGas = sensor.value;
+        } else if (sensorId.includes('mq3')) {
+          convertedData.alcohol = sensor.value;
         }
       });
       setSensorData(convertedData);
