@@ -77,7 +77,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                         <div
                             key={alert._id}
                             className={`p-3 rounded-lg border-l-4 text-sm relative group transition-all ${
-                                alert.alert_type === 'ml_anomaly'
+                                alert.sensor_type === 'ml_system'
                                     ? 'bg-purple-900/20 border-purple-500' 
                                     : alert.alert_type === 'critical'
                                         ? 'bg-red-900/20 border-red-500'
@@ -86,21 +86,21 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                         >
                             <div className="flex justify-between items-start mb-1">
                                 <span className={`font-bold flex items-center gap-1 ${
-                                    alert.alert_type === 'ml_anomaly' 
+                                    alert.sensor_type === 'ml_system' 
                                         ? 'text-purple-400' 
                                         : alert.alert_type === 'critical' 
                                             ? 'text-red-400' 
                                             : 'text-amber-400'
                                     }`}>
-                                    {alert.alert_type === 'ml_anomaly' && <span>🧠</span>}
-                                    {alert.alert_type.toUpperCase().replace('_', ' ')}
+                                    {alert.sensor_type === 'ml_system' && <span>🧠</span>}
+                                    {alert.sensor_type === 'ml_system' ? 'AI ANOMALY' : alert.alert_type.toUpperCase()}
                                 </span>
                                 <span className="text-gray-500 text-xs">
                                     {new Date(alert.timestamp.endsWith('Z') ? alert.timestamp : alert.timestamp + 'Z').toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
                             <div className="font-medium text-gray-200 mb-1">
-                                {sensorMap[alert.sensor_id] || alert.sensor_type || 'System'} ({alert.value.toFixed(2)} {alert.unit})
+                                {alert.sensor_type === 'ml_system' ? 'System Analysis' : (sensorMap[alert.sensor_id] || alert.sensor_type)} ({alert.value.toFixed(2)} {alert.unit})
                             </div>
                             <p className="text-gray-400 text-xs line-clamp-2" title={alert.message}>
                                 {alert.message}

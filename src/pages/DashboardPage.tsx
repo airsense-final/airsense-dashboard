@@ -326,7 +326,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       {/* Widgets Area: AI Health & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 min-h-[20rem]">
         <div className="lg:col-span-1 flex flex-col">
-            <AIHealthStatusWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
+            <AIHealthStatusWidget 
+              companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} 
+              sensorData={sensorData} 
+            />
         </div>
         <div className="lg:col-span-2 flex flex-col">
             <RecentAlertsWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
