@@ -11,7 +11,7 @@ interface DashboardPageProps {
   currentUser: User | null;
 }
 
-const SensorCard: React.FC<{
+const SensorCard = React.memo< {
   sensor: Sensor;
   latestValue: number | null;
   unit: string;
@@ -20,7 +20,7 @@ const SensorCard: React.FC<{
   companyName?: string;
   isError?: boolean;
   alertStatus?: 'critical' | 'warning' | null;
-}> = ({ sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus }) => {
+}>(({ sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus }) => {
   let statusColor = 'border-gray-700 hover:border-cyan-400';
   let statusDotColor = 'bg-gray-500';
 
@@ -99,7 +99,7 @@ const SensorCard: React.FC<{
       )}
     </div>
   );
-};
+});
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => {
   const [sensorData, setSensorData] = useState<LatestSensorData[]>([]);
@@ -327,9 +327,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div>
           <h2 className="text-3xl font-bold">Dashboard Overview</h2>
-          <p className="text-sm text-gray-400 mt-1">
-            Last updated: {lastUpdate.toLocaleTimeString()}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-gray-400">
+              Last updated: {lastUpdate.toLocaleTimeString()}
+            </p>
+            {isConnected && (
+              <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                Live
+              </span>
+            )}
+          </div>
         </div>
 
         {currentUser?.role === 'superadmin' && companies.length > 0 && (

@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
-import { DashboardPage } from './pages/DashboardPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { TestSimulationPage } from './pages/TestSimulationPage';
-import { AdminUsersPage } from './pages/AdminUsersPage';
-import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
-import { SensorDetailPage } from './pages/SensorDetailPage';
-import SensorManagementPage from './pages/SensorManagementPage';
-import ThresholdManagementPage from './pages/ThresholdManagementPage';
-import AlertHistoryPage from './pages/AlertHistoryPage';
 import type { User } from './types/types';
+
+// Lazy load pages for performance optimization
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(module => ({ default: module.DashboardPage })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then(module => ({ default: module.RegisterPage })));
+const TestSimulationPage = lazy(() => import('./pages/TestSimulationPage').then(module => ({ default: module.TestSimulationPage })));
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage').then(module => ({ default: module.AdminUsersPage })));
+const AdminCompaniesPage = lazy(() => import('./pages/AdminCompaniesPage').then(module => ({ default: module.AdminCompaniesPage })));
+const SensorDetailPage = lazy(() => import('./pages/SensorDetailPage').then(module => ({ default: module.SensorDetailPage })));
+const SensorManagementPage = lazy(() => import('./pages/SensorManagementPage'));
+const ThresholdManagementPage = lazy(() => import('./pages/ThresholdManagementPage'));
+const AlertHistoryPage = lazy(() => import('./pages/AlertHistoryPage'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="text-cyan-400 text-xl animate-pulse font-medium">Loading...</div>
+  </div>
+);
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
@@ -188,7 +197,11 @@ function App() {
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
       <Header isAuthed={isAuthed} onLogout={handleLogout} currentUser={currentUser} />
-      <main className="container mx-auto p-6">{content}</main>
+      <main className="container mx-auto p-6">
+        <Suspense fallback={<PageLoader />}>
+          {content}
+        </Suspense>
+      </main>
     </div>
   );
 }
