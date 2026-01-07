@@ -3,6 +3,7 @@ import { getCompanies, getDashboardSummary, getLatestAlerts, listSensors } from 
 import type { Sensor, LatestSensorData, User, Company, DataPoint, Alert } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
 import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
+import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget'; // Yeni Import
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 
 interface DashboardPageProps {
@@ -322,9 +323,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
       )}
 
-      {/* Recent Alerts Widget */}
-      <div className="mb-8">
-        <RecentAlertsWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
+      {/* Widgets Area: AI Health & Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 min-h-[20rem]">
+        <div className="lg:col-span-1 flex flex-col">
+            <AIHealthStatusWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
+        </div>
+        <div className="lg:col-span-2 flex flex-col">
+            <RecentAlertsWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
+        </div>
       </div>
 
       {sensorData.length > 0 ? (
