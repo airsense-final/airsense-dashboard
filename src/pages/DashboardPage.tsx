@@ -3,8 +3,9 @@ import { getCompanies, getDashboardSummary, getLatestAlerts, listSensors } from 
 import type { Sensor, LatestSensorData, User, Company, DataPoint, Alert } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
 import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
-import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget'; // Yeni Import
+import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
+import { useWebSocket } from '../hooks/useWebSocket'; // WebSocket Hook
 
 interface DashboardPageProps {
   currentUser: User | null;
@@ -111,6 +112,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
   const [sensorIdMap, setSensorIdMap] = useState<Record<string, string>>({});
   const isFetchingRef = useRef(false);
+  
+  // WebSocket Hook
+  const { lastMessage, isConnected } = useWebSocket();
 
   // Ref to track the latest selected company to prevent race conditions
   const selectedCompanyRef = useRef(selectedCompany);
@@ -119,49 +123,82 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     loadInitialData();
   }, []);
 
+  // Handle WebSocket Updates
+  useEffect(() => {
+    if (lastMessage && lastMessage.type === 'SENSOR_UPDATE') {
+      const data = lastMessage.data;
+      
+      // Filter by company if needed
+      if (currentUser?.role === 'superadmin' && selectedCompany && data.company_name !== selectedCompany) {
+        return;
+      }
+
+      console.log('⚡ WS Update:', data);
+      
+      // Transform WS data to LatestSensorData format
+      const timestamp = data.timestamp || new Date().toISOString();
+      
+      // Create updates for each sensor value in the payload
+      const updates: LatestSensorData[] = [];
+      const ignoreKeys = ['timestamp', 'sensor_id', 'device_id', 'status', 'company_name'];
+
+      Object.entries(data.values).forEach(([key, value]) => {
+        if (ignoreKeys.includes(key) || typeof value !== 'number') return;
+
+        // Construct Sensor ID (e.g. "Company_mq4_1") matches backend logic
+        const uniqueId = data.company_name ? `${data.company_name}_${key}` : `${data.device_id}_${key}`;
+        
+        updates.push({
+          _id: uniqueId, // This might not match DB _id but metadata.sensor_id is key
+          timestamp: timestamp,
+          value: value as number,
+          status: 'active',
+          metadata: {
+            sensor_id: uniqueId,
+            parent_device: data.device_id,
+            type: key, // Simplified type derivation
+            unit: '' // Unit comes from catalog, hard to get here without map
+          }
+        });
+      });
+
+      // Update State: Merge new updates with existing sensorData
+      setSensorData(prevData => {
+        const newData = [...prevData];
+        updates.forEach(update => {
+          const index = newData.findIndex(d => d.metadata.sensor_id === update.metadata.sensor_id);
+          if (index !== -1) {
+            // Preserve unit and other metadata from existing state
+            newData[index] = {
+              ...newData[index],
+              value: update.value,
+              timestamp: update.timestamp,
+              status: update.status
+            };
+          } else {
+            // New sensor found via WS (less common, usually loadInitialData handles it)
+            newData.push(update);
+          }
+        });
+        return newData;
+      });
+      
+      setLastUpdate(new Date());
+    }
+  }, [lastMessage, selectedCompany, currentUser]);
+
   useEffect(() => {
     selectedCompanyRef.current = selectedCompany;
 
     // Clear data immediately when company changes to prevent ghost data
     if (currentUser?.role === 'superadmin') {
-      setSensorData([]);
-      setSensorHistory({});
+      // Reload full data on company switch
+      loadInitialData();
     }
-
-    let isMounted = true;
-    let timeoutId: number;
-    let alertTimeoutId: number;
-
-    const continuousLoad = async () => {
-      if (!isMounted) return;
-
-      if (selectedCompany || currentUser?.role !== 'superadmin') {
-        await loadSensorData();
-        if (isMounted) {
-          timeoutId = setTimeout(continuousLoad, 2000);
-        }
-      }
-    };
-
-    const continuousAlertLoad = async () => {
-      if (!isMounted) return;
-      if (selectedCompany || currentUser?.role !== 'superadmin') {
-        await loadAlerts();
-        if (isMounted) {
-          alertTimeoutId = setTimeout(continuousAlertLoad, 3000);
-        }
-      }
-    };
-
+    
+    // Only load sensor map, no polling
     loadSensorMap();
-    continuousLoad();
-    continuousAlertLoad();
 
-    return () => {
-      isMounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-      if (alertTimeoutId) clearTimeout(alertTimeoutId);
-    };
   }, [selectedCompany, currentUser]);
 
   const loadInitialData = async () => {
