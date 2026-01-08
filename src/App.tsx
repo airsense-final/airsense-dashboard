@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
+import DigitalTwinButton from './components/DigitalTwinButton'; 
 import type { User } from './types/types';
 
 // Lazy load pages for performance optimization
@@ -198,12 +199,24 @@ function App() {
     <div className="bg-gray-900 text-white min-h-screen font-sans">
       <Header isAuthed={isAuthed} onLogout={handleLogout} currentUser={currentUser} />
       <main className="container mx-auto p-6">
-        <Suspense fallback={<PageLoader />}>
-          {content}
-        </Suspense>
+        
+        {/* --- 3D İZLEME BUTONU BURAYA EKLENDİ --- */}
+        {isAuthed && currentUser && (
+            <div className="flex justify-end mb-4">
+                <DigitalTwinButton 
+                    role={currentUser.role}
+                    // Typescript artık kızmayacak çünkü User içinde company_name var
+                    company={currentUser.company_name || "Karacan"}
+                />
+            </div>
+        )}
+        
+        {content}
       </main>
     </div>
   );
 }
 
 export default App;
+
+
