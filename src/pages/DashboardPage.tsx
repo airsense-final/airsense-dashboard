@@ -201,6 +201,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   }, [selectedCompany, currentUser]);
 
+  // Auto-refresh sensor history for charts (similar to detail page)
+  useEffect(() => {
+    // Initial load is handled by loadInitialData
+
+    // Auto-refresh sensor history every 3 seconds for real-time chart updates
+    const historyIntervalId = setInterval(() => {
+      loadSensorData(); // This loads both latest values and history
+    }, 3000);
+
+    return () => {
+      clearInterval(historyIntervalId);
+    };
+  }, [selectedCompany, currentUser]);
+
   const loadInitialData = async () => {
     try {
       setLoading(true);
