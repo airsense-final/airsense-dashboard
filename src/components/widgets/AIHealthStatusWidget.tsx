@@ -104,58 +104,55 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
     const suggestions = generateSmartSuggestions();
 
     if (loading) {
-        return <div className="animate-pulse bg-gray-800 rounded-lg h-32"></div>;
+        return <div className="animate-pulse bg-gray-700/50 rounded h-32"></div>;
     }
 
     return (
-        <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700 h-full relative overflow-hidden flex flex-col">
+        <div className="relative overflow-hidden flex flex-col">
             {/* Background Effect */}
-            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full filter blur-3xl opacity-20 -mr-10 -mt-10 transition-colors duration-500 ${
+            <div className={`absolute top-0 right-0 w-20 h-20 rounded-full filter blur-2xl opacity-20 -mr-6 -mt-6 transition-colors duration-500 ${
                 status === 'ANOMALY' ? 'bg-purple-500' : 'bg-green-500'
             }`}></div>
 
             <div className="relative z-10 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <span>🧠</span> AI System Health
-                    </h3>
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                         status === 'ANOMALY' 
                             ? 'bg-purple-900/50 text-purple-200 border-purple-500' 
                             : 'bg-green-900/50 text-green-200 border-green-500'
                     }`}>
-                        {status === 'ANOMALY' ? 'ANOMALY DETECTED' : 'SYSTEM OPTIMAL'}
+                        {status === 'ANOMALY' ? 'ANOMALY' : 'OPTIMAL'}
                     </div>
                 </div>
 
-                <div className="mt-4 flex-1 flex flex-col justify-between">
+                <div className="flex-1 flex flex-col">
                     {status === 'ANOMALY' ? (
                         <div>
-                            <p className="text-gray-400 text-sm mb-3">The AI model has detected unusual patterns.</p>
+                            <p className="text-gray-400 text-[10px] mb-2">AI detected unusual patterns</p>
                             
                             {/* Anomaly Detail Card */}
-                            <div className="bg-purple-900/20 p-3 rounded border border-purple-500/30 mb-3">
-                                <div className="text-xs text-purple-400 uppercase font-bold mb-1">Anomaly Detail</div>
-                                <div className="text-white text-sm font-medium">{lastAnomaly?.message}</div>
-                                <div className="flex justify-between items-center mt-2">
-                                    <span className="text-xs text-gray-500">Score: {lastAnomaly?.value.toFixed(4)}</span>
-                                    <span className="text-xs text-gray-500">
-                                        {lastAnomaly && new Date(lastAnomaly.timestamp.endsWith('Z') ? lastAnomaly.timestamp : lastAnomaly.timestamp + 'Z').toLocaleTimeString()}
+                            <div className="bg-purple-900/20 p-2 rounded border border-purple-500/30 mb-2">
+                                <div className="text-[9px] text-purple-400 uppercase font-bold mb-0.5">Anomaly</div>
+                                <div className="text-white text-[10px] font-medium line-clamp-2">{lastAnomaly?.message}</div>
+                                <div className="flex justify-between items-center mt-1">
+                                    <span className="text-[9px] text-gray-500">Score: {lastAnomaly?.value.toFixed(3)}</span>
+                                    <span className="text-[9px] text-gray-500">
+                                        {lastAnomaly && new Date(lastAnomaly.timestamp.endsWith('Z') ? lastAnomaly.timestamp : lastAnomaly.timestamp + 'Z').toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Smart Suggestions */}
-                            <div className="bg-gray-700/50 p-3 rounded border border-gray-600">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-yellow-400 text-lg">💡</span>
-                                    <span className="text-sm font-bold text-gray-200">AI Action Plan</span>
+                            <div className="bg-gray-700/50 p-2 rounded border border-gray-600">
+                                <div className="flex items-center gap-1 mb-1">
+                                    <span className="text-yellow-400 text-xs">💡</span>
+                                    <span className="text-[10px] font-bold text-gray-200">Action Plan</span>
                                 </div>
-                                <ul className="text-xs text-gray-300 space-y-1 list-none">
-                                    {suggestions.map((s, idx) => (
-                                        <li key={idx} className="flex items-start gap-2">
-                                            <span className="mt-0.5 text-yellow-500/80">➤</span>
-                                            <span>{s}</span>
+                                <ul className="text-[9px] text-gray-300 space-y-0.5 list-none">
+                                    {suggestions.slice(0, 3).map((s, idx) => (
+                                        <li key={idx} className="flex items-start gap-1">
+                                            <span className="mt-0.5 text-yellow-500/80 text-[8px]">➤</span>
+                                            <span className="line-clamp-1">{s}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -163,24 +160,24 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
                         </div>
                     ) : (
                         <div>
-                            <p className="text-gray-400 text-sm mb-4">Isolation Forest model is monitoring all 8 sensors in real-time. No anomalies detected.</p>
+                            <p className="text-gray-400 text-[10px] mb-2">No anomalies detected</p>
                             
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="h-2 flex-1 bg-gray-700 rounded-full overflow-hidden">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="h-1.5 flex-1 bg-gray-700 rounded-full overflow-hidden">
                                     <div className="h-full bg-green-500 w-full animate-pulse"></div>
                                 </div>
-                                <span className="text-xs text-green-400 font-mono">MONITORING</span>
+                                <span className="text-[9px] text-green-400 font-mono">OK</span>
                             </div>
 
                             {/* Normal State Suggestion */}
-                            <div className="bg-gray-700/30 p-3 rounded border border-gray-700/50">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-cyan-400 text-sm">ℹ️</span>
-                                    <span className="text-xs font-bold text-gray-300">AI Insight</span>
+                            <div className="bg-gray-700/30 p-2 rounded border border-gray-700/50">
+                                <div className="flex items-center gap-1 mb-1">
+                                    <span className="text-cyan-400 text-xs">ℹ️</span>
+                                    <span className="text-[10px] font-bold text-gray-300">Status</span>
                                 </div>
-                                <ul className="text-xs text-gray-400 space-y-1">
-                                     {suggestions.map((s, idx) => (
-                                        <li key={idx}>{s}</li>
+                                <ul className="text-[9px] text-gray-400 space-y-0.5">
+                                     {suggestions.slice(0, 2).map((s, idx) => (
+                                        <li key={idx} className="line-clamp-1">{s}</li>
                                     ))}
                                 </ul>
                             </div>
