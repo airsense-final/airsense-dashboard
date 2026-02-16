@@ -4,9 +4,11 @@ import type { Alert } from '../../types/types';
 
 interface RecentAlertsWidgetProps {
     companyName?: string;
+    parentDeviceId?: string; // Optional filter for specific device
+    sensorIdsForDevice?: string[]; // Sensor IDs that belong to this device
 }
 
-export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyName }) => {
+export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyName, parentDeviceId, sensorIdsForDevice }) => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [sensorMap, setSensorMap] = useState<Record<string, string>>({});
@@ -20,6 +22,10 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                     if (s._id) {
                         map[s._id] = s.sensor_name || s.sensor_id;
                     }
+                    // Also map by sensor_id since alerts might use sensor_id instead of _id
+                    if (s.sensor_id) {
+                        map[s.sensor_id] = s.sensor_name || s.sensor_id;
+                    }
                 });
                 setSensorMap(map);
             } catch (err) {
@@ -30,7 +36,21 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
         const fetchAlerts = async () => {
             try {
                 // Fetch only active alerts (is_resolved=false)
-                const data = await getLatestAlerts(companyName, false);
+                let data = await getLatestAlerts(companyName, false);
+                
+                console.log('🔔 All alerts:', data.length);
+                
+                // Filter by sensor IDs if provided (more reliable than parent_device_id lookup)
+                if (sensorIdsForDevice && sensorIdsForDevice.length > 0) {
+                    console.log('🔍 Filtering for sensor IDs:', sensorIdsForDevice);
+                    console.log('📋 Alert sensor IDs:', data.map(a => a.sensor_id));
+                    
+                    const sensorIdSet = new Set(sensorIdsForDevice);
+                    data = data.filter(alert => sensorIdSet.has(alert.sensor_id));
+                    
+                    console.log('✅ Filtered alerts:', data.length);
+                }
+                
                 setAlerts(data);
             } catch (err) {
                 console.error('Failed to load recent alerts', err);
@@ -43,7 +63,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
         fetchAlerts();
         const intervalId = setInterval(fetchAlerts, 30000); // Poll every 30s
         return () => clearInterval(intervalId);
-    }, [companyName]);
+    }, [companyName, sensorIdsForDevice]);
 
     const handleViewHistory = () => {
         window.location.hash = '#/alerts/history';
@@ -54,29 +74,29 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
     }
 
     return (
-        <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <span className="text-red-500">🔔</span> Recent Active Alerts
+        <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-white flex items-center gap-1">
+                    <span className="text-red-500 text-sm">🔔</span> Active Alerts
                 </h3>
                 {alerts.length > 0 && (
-                    <span className="bg-red-900/50 text-red-200 text-xs px-2 py-1 rounded-full border border-red-500/30 font-mono">
-                        {alerts.length} Active
+                    <span className="bg-red-900/50 text-red-200 text-[10px] px-1.5 py-0.5 rounded-full border border-red-500/30 font-mono">
+                        {alerts.length}
                     </span>
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar max-h-64">
                 {alerts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-                        <span className="text-3xl mb-2">✅</span>
-                        <p className="text-sm">No active alerts</p>
+                    <div className="flex flex-col items-center justify-center h-20 text-gray-500">
+                        <span className="text-xl mb-1">✅</span>
+                        <p className="text-[10px]">No alerts</p>
                     </div>
                 ) : (
-                    alerts.map(alert => (
+                    alerts.slice(0, 5).map(alert => (
                         <div
                             key={alert._id}
-                            className={`p-3 rounded-lg border-l-4 text-sm relative group transition-all ${
+                            className={`p-2 rounded-lg border-l-2 text-xs relative group transition-all ${
                                 alert.sensor_type === 'ml_system'
                                     ? 'bg-purple-900/20 border-purple-500' 
                                     : alert.alert_type === 'critical'
@@ -85,7 +105,7 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                                 }`}
                         >
                             <div className="flex justify-between items-start mb-1">
-                                <span className={`font-bold flex items-center gap-1 ${
+                                <span className={`font-bold flex items-center gap-1 text-[10px] ${
                                     alert.sensor_type === 'ml_system' 
                                         ? 'text-purple-400' 
                                         : alert.alert_type === 'critical' 
@@ -93,36 +113,29 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
                                             : 'text-amber-400'
                                     }`}>
                                     {alert.sensor_type === 'ml_system' && <span>🧠</span>}
-                                    {alert.sensor_type === 'ml_system' ? 'AI ANOMALY' : alert.alert_type.toUpperCase()}
+                                    {alert.sensor_type === 'ml_system' ? 'AI' : alert.alert_type.toUpperCase()}
                                 </span>
-                                <span className="text-gray-500 text-xs">
+                                <span className="text-gray-500 text-[9px]">
                                     {new Date(alert.timestamp.endsWith('Z') ? alert.timestamp : alert.timestamp + 'Z').toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
-                            <div className="font-medium text-gray-200 mb-1">
-                                {alert.sensor_type === 'ml_system' ? 'System Analysis' : (sensorMap[alert.sensor_id] || alert.sensor_type)} ({alert.value.toFixed(2)} {alert.unit})
+                            <div className="font-medium text-gray-200 mb-0.5 text-[10px] truncate">
+                                {alert.sensor_type === 'ml_system' ? 'System' : (sensorMap[alert.sensor_id] || alert.sensor_type)}
                             </div>
-                            <p className="text-gray-400 text-xs line-clamp-2" title={alert.message}>
+                            <p className="text-gray-400 text-[9px] line-clamp-1" title={alert.message}>
                                 {alert.message}
                             </p>
-                            <div className="mt-2 text-xs text-gray-500 flex justify-between items-center">
-                                <span>{alert.company_name}</span>
-                                {/* Optional: Link to sensor detail */}
-                                <a href={`#/sensor/?id=${alert.sensor_id}&name=${encodeURIComponent(alert.sensor_type)}&type=${encodeURIComponent(alert.sensor_type)}&unit=${encodeURIComponent(alert.unit)}&company=${encodeURIComponent(alert.company_name)}`} className="text-cyan-400 hover:underline">
-                                    View Sensor →
-                                </a>
-                            </div>
                         </div>
                     ))
                 )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-gray-700 text-center">
+            <div className="mt-2 pt-2 border-t border-gray-700 text-center">
                 <button
                     onClick={handleViewHistory}
-                    className="text-sm text-cyan-400 hover:text-cyan-300 font-medium hover:underline flex items-center justify-center gap-1 w-full"
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium hover:underline flex items-center justify-center gap-1 w-full"
                 >
-                    View Alert History <span>→</span>
+                    View All <span>→</span>
                 </button>
             </div>
         </div>

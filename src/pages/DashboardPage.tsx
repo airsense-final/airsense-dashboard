@@ -36,7 +36,7 @@ const SensorCard = React.memo< {
   } else if (isOnline) {
     statusDotColor = 'bg-green-500';
   } else {
-    statusColor = 'border-red-500'; // Offline but no alert/error? Default offline styling
+    statusColor = 'border-red-500';
     statusDotColor = 'bg-red-500';
   }
 
@@ -58,18 +58,17 @@ const SensorCard = React.memo< {
   return (
     <div
       onClick={handleClick}
-      className={`bg-gray-800 rounded-lg p-4 shadow-lg transition-all duration-200 border-2 ${statusColor} flex flex-col cursor-pointer hover:shadow-xl hover:scale-105`}
+      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-3`}
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-bold truncate">{sensor.sensor_name}</h3>
-          <p className="text-sm text-gray-400">{sensor.sensor_type}</p>
-          <p className="text-xs text-gray-500 mt-1">{sensor.sensor_id}</p>
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold truncate text-sm">{sensor.sensor_name}</h3>
+          <p className="text-gray-500 truncate text-xs">{sensor.sensor_id}</p>
         </div>
-        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${statusDotColor}`}></div>
+        <div className={`rounded-full flex-shrink-0 ml-1 ${statusDotColor} w-3 h-3`}></div>
       </div>
 
-      <div className="mt-4 h-28">
+      <div className="h-20 mb-2">
         {historyData.length > 0 ? (
           <LineChartWidget
             title=""
@@ -79,24 +78,18 @@ const SensorCard = React.memo< {
             compact={true}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-            No history
+          <div className="flex items-center justify-center h-full text-gray-500 text-xs">
+            No data
           </div>
         )}
       </div>
 
-      <div className="mt-4 text-center">
-        <span className="text-3xl font-semibold">
+      <div className="text-center">
+        <span className="font-semibold text-lg">
           {getSensorDisplayValue(latestValue, !!isError)}
         </span>
-        {!isError && <span className="text-md ml-1 text-gray-400">{unit}</span>}
+        {!isError && <span className="ml-1 text-gray-400 text-sm">{unit}</span>}
       </div>
-
-      {sensor.location && sensor.location !== 'Unknown' && (
-        <div className="mt-2 text-xs text-gray-500 text-center">
-          📍 {sensor.location}
-        </div>
-      )}
     </div>
   );
 });
@@ -111,6 +104,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
   const [sensorIdMap, setSensorIdMap] = useState<Record<string, string>>({});
+  const [allSensors, setAllSensors] = useState<Sensor[]>([]);
   const isFetchingRef = useRef(false);
   
   // WebSocket Hook
@@ -254,6 +248,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         }
       });
       setSensorIdMap(map);
+      setAllSensors(sensors); // Store full sensor list with MongoDB ObjectIDs
     } catch (err) {
       console.error('Failed to load sensor map', err);
     }
@@ -382,21 +377,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
       )}
 
-      {/* Widgets Area: AI Health & Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 min-h-[20rem]">
-        <div className="lg:col-span-1 flex flex-col">
-            <AIHealthStatusWidget 
-              companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} 
-              sensorData={sensorData} 
-            />
-        </div>
-        <div className="lg:col-span-2 flex flex-col">
-            <RecentAlertsWidget companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} />
-        </div>
-      </div>
-
+      {/* Main Layout: Device Groups with their own widgets */}
       {sensorData.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="space-y-6">
           {(() => {
             // Create context map for error checking
             const sensorValueMap: Record<string, number> = {};
@@ -433,40 +416,120 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
               }
             });
 
-            return Object.values(
+            // Get unique sensor data
+            const uniqueSensorData = Object.values(
               sensorData.reduce((acc, data) => {
-                // Keep only the latest data for each sensor_id
                 const sensorId = data.metadata.sensor_id;
                 if (!acc[sensorId] || new Date(data.timestamp) > new Date(acc[sensorId].timestamp)) {
                   acc[sensorId] = data;
                 }
                 return acc;
               }, {} as Record<string, typeof sensorData[0]>)
-            )
-              .sort((a, b) => a.metadata.sensor_id.localeCompare(b.metadata.sensor_id))
-              .map((data) => {
-                const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
-                return (
-                  <SensorCard
-                    key={data.metadata.sensor_id}
-                    sensor={{
-                      _id: data._id,
-                      sensor_id: data.metadata.sensor_id,
-                      sensor_name: data.metadata.type,
-                      sensor_type: data.metadata.unit,
-                      parent_device_id: data.metadata.parent_device,
-                      company_id: '',
-                    }}
-                    latestValue={data.value}
-                    unit={data.metadata.unit}
-                    isOnline={data.status === 'active'}
-                    historyData={sensorHistory[data.metadata.sensor_id] || []}
-                    companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
-                    isError={isError}
-                    alertStatus={alertStatusMap[data.metadata.sensor_id]}
-                  />
+            );
+
+            // Group sensors by parent_device_id
+            const groupedByDevice: Record<string, typeof uniqueSensorData> = {};
+            uniqueSensorData.forEach(data => {
+              const parentDevice = data.metadata.parent_device || 'Unknown Device';
+              if (!groupedByDevice[parentDevice]) {
+                groupedByDevice[parentDevice] = [];
+              }
+              groupedByDevice[parentDevice].push(data);
+            });
+
+            // Sort each group by sensor_id
+            Object.keys(groupedByDevice).forEach(device => {
+              groupedByDevice[device].sort((a, b) => 
+                a.metadata.sensor_id.localeCompare(b.metadata.sensor_id)
+              );
+            });
+
+            // Render groups with their own widgets
+            return Object.entries(groupedByDevice)
+              .sort(([deviceA], [deviceB]) => deviceA.localeCompare(deviceB))
+              .map(([parentDevice, sensors]) => {
+                // Filter sensor data for this device
+                const deviceSensorData = sensorData.filter(
+                  d => d.metadata.parent_device === parentDevice
                 );
-              })
+
+                // Get MongoDB ObjectIDs for this device's sensors
+                // Match by sensor_id (readable) from uniqueSensorData to get _id (MongoDB ObjectID) from allSensors
+                const sensorIdsReadable = sensors.map(s => s.metadata.sensor_id);
+                const deviceSensorIds = allSensors
+                  .filter(s => sensorIdsReadable.includes(s.sensor_id))
+                  .map(s => s._id)
+                  .filter(Boolean); // Remove any undefined values
+
+                console.log('🔍 Device:', parentDevice, 'Sensor ObjectIDs:', deviceSensorIds);
+
+                return (
+                  <div 
+                    key={parentDevice} 
+                    className="bg-gray-800/30 rounded-lg border border-gray-700 p-4"
+                  >
+                    {/* Device Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-cyan-600/20 rounded-lg flex items-center justify-center">
+                        <span className="text-2xl">🔌</span>
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-cyan-400">{parentDevice}</h2>
+                        <p className="text-xs text-gray-400">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} connected</p>
+                      </div>
+                    </div>
+
+                    {/* Layout: Sensors Left + Widgets Right */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                      {/* Sensors Grid */}
+                      <div className="lg:col-span-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+                          {sensors.map((data) => {
+                            const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
+                            return (
+                              <SensorCard
+                                key={data.metadata.sensor_id}
+                                sensor={{
+                                  _id: data._id,
+                                  sensor_id: data.metadata.sensor_id,
+                                  sensor_name: data.metadata.type,
+                                  sensor_type: data.metadata.unit,
+                                  parent_device_id: data.metadata.parent_device,
+                                  company_id: '',
+                                }}
+                                latestValue={data.value}
+                                unit={data.metadata.unit}
+                                isOnline={data.status === 'active'}
+                                historyData={sensorHistory[data.metadata.sensor_id] || []}
+                                companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
+                                isError={isError}
+                                alertStatus={alertStatusMap[data.metadata.sensor_id]}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Device-specific Widgets */}
+                      <div className="lg:col-span-1 flex flex-col gap-4">
+                        <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                          <h3 className="text-xs font-semibold text-gray-400 mb-2">🧠 AI Health</h3>
+                          <AIHealthStatusWidget 
+                            companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} 
+                            sensorData={deviceSensorData}
+                          />
+                        </div>
+                        <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                          <RecentAlertsWidget 
+                            companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
+                            sensorIdsForDevice={deviceSensorIds}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
           })()}
         </div>
       ) : (
