@@ -20,7 +20,8 @@ const SensorManagementPage: React.FC = () => {
     sensor_name: '',
     sensor_type: '',
     location: 'Unknown',
-    company_name: ''
+    company_name: '',
+    parent_device_id: ''
   });
 
   const sensorTypes = [
@@ -110,7 +111,7 @@ const SensorManagementPage: React.FC = () => {
   const openCreateModal = () => {
     // Auto-fill company name for company admin
     const companyName = currentUser?.role === 'companyadmin' ? currentUser.company_name : '';
-    setFormData({ sensor_id: '', sensor_name: '', sensor_type: '', location: 'Unknown', company_name: companyName });
+    setFormData({ sensor_id: '', sensor_name: '', sensor_type: '', location: 'Unknown', company_name: companyName, parent_device_id: '' });
     setShowCreateModal(true);
   };
 
@@ -332,6 +333,18 @@ const SensorManagementPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
                     placeholder="e.g., Production Floor A"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Parent Device ID *</label>
+                  <input
+                    type="text"
+                    value={formData.parent_device_id}
+                    onChange={(e) => setFormData({ ...formData, parent_device_id: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    placeholder="e.g., ESP32_AirSense"
+                    required
                   />
                 </div>
 
