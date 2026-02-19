@@ -6,10 +6,108 @@ import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
 import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 import { useWebSocket } from '../hooks/useWebSocket'; // WebSocket Hook
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface DashboardPageProps {
   currentUser: User | null;
 }
+
+// Sortable wrapper for device groups
+const SortableDeviceGroup: React.FC<{
+  id: string;
+  children: React.ReactNode;
+}> = ({ id, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      {/* Drag Handle for Device Group */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 right-2 cursor-move p-2 bg-cyan-600/20 hover:bg-cyan-600/40 rounded transition-colors z-10 border border-cyan-500/30"
+        title="Drag to reorder device"
+      >
+        <svg className="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M5 3h2v2H5V3zm4 0h2v2H9V3zM5 7h2v2H5V7zm4 0h2v2H9V7zm-4 4h2v2H5v-2zm4 0h2v2H9v-2z"/>
+        </svg>
+      </div>
+      {children}
+    </div>
+  );
+};
+
+// Sortable wrapper for sensor cards
+const SortableSensorCard = React.memo<{
+  id: string;
+  sensor: Sensor;
+  latestValue: number | null;
+  unit: string;
+  isOnline: boolean;
+  historyData: DataPoint[];
+  companyName?: string;
+  isError?: boolean;
+  alertStatus?: 'critical' | 'warning' | null;
+}>(({ id, sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <SensorCard
+        sensor={sensor}
+        latestValue={latestValue}
+        unit={unit}
+        isOnline={isOnline}
+        historyData={historyData}
+        companyName={companyName}
+        isError={isError}
+        alertStatus={alertStatus}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+});
 
 const SensorCard = React.memo< {
   sensor: Sensor;
@@ -20,7 +118,8 @@ const SensorCard = React.memo< {
   companyName?: string;
   isError?: boolean;
   alertStatus?: 'critical' | 'warning' | null;
-}>(({ sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus }) => {
+  dragHandleProps?: any;
+}>(({ sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus, dragHandleProps }) => {
   let statusColor = 'border-gray-700 hover:border-cyan-400';
   let statusDotColor = 'bg-gray-500';
 
@@ -58,8 +157,21 @@ const SensorCard = React.memo< {
   return (
     <div
       onClick={handleClick}
-      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-3`}
+      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-3 relative`}
     >
+      {/* Drag Handle */}
+      {dragHandleProps && (
+        <div
+          {...dragHandleProps}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute bottom-1 left-1 cursor-move p-1.5 bg-gray-700/50 hover:bg-gray-600 rounded transition-colors z-10 border border-gray-600"
+          title="Drag to reorder"
+        >
+          <svg className="w-3 h-3 text-gray-300" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5 3h2v2H5V3zm4 0h2v2H9V3zM5 7h2v2H5V7zm4 0h2v2H9V7zm-4 4h2v2H5v-2zm4 0h2v2H9v-2z"/>
+          </svg>
+        </div>
+      )}
       <div className="flex justify-between items-start mb-2">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold truncate text-sm">{sensor.sensor_name}</h3>
@@ -105,7 +217,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
   const [sensorIdMap, setSensorIdMap] = useState<Record<string, string>>({});
   const [allSensors, setAllSensors] = useState<Sensor[]>([]);
+  const [sensorOrder, setSensorOrder] = useState<Record<string, string[]>>({});
+  const [deviceOrder, setDeviceOrder] = useState<string[]>([]);
   const isFetchingRef = useRef(false);
+  
+  // DnD sensors for sensor cards
+  const dndSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // DnD sensors for device groups
+  const deviceDndSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   // WebSocket Hook
   const { lastMessage, isConnected } = useWebSocket();
@@ -321,6 +451,87 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     }
   };
 
+  // Load sensor order from local storage
+  useEffect(() => {
+    const stored = localStorage.getItem('sensor_order');
+    if (stored) {
+      try {
+        setSensorOrder(JSON.parse(stored));
+      } catch (err) {
+        console.error('Failed to parse sensor order from localStorage', err);
+      }
+    }
+
+    const storedDevices = localStorage.getItem('device_order');
+    if (storedDevices) {
+      try {
+        setDeviceOrder(JSON.parse(storedDevices));
+      } catch (err) {
+        console.error('Failed to parse device order from localStorage', err);
+      }
+    }
+  }, []);
+
+  // Save sensor order to local storage whenever it changes
+  useEffect(() => {
+    if (Object.keys(sensorOrder).length > 0) {
+      localStorage.setItem('sensor_order', JSON.stringify(sensorOrder));
+    }
+  }, [sensorOrder]);
+
+  // Save device order to local storage whenever it changes
+  useEffect(() => {
+    if (deviceOrder.length > 0) {
+      localStorage.setItem('device_order', JSON.stringify(deviceOrder));
+    }
+  }, [deviceOrder]);
+
+  // Handle drag end for sensors
+  const handleDragEnd = (event: any, deviceId: string) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setSensorOrder((prev) => {
+      const currentOrder = prev[deviceId] || [];
+      const oldIndex = currentOrder.indexOf(active.id as string);
+      const newIndex = currentOrder.indexOf(over.id as string);
+
+      if (oldIndex === -1 || newIndex === -1) {
+        return prev;
+      }
+
+      const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
+
+      return {
+        ...prev,
+        [deviceId]: newOrder,
+      };
+    });
+  };
+
+  // Handle drag end for device groups
+  const handleDeviceDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setDeviceOrder((prev) => {
+      const oldIndex = prev.indexOf(active.id as string);
+      const newIndex = prev.indexOf(over.id as string);
+
+      if (oldIndex === -1 || newIndex === -1) {
+        return prev;
+      }
+
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -437,17 +648,66 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
               groupedByDevice[parentDevice].push(data);
             });
 
-            // Sort each group by sensor_id
+            // Apply custom order from state or sort by sensor_id
             Object.keys(groupedByDevice).forEach(device => {
-              groupedByDevice[device].sort((a, b) => 
-                a.metadata.sensor_id.localeCompare(b.metadata.sensor_id)
-              );
+              const customOrder = sensorOrder[device];
+              if (customOrder && customOrder.length > 0) {
+                // Sort by custom order
+                groupedByDevice[device].sort((a, b) => {
+                  const indexA = customOrder.indexOf(a.metadata.sensor_id);
+                  const indexB = customOrder.indexOf(b.metadata.sensor_id);
+                  
+                  // If both are in custom order, sort by their position
+                  if (indexA !== -1 && indexB !== -1) {
+                    return indexA - indexB;
+                  }
+                  // If only A is in custom order, it comes first
+                  if (indexA !== -1) return -1;
+                  // If only B is in custom order, it comes first
+                  if (indexB !== -1) return 1;
+                  // If neither is in custom order, sort alphabetically
+                  return a.metadata.sensor_id.localeCompare(b.metadata.sensor_id);
+                });
+              } else {
+                // Default alphabetical sort
+                groupedByDevice[device].sort((a, b) => 
+                  a.metadata.sensor_id.localeCompare(b.metadata.sensor_id)
+                );
+              }
+              
+              // Initialize sensor order for this device if not exists
+              if (!sensorOrder[device]) {
+                const initialOrder = groupedByDevice[device].map(s => s.metadata.sensor_id);
+                setSensorOrder(prev => ({ ...prev, [device]: initialOrder }));
+              }
             });
 
-            // Render groups with their own widgets
-            return Object.entries(groupedByDevice)
-              .sort(([deviceA], [deviceB]) => deviceA.localeCompare(deviceB))
-              .map(([parentDevice, sensors]) => {
+            // Initialize device order if not exists
+            const deviceKeys = Object.keys(groupedByDevice).sort();
+            if (deviceOrder.length === 0) {
+              setDeviceOrder(deviceKeys);
+            }
+
+            // Sort device groups by custom order
+            const sortedDeviceEntries = deviceOrder.length > 0
+              ? deviceOrder
+                  .filter(deviceId => groupedByDevice[deviceId]) // Only include devices that exist
+                  .map(deviceId => [deviceId, groupedByDevice[deviceId]] as [string, typeof uniqueSensorData])
+              : Object.entries(groupedByDevice).sort(([deviceA], [deviceB]) => deviceA.localeCompare(deviceB));
+
+            // Render groups with their own widgets wrapped in DndContext for device reordering
+            return (
+              <DndContext
+                sensors={deviceDndSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDeviceDragEnd}
+              >
+                <SortableContext
+                  items={deviceOrder.length > 0 ? deviceOrder : deviceKeys}
+                  strategy={rectSortingStrategy}
+                >
+                  <div className="space-y-6">
+                    {sortedDeviceEntries.map(([parentDevice, sensors]) => {
                 // Filter sensor data for this device
                 const deviceSensorData = sensorData.filter(
                   d => d.metadata.parent_device === parentDevice
@@ -464,10 +724,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 console.log('🔍 Device:', parentDevice, 'Sensor ObjectIDs:', deviceSensorIds);
 
                 return (
-                  <div 
-                    key={parentDevice} 
-                    className="bg-gray-800/30 rounded-lg border border-gray-700 p-4"
-                  >
+                  <SortableDeviceGroup key={parentDevice} id={parentDevice}>
+                    <div className="bg-gray-800/30 rounded-lg border border-gray-700 p-4">
                     {/* Device Header */}
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 bg-cyan-600/20 rounded-lg flex items-center justify-center">
@@ -483,31 +741,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                       {/* Sensors Grid */}
                       <div className="lg:col-span-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
-                          {sensors.map((data) => {
-                            const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
-                            return (
-                              <SensorCard
-                                key={data.metadata.sensor_id}
-                                sensor={{
-                                  _id: data._id,
-                                  sensor_id: data.metadata.sensor_id,
-                                  sensor_name: data.metadata.type,
-                                  sensor_type: data.metadata.unit,
-                                  parent_device_id: data.metadata.parent_device,
-                                  company_id: '',
-                                }}
-                                latestValue={data.value}
-                                unit={data.metadata.unit}
-                                isOnline={data.status === 'active'}
-                                historyData={sensorHistory[data.metadata.sensor_id] || []}
-                                companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
-                                isError={isError}
-                                alertStatus={alertStatusMap[data.metadata.sensor_id]}
-                              />
-                            );
-                          })}
-                        </div>
+                        <DndContext
+                          sensors={dndSensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(event) => handleDragEnd(event, parentDevice)}
+                        >
+                          <SortableContext
+                            items={sensors.map(s => s.metadata.sensor_id)}
+                            strategy={rectSortingStrategy}
+                          >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+                              {sensors.map((data) => {
+                                const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
+                                return (
+                                  <SortableSensorCard
+                                    key={data.metadata.sensor_id}
+                                    id={data.metadata.sensor_id}
+                                    sensor={{
+                                      _id: data._id,
+                                      sensor_id: data.metadata.sensor_id,
+                                      sensor_name: data.metadata.type,
+                                      sensor_type: data.metadata.unit,
+                                      parent_device_id: data.metadata.parent_device,
+                                      company_id: '',
+                                    }}
+                                    latestValue={data.value}
+                                    unit={data.metadata.unit}
+                                    isOnline={data.status === 'active'}
+                                    historyData={sensorHistory[data.metadata.sensor_id] || []}
+                                    companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
+                                    isError={isError}
+                                    alertStatus={alertStatusMap[data.metadata.sensor_id]}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
                       </div>
 
                       {/* Device-specific Widgets */}
@@ -528,8 +798,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                       </div>
                     </div>
                   </div>
+                  </SortableDeviceGroup>
                 );
-              });
+              })}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            );
           })()}
         </div>
       ) : (
