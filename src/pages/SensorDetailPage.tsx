@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor, getLatestSensorData, getAlertHistory, markAlertAsRead } from '../services/apiService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { DataPoint, ThresholdConfig, Alert } from '../types/types';
@@ -6,6 +6,34 @@ import { resolveHwKey } from '../types/types';
 import { ThresholdModal } from '../components/ThresholdModal';
 import type { ValueType, NameType, Payload } from 'recharts/types/component/DefaultTooltipContent';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
+
+const FilterIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+    </svg>
+);
+
+const DownloadIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+    </svg>
+);
+
+const LiveIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+const dateToDateTimeLocalString = (date: Date | null): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 interface SensorDetailPageProps {
     sensorId: string;
@@ -54,6 +82,13 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     const [sensorMetadata, setSensorMetadata] = useState<any>(null);
     const [scenario, setScenario] = useState('indoor_small');
     const [latestContext, setLatestContext] = useState<Record<string, number>>({});
+    
+    // Time Filter States
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [startDate, setStartDate] = useState<Date | null>(null);
+    const [endDate, setEndDate] = useState<Date | null>(null);
+    const [filterApplied, setFilterApplied] = useState(false);
+    const [activeQuickFilter, setActiveQuickFilter] = useState<number | null>(null);
     const currentValue = historyData.length > 0 ? historyData[historyData.length - 1].value : null;
     const isError = currentValue !== null ? isSensorError(sensorId, currentValue, latestContext) : false;
 
@@ -78,14 +113,23 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
         }
     }
 
+    const filterAppliedRef = useRef(false);
+    useEffect(() => {
+        filterAppliedRef.current = filterApplied;
+    }, [filterApplied]);
+
     useEffect(() => {
         effectiveSensorIdRef.current = sensorId; // Reset on prop change
         loadData();
 
-        // Auto-refresh sensor history every 3 seconds (Original Sensor Logic)
-        const sensorIntervalId = setInterval(() => loadSensorHistory(), 3000);
+        // Auto-refresh sensor history every 3 seconds ONLY if no filter applied
+        const sensorIntervalId = setInterval(() => {
+            if (!filterAppliedRef.current) {
+                loadSensorHistory();
+            }
+        }, 3000);
 
-        // Auto-refresh active alerts every 30 seconds (New Alert Logic)
+        // Auto-refresh active alerts every 30 seconds
         const alertIntervalId = setInterval(() => loadActiveAlerts(), 30000);
 
         return () => {
@@ -202,11 +246,21 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
         }
     };
 
-    const loadSensorHistory = async () => {
+    const loadSensorHistory = async (overrideStart?: Date | null, overrideEnd?: Date | null) => {
         try {
             // Use the authoritative functional ID if resolved, otherwise the prop
             const targetId = effectiveSensorIdRef.current || sensorId;
-            const history = await getSensorHistory('sensor_id', targetId, 100, companyName);
+            const sTime = overrideStart !== undefined ? overrideStart : startDate;
+            const eTime = overrideEnd !== undefined ? overrideEnd : endDate;
+            
+            const history = await getSensorHistory(
+                'sensor_id', 
+                targetId, 
+                (sTime || eTime) ? 500 : 100, // Safely fetch more data for ranges
+                companyName,
+                sTime ? sTime.toISOString() : undefined,
+                eTime ? eTime.toISOString() : undefined
+            );
 
             const transformedData: DataPoint[] = history.map((item: any) => {
                 const utcTimestamp = item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z';
@@ -228,6 +282,55 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
         }
     };
 
+
+    const handleQuickFilter = (minutes: number) => {
+        const end = new Date();
+        const start = new Date(end.getTime() - minutes * 60 * 1000);
+        setEndDate(end);
+        setStartDate(start);
+        setActiveQuickFilter(minutes);
+        setFilterApplied(true);
+        loadSensorHistory(start, end);
+        setIsFilterPanelOpen(false);
+    };
+
+    const handleApplyCustomFilter = () => {
+        if (startDate || endDate) {
+            setActiveQuickFilter(null);
+            setFilterApplied(true);
+            loadSensorHistory(startDate, endDate);
+        }
+        setIsFilterPanelOpen(false);
+    };
+
+    const handleClearFilter = () => {
+        setStartDate(null);
+        setEndDate(null);
+        setFilterApplied(false);
+        setActiveQuickFilter(null);
+        setIsFilterPanelOpen(false);
+        loadSensorHistory(null, null);
+    };
+
+    const handleDownloadData = () => {
+        if (historyData.length === 0) {
+            alert("No data available to download.");
+            return;
+        }
+        const jsonString = JSON.stringify(historyData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sensor_data_${sensorId}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const startDateString = useMemo(() => dateToDateTimeLocalString(startDate), [startDate]);
+    const endDateString = useMemo(() => dateToDateTimeLocalString(endDate), [endDate]);
 
     const handleScenarioChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newScenario = e.target.value;
@@ -289,6 +392,31 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                         <p className="text-gray-400">Type: {displayType}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap justify-end">
+                            <button
+                                onClick={() => setIsFilterPanelOpen(prev => !prev)}
+                                className={`px-3 py-1.5 font-semibold rounded-lg transition-colors flex items-center justify-center text-sm ${filterApplied ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
+                            >
+                                <FilterIcon />
+                                <span>{filterApplied ? 'Filter Active' : 'Time Range'}</span>
+                            </button>
+                            {filterApplied && (
+                                <button
+                                    onClick={handleClearFilter}
+                                    className="px-3 py-1.5 font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center justify-center text-sm"
+                                >
+                                    <LiveIcon />
+                                    <span>Live</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={handleDownloadData}
+                                className="px-3 py-1.5 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center text-sm"
+                            >
+                                <DownloadIcon />
+                                <span>Download</span>
+                            </button>
+                        </div>
                         <div className={`text-3xl font-semibold ${isError ? 'text-red-500 animate-pulse' : ''}`}>
                             {getSensorDisplayValue(currentValue, isError)}
                             {!isError && <span className="text-md ml-1 text-gray-400">{unit}</span>}
@@ -304,6 +432,80 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                     </div>
                 </div>
 
+
+                {/* Filter Panel */}
+                <div className={`bg-gray-800/60 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gray-700 overflow-hidden transition-all duration-300 ease-in-out ${isFilterPanelOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 !p-0 !mb-0'}`}>
+                    <h4 className="text-lg font-semibold text-gray-200 mb-4">Filter by Time Range</h4>
+                    <div className="mb-4">
+                        <p className="text-sm text-gray-400 mb-2">Quick Ranges</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {[
+                                { label: 'Last 15m', minutes: 15 },
+                                { label: 'Last 1h', minutes: 60 },
+                                { label: 'Last 6h', minutes: 360 },
+                                { label: 'Last 24h', minutes: 1440 },
+                            ].map(({ label, minutes }) => (
+                                <button key={minutes} onClick={() => handleQuickFilter(minutes)} className={`w-full text-center px-3 py-2 text-sm rounded-md transition-colors ${activeQuickFilter === minutes ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}>
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p className="text-sm text-gray-400 mb-2">Custom Range</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="startDate" className="block mb-1 text-xs font-medium text-gray-300">Start Time</label>
+                                <input
+                                    type="datetime-local"
+                                    id="startDate"
+                                    value={startDateString}
+                                    onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                                    className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                                    style={{colorScheme: 'dark'}}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="endDate" className="block mb-1 text-xs font-medium text-gray-300">End Time</label>
+                                <input
+                                    type="datetime-local"
+                                    id="endDate"
+                                    value={endDateString}
+                                    onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                                    className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                                    style={{colorScheme: 'dark'}}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end gap-3">
+                        <button
+                            onClick={handleClearFilter}
+                            className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                            Clear Filter
+                        </button>
+                        <button
+                            onClick={handleApplyCustomFilter}
+                            className="px-4 py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-colors"
+                        >
+                            Apply Custom Filter
+                        </button>
+                    </div>
+                </div>
+
+                {filterApplied && (
+                    <div className="bg-gray-800 border border-blue-500/50 rounded-lg p-3 mb-6 text-sm">
+                        <p className="font-semibold text-blue-300">
+                            Filter Active <span className="ml-2 text-yellow-400">(Live updates paused)</span>
+                        </p>
+                        <p className="text-gray-400 mt-1">
+                            Showing data from <span className="font-medium text-gray-300">{startDate ? startDate.toLocaleString() : 'the beginning'}</span> to <span className="font-medium text-gray-300">{endDate ? endDate.toLocaleString() : 'now'}</span>.
+                        </p>
+                    </div>
+                )}
 
                 {error && (
                     <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
@@ -366,7 +568,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                     {historyData.length > 0 ? (
                         <>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-semibold text-cyan-400">{sensorName} - Real-Time Data</h2>
+                                <h2 className="text-xl font-semibold text-cyan-400">{sensorName} - {filterApplied ? 'Historical Data' : 'Real-Time Data'}</h2>
                                 {currentUser?.role !== 'viewer' && (
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-gray-400">Environment:</span>

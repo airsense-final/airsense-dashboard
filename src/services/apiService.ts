@@ -224,7 +224,9 @@ export function getSensorHistory(
   filterKey: string,
   filterValue: string,
   limit: number = 100,
-  companyName?: string
+  companyName?: string,
+  startTime?: string,
+  endTime?: string
 ): Promise<any[]> {
   const params = new URLSearchParams({
     filter_key: filterKey,
@@ -233,6 +235,12 @@ export function getSensorHistory(
   });
   if (companyName) {
     params.append('target_company_name', companyName);
+  }
+  if (startTime) {
+    params.append('start_time', startTime);
+  }
+  if (endTime) {
+    params.append('end_time', endTime);
   }
   return apiFetch<any[]>(`/api/v1/sensors/history?${params.toString()}`);
 }
