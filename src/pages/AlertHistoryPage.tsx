@@ -4,6 +4,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { getAlertHistory, getAggregatedAlertHistory, getCompanies, getCurrentUser, markAlertAsRead, markAllAlertsAsRead, listSensors } from '../services/apiService';
 import type { Alert, Company, User } from '../types/types';
+import AlertDistributionChart from '../components/widgets/AlertDistributionChart';
 
 const AlertHistoryPage: React.FC = () => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -233,6 +234,16 @@ const AlertHistoryPage: React.FC = () => {
                             </button>
                         ))}
                     </div>
+                </div>
+
+                {/* Futuristic Donut Chart (Alert Distribution) */}
+                <div className="w-full mb-6">
+                    <AlertDistributionChart 
+                        total={stats.total} 
+                        activeCritical={stats.activeCritical} 
+                        activeWarning={stats.activeWarning} 
+                        resolved={stats.resolved} 
+                    />
                 </div>
 
                 {/* Stats Cards */}
