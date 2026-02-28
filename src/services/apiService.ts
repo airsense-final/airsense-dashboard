@@ -374,4 +374,58 @@ export function markAllAlertsAsRead(targetCompanyName?: string): Promise<{ messa
   });
 }
 
+export async function exportAlertsPDF(params: {
+  target_company_name?: string;
+  start_date?: string;
+  end_date?: string;
+  is_resolved?: boolean;
+  include_anomalies?: boolean;
+}): Promise<void> {
+  const queryParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, value.toString());
+    }
+  });
 
+  const token = getToken();
+  if (!token) {
+    throw new Error('No authentication token found. Please login again.');
+  }
+
+  const response = await fetch(`${BASE_URL}/api/v1/alerts/export/pdf?${queryParams.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to export PDF' }));
+    throw new Error(errorData.detail || 'Failed to export PDF');
+  }
+
+  // Get filename from Content-Disposition header or create default
+  const contentDisposition = response.headers.get('Content-Disposition');
+  let filename = 'AirSense_Alert_Report.pdf';
+  
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (filenameMatch && filenameMatch[1]) {
+      filename = filenameMatch[1].replace(/['"]/g, '');
+    }
+  }
+
+  // Create blob and download
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  
+  // Cleanup
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
