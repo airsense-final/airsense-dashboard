@@ -16,7 +16,7 @@ interface AlertDistributionChartProps {
   resolved: number;
 }
 
-const COLORS = ["#FF1744", "#FF6D00", "#00FFB2", "#00E5FF"];
+// const COLORS = ["#FF1744", "#FF6D00", "#00FFB2", "#00E5FF"];
 
 const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, activeCritical, activeWarning, resolved }) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -150,6 +150,7 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
               outerRadius="80%"
               paddingAngle={5}
               dataKey="value"
+              // @ts-ignore
               activeIndex={activeIndex !== null ? activeIndex : undefined}
               activeShape={renderActiveShape}
               onMouseEnter={(_, index) => setActiveIndex(index)}

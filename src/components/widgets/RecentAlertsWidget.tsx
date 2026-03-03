@@ -8,7 +8,7 @@ interface RecentAlertsWidgetProps {
     sensorIdsForDevice?: string[]; // Sensor IDs that belong to this device
 }
 
-export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyName, parentDeviceId, sensorIdsForDevice }) => {
+export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyName, sensorIdsForDevice }) => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [sensorMap, setSensorMap] = useState<Record<string, string>>({});

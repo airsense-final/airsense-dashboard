@@ -101,7 +101,7 @@ const SensorManagementPage: React.FC = () => {
       setError(null);
       await createSensor(formData);
       setShowCreateModal(false);
-      setFormData({ sensor_id: '', sensor_name: '', sensor_type: '', location: 'Unknown', company_name: '' });
+      setFormData({ sensor_id: '', sensor_name: '', sensor_type: '', location: 'Unknown', company_name: '', parent_device_id: '' });
       loadData();
     } catch (err: any) {
       setError(err.message || 'Failed to create sensor');
@@ -150,7 +150,8 @@ const SensorManagementPage: React.FC = () => {
       sensor_name: sensor.sensor_name,
       sensor_type: sensor.sensor_type,
       location: sensor.location || 'Unknown',
-      company_name: ''
+      company_name: '',
+      parent_device_id: sensor.parent_device_id || ''
     });
     setShowEditModal(true);
   };
