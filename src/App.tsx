@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy } from 'react';
 import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
 import DigitalTwinButton from './components/DigitalTwinButton'; 
@@ -16,12 +16,7 @@ const SensorManagementPage = lazy(() => import('./pages/SensorManagementPage'));
 const ThresholdManagementPage = lazy(() => import('./pages/ThresholdManagementPage'));
 const AlertHistoryPage = lazy(() => import('./pages/AlertHistoryPage'));
 
-// Loading fallback component
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="text-cyan-400 text-xl animate-pulse font-medium">Loading...</div>
-  </div>
-);
+// Loading fallback component (unused)
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
