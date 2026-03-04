@@ -23,8 +23,11 @@ const DigitalTwinButton: React.FC<DigitalTwinButtonProps> = ({ role, company }) 
     const safeRole = role ? role.toLowerCase() : "viewer";
 
     // 3. URL'yi oluştur (Port 5173 - Digital Twin Projesi)
-    const twinUrl = `http://localhost:5174/?token=${token}&role=${safeRole}&company=${safeCompany}`;
+    const TWIN_BASE_URL = 
+      (import.meta as any).env?.VITE_TWIN_URL || 
+      "https://airsensedigitaltwin.netlify.app"; 
 
+    const twinUrl = `${TWIN_BASE_URL}/?token=${token}&role=${safeRole}&company=${safeCompany}`;
     // 4. Yeni sekmede aç
     window.open(twinUrl, '_blank');
   };
