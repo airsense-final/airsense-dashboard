@@ -142,6 +142,7 @@ export interface SensorDashboardView {
   sensor_type: string;
   unit: string;
   location?: string;
+  parent_device_id?: string;
   latest_value: number | null;
   latest_timestamp: string | null;
   status: string;
