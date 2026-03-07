@@ -410,7 +410,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         status: item.status,
         metadata: {
           sensor_id: item.sensor_id,
-          parent_device: "ESP32",
+          parent_device: item.parent_device_id || "Unknown Device",
           type: item.sensor_name, // Dashboard displays metadata.type as name
           unit: item.unit
         }
@@ -485,6 +485,54 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       localStorage.setItem('device_order', JSON.stringify(deviceOrder));
     }
   }, [deviceOrder]);
+
+  // Reconcile device & sensor order when sensorData changes
+  useEffect(() => {
+    if (sensorData.length === 0) return;
+
+    // Build groupedByDevice map
+    const uniqueMap: Record<string, typeof sensorData[0]> = {};
+    sensorData.forEach(d => {
+      const sid = d.metadata.sensor_id;
+      if (!uniqueMap[sid] || new Date(d.timestamp) > new Date(uniqueMap[sid].timestamp)) {
+        uniqueMap[sid] = d;
+      }
+    });
+    const uniqueSensorData = Object.values(uniqueMap);
+
+    const groupedByDevice: Record<string, typeof uniqueSensorData> = {};
+    uniqueSensorData.forEach(data => {
+      const parentDevice = data.metadata.parent_device || 'Unknown Device';
+      if (!groupedByDevice[parentDevice]) groupedByDevice[parentDevice] = [];
+      groupedByDevice[parentDevice].push(data);
+    });
+
+    const deviceKeys = Object.keys(groupedByDevice).sort();
+
+    // Reconcile device order
+    setDeviceOrder(prev => {
+      const matching = prev.filter(id => groupedByDevice[id]);
+      if (prev.length === 0 || matching.length === 0) return deviceKeys;
+      if (matching.length < deviceKeys.length) {
+        const newDevices = deviceKeys.filter(dk => !prev.includes(dk));
+        return [...matching, ...newDevices];
+      }
+      return prev;
+    });
+
+    // Reconcile sensor order per device
+    setSensorOrder(prev => {
+      const next = { ...prev };
+      let changed = false;
+      Object.keys(groupedByDevice).forEach(device => {
+        if (!next[device]) {
+          next[device] = groupedByDevice[device].map(s => s.metadata.sensor_id);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [sensorData]);
 
   // Handle drag end for sensors
   const handleDragEnd = (event: any, deviceId: string) => {
@@ -674,24 +722,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                   a.metadata.sensor_id.localeCompare(b.metadata.sensor_id)
                 );
               }
-              
-              // Initialize sensor order for this device if not exists
-              if (!sensorOrder[device]) {
-                const initialOrder = groupedByDevice[device].map(s => s.metadata.sensor_id);
-                setSensorOrder(prev => ({ ...prev, [device]: initialOrder }));
-              }
             });
 
-            // Initialize device order if not exists
+            // Compute effective device order (no setState during render!)
             const deviceKeys = Object.keys(groupedByDevice).sort();
-            if (deviceOrder.length === 0) {
-              setDeviceOrder(deviceKeys);
-            }
+            const matchingDevices = deviceOrder.filter(deviceId => groupedByDevice[deviceId]);
+            const effectiveDeviceOrder = matchingDevices.length > 0 ? deviceOrder.filter(id => groupedByDevice[id]) : deviceKeys;
 
-            // Sort device groups by custom order
-            const sortedDeviceEntries = deviceOrder.length > 0
-              ? deviceOrder
-                  .filter(deviceId => groupedByDevice[deviceId]) // Only include devices that exist
+            // Sort device groups by effective order
+            const sortedDeviceEntries = effectiveDeviceOrder.length > 0
+              ? effectiveDeviceOrder
                   .map(deviceId => [deviceId, groupedByDevice[deviceId]] as [string, typeof uniqueSensorData])
               : Object.entries(groupedByDevice).sort(([deviceA], [deviceB]) => deviceA.localeCompare(deviceB));
 
@@ -703,7 +743,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 onDragEnd={handleDeviceDragEnd}
               >
                 <SortableContext
-                  items={deviceOrder.length > 0 ? deviceOrder : deviceKeys}
+                  items={effectiveDeviceOrder.length > 0 ? effectiveDeviceOrder : deviceKeys}
                   strategy={rectSortingStrategy}
                 >
                   <div className="space-y-6">
@@ -719,7 +759,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 const deviceSensorIds = allSensors
                   .filter(s => sensorIdsReadable.includes(s.sensor_id))
                   .map(s => s._id)
-                  .filter(Boolean); // Remove any undefined values
+                  .filter((id): id is string => Boolean(id));
 
                 console.log('🔍 Device:', parentDevice, 'Sensor ObjectIDs:', deviceSensorIds);
 
