@@ -832,7 +832,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                         <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
                           <RecentAlertsWidget 
                             companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
-                            sensorIdsForDevice={deviceSensorIds}
+                            sensorIdsForDevice={deviceSensorIds as string[]}
                           />
                         </div>
                       </div>

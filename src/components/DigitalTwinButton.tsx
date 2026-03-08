@@ -22,9 +22,11 @@ const DigitalTwinButton: React.FC<DigitalTwinButtonProps> = ({ role, company }) 
     const safeCompany = company ? encodeURIComponent(company) : "";
     const safeRole = role ? role.toLowerCase() : "viewer";
 
-    // 3. URL'yi oluştur (Port 5173 - Digital Twin Projesi)
-    const twinUrl = `http://localhost:5174/?token=${token}&role=${safeRole}&company=${safeCompany}`;
+    // 3. URL'yi oluştur ( Digital Twin Projesi)
+    const TWIN_BASE_URL = 
+      "https://airsensedigitaltwin.netlify.app"; 
 
+    const twinUrl = `${TWIN_BASE_URL}/?token=${token}&role=${safeRole}&company=${safeCompany}`;
     // 4. Yeni sekmede aç
     window.open(twinUrl, '_blank');
   };

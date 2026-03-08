@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { getAlertHistory, getAggregatedAlertHistory, getCompanies, getCurrentUser, markAlertAsRead, markAllAlertsAsRead, listSensors } from '../services/apiService';
+import { getAlertHistory, getAggregatedAlertHistory, getCompanies, getCurrentUser, markAlertAsRead, markAllAlertsAsRead, listSensors, exportAlertsPDF } from '../services/apiService';
 import type { Alert, Company, User } from '../types/types';
+import AlertDistributionChart from '../components/widgets/AlertDistributionChart';
 
 const AlertHistoryPage: React.FC = () => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -94,6 +95,54 @@ const AlertHistoryPage: React.FC = () => {
             loadAlerts();
         } catch (err) {
             console.error('Failed to mark all as read', err);
+        }
+    };
+
+    const handleExportPDF = async () => {
+        try {
+            setError(null);
+            
+            // Prepare export parameters based on current filters
+            const exportParams: {
+                target_company_name?: string;
+                start_date?: string;
+                end_date?: string;
+                is_resolved?: boolean;
+                include_anomalies: boolean;
+            } = {
+                include_anomalies: true, // Always include anomalies
+            };
+
+            // Add company filter for superadmin
+            if (currentUser?.role === 'superadmin' && selectedCompany) {
+                exportParams.target_company_name = selectedCompany;
+            }
+
+            // Add date range if set
+            if (startDate) {
+                exportParams.start_date = startDate;
+            }
+            if (endDate) {
+                exportParams.end_date = endDate;
+            }
+
+            // Add resolution status filter
+            if (statusFilter === 'active') {
+                exportParams.is_resolved = false;
+            } else if (statusFilter === 'resolved') {
+                exportParams.is_resolved = true;
+            }
+
+            // Show loading state (you can add a loading indicator if needed)
+            console.log('Exporting PDF with params:', exportParams);
+            
+            await exportAlertsPDF(exportParams);
+            
+            // Success notification (optional)
+            console.log('PDF exported successfully');
+        } catch (err: any) {
+            console.error('Failed to export PDF', err);
+            setError(err.message || 'Failed to export PDF report');
         }
     };
 
@@ -211,6 +260,16 @@ const AlertHistoryPage: React.FC = () => {
                             >
                                 Mark All Read
                             </button>
+                            <button
+                                onClick={handleExportPDF}
+                                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-sm font-medium rounded-lg text-white transition-colors shadow-lg flex items-center gap-2"
+                                title="Export filtered alerts and anomalies as PDF report"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Export PDF Report
+                            </button>
                         </div>
                         <p className="text-gray-400 mt-1">Review past and ongoing sensor alerts</p>
                     </div>
@@ -233,6 +292,16 @@ const AlertHistoryPage: React.FC = () => {
                             </button>
                         ))}
                     </div>
+                </div>
+
+                {/* Futuristic Donut Chart (Alert Distribution) */}
+                <div className="w-full mb-6">
+                    <AlertDistributionChart 
+                        total={stats.total} 
+                        activeCritical={stats.activeCritical} 
+                        activeWarning={stats.activeWarning} 
+                        resolved={stats.resolved} 
+                    />
                 </div>
 
                 {/* Stats Cards */}
