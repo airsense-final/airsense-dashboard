@@ -214,7 +214,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2 flex items-center space-x-3">
-            <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
             <span>Test Simulation</span>
@@ -263,7 +263,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
                 onClick={handleStopAutoRun}
                 className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>Stop Auto Test</span>
@@ -277,7 +277,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
                   : 'bg-purple-600 hover:bg-purple-700 text-white'
                   }`}
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                 </svg>
                 <span>Run All Tests</span>
@@ -288,7 +288,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
                 onClick={handleStopTest}
                 className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
                 </svg>
                 <span>Stop</span>
@@ -302,7 +302,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
                 : 'bg-gray-700 hover:bg-gray-600 text-white'
                 }`}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               <span>Reset</span>
@@ -340,7 +340,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       {/* Live Sensor Data */}
       <div>
         <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-          <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <span>Live Sensor Data</span>
@@ -352,7 +352,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       {lastResult && (
         <div>
           <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-            <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <span>Latest Test Result</span>
@@ -364,7 +364,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       {/* Test Scenarios */}
       <div>
         <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-          <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <span>Test Scenarios</span>
@@ -385,7 +385,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       {/* Info Panel */}
       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
         <h3 className="text-lg font-bold text-white mb-3 flex items-center space-x-2">
-          <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+          <svg aria-hidden="true" className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
           <span>How to Use?</span>

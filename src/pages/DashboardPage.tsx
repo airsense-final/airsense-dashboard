@@ -56,7 +56,7 @@ const SortableDeviceGroup: React.FC<{
         className="absolute top-2 right-2 cursor-move p-2 bg-cyan-600/20 hover:bg-cyan-600/40 rounded transition-colors z-10 border border-cyan-500/30"
         title="Drag to reorder device"
       >
-        <svg className="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 16 16">
+        <svg aria-hidden="true" className="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 16 16">
           <path d="M5 3h2v2H5V3zm4 0h2v2H9V3zM5 7h2v2H5V7zm4 0h2v2H9V7zm-4 4h2v2H5v-2zm4 0h2v2H9v-2z"/>
         </svg>
       </div>
@@ -167,7 +167,7 @@ const SensorCard = React.memo< {
           className="absolute bottom-1 left-1 cursor-move p-1.5 bg-gray-700/50 hover:bg-gray-600 rounded transition-colors z-10 border border-gray-600"
           title="Drag to reorder"
         >
-          <svg className="w-3 h-3 text-gray-300" fill="currentColor" viewBox="0 0 16 16">
+          <svg aria-hidden="true" className="w-3 h-3 text-gray-300" fill="currentColor" viewBox="0 0 16 16">
             <path d="M5 3h2v2H5V3zm4 0h2v2H9V3zM5 7h2v2H5V7zm4 0h2v2H9V7zm-4 4h2v2H5v-2zm4 0h2v2H9v-2z"/>
           </svg>
         </div>

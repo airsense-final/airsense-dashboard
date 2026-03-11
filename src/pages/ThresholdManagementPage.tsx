@@ -235,16 +235,16 @@ const ThresholdManagementPage: React.FC = () => {
             {error && !showModal && (
                 <div className="bg-red-900/40 border border-red-500 text-red-200 px-4 py-3 rounded-lg flex items-center justify-between">
                     <span>{error}</span>
-                    <button onClick={() => setError(null)}>✕</button>
+                    <button aria-label="Close error message" onClick={() => setError(null)}>✕</button>
                 </div>
-            )}
+                )}
 
-            {success && !showModal && (
+                {success && (
                 <div className="bg-green-900/40 border border-green-500 text-green-200 px-4 py-3 rounded-lg flex items-center justify-between">
                     <span>{success}</span>
-                    <button onClick={() => setSuccess(null)}>✕</button>
+                    <button aria-label="Close success message" onClick={() => setSuccess(null)}>✕</button>
                 </div>
-            )}
+                )}
 
             {/* Table */}
             <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
