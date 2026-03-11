@@ -126,8 +126,9 @@ export const RegisterPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                        <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">Username</label>
                         <input
+                            id="username"
                             type="text"
                             required
                             value={username}
@@ -140,8 +141,9 @@ export const RegisterPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
                         <input
+                            id="email"
                             type="email"
                             required
                             value={email}
@@ -154,8 +156,9 @@ export const RegisterPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">Password</label>
                         <input
+                            id="password"
                             type="password"
                             required
                             value={password}
@@ -168,8 +171,9 @@ export const RegisterPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
                         <input
+                            id="confirmPassword"
                             type="password"
                             required
                             value={confirmPassword}
@@ -182,8 +186,9 @@ export const RegisterPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Company</label>
+                        <label htmlFor="company" className="block text-sm font-medium text-gray-300 mb-1">Company</label>
                         <select
+                            id="company"
                             required
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}

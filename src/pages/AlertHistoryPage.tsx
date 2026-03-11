@@ -265,7 +265,7 @@ const AlertHistoryPage: React.FC = () => {
                                 className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-sm font-medium rounded-lg text-white transition-colors shadow-lg flex items-center gap-2"
                                 title="Export filtered alerts and anomalies as PDF report"
                             >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 Export PDF Report
@@ -312,7 +312,7 @@ const AlertHistoryPage: React.FC = () => {
                             <p className="text-2xl font-bold text-white">{stats.activeTotal} <span className="text-sm text-gray-500 font-normal">/ {stats.total}</span></p>
                         </div>
                         <div className="p-3 bg-gray-700/50 rounded-full">
-                            <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg aria-hidden="true" className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
@@ -324,7 +324,7 @@ const AlertHistoryPage: React.FC = () => {
                             <p className="text-2xl font-bold text-red-100">{stats.activeCritical}</p>
                         </div>
                         <div className="p-3 bg-red-900/20 rounded-full">
-                            <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg aria-hidden="true" className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
@@ -336,7 +336,7 @@ const AlertHistoryPage: React.FC = () => {
                             <p className="text-2xl font-bold text-yellow-100">{stats.activeWarning}</p>
                         </div>
                         <div className="p-3 bg-yellow-900/20 rounded-full">
-                            <svg className="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg aria-hidden="true" className="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
@@ -348,7 +348,7 @@ const AlertHistoryPage: React.FC = () => {
                             <p className="text-2xl font-bold text-green-100">{stats.resolved}</p>
                         </div>
                         <div className="p-3 bg-green-900/20 rounded-full">
-                            <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg aria-hidden="true" className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
@@ -515,14 +515,14 @@ const AlertHistoryPage: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {alert.is_resolved ? (
                                                     <span className="flex items-center text-green-400 text-sm">
-                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg aria-hidden="true" className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                         </svg>
                                                         Resolved
                                                     </span>
                                                 ) : (
                                                     <span className="flex items-center text-red-400 text-sm animate-pulse">
-                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg aria-hidden="true" className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
                                                         Active
@@ -544,7 +544,7 @@ const AlertHistoryPage: React.FC = () => {
                                                     </button>
                                                 ) : (
                                                     <span className="text-blue-400 flex items-center justify-center gap-1">
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                         </svg>
                                                         Read
