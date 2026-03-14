@@ -9,6 +9,12 @@ AirSense Dashboard is a modern, real-time IoT monitoring application built with 
   - **Dynamic Charts:** Time-series data visualization using Recharts.
   - **Gauges:** Instant visual feedback for current sensor levels.
   - **Status Indicators:** Color-coded alerts for threshold violations.
+- **Historical Analysis & Reporting:**
+  - **PDF Export:** Generate and download comprehensive PDF reports of historical alerts and anomalies.
+  - **Date Range Filtering:** Filter reports and charts by specific time periods.
+- **Alert Management:**
+  - **Email Notifications:** Configure and manage automated email alerts for threshold violations.
+  - **Real-time Alerts:** Instant UI notifications when sensors exceed safe limits.
 - **Authentication & Security:**
   - Secure Login and Registration.
   - Role-Based Access Control (RBAC) for managing user permissions.
