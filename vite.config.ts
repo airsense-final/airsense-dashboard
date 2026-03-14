@@ -1,50 +1,12 @@
-import { defineConfig, type PluginOption } from 'vite'
+import { defineConfig, type UserConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 // @ts-ignore
 import obfuscator from 'vite-plugin-javascript-obfuscator'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => {
-  const plugins: PluginOption[] = [react()]
-
-  // Sadece build sırasında obfuscator ekle
-  if (command === 'build') {
-    plugins.push(
-      obfuscator({
-        options: {
-          compact: true,
-          controlFlowFlattening: false,
-          deadCodeInjection: false,
-          debugProtection: true,
-          debugProtectionInterval: 2000,
-          disableConsoleOutput: true,
-          identifierNamesGenerator: 'hexadecimal',
-          log: false,
-          numbersToExpressions: false,
-          renameGlobals: false,
-          selfDefending: true,
-          simplify: true,
-          splitStrings: false,
-          stringArray: true,
-          stringArrayCallsTransform: false,
-          stringArrayEncoding: [],
-          stringArrayIndexShift: true,
-          stringArrayRotate: true,
-          stringArrayShuffle: true,
-          stringArrayWrappersCount: 1,
-          stringArrayWrappersChainedCalls: true,
-          stringArrayWrappersParametersMaxCount: 2,
-          stringArrayWrappersType: 'variable',
-          stringArrayIndexShiftThreshold: 0.75,
-          target: 'browser',
-          unicodeEscapeSequence: false
-        },
-      })
-    )
-  }
-
-  return {
-    plugins,
+  const config: UserConfig = {
+    plugins: [react()],
     build: {
       sourcemap: false,
       minify: 'terser',
@@ -68,4 +30,26 @@ export default defineConfig(({ command }) => {
       },
     },
   }
+
+  // Sadece build aşamasında ve plugin varsa obfuscator ekle
+  if (command === 'build' && config.plugins) {
+    config.plugins.push(
+      obfuscator({
+        options: {
+          compact: true,
+          controlFlowFlattening: false,
+          debugProtection: true,
+          debugProtectionInterval: 2000,
+          disableConsoleOutput: true,
+          selfDefending: true,
+          stringArray: true,
+          rotateStringArray: true,
+          shuffleStringArray: true,
+          stringArrayThreshold: 0.75,
+        },
+      })
+    )
+  }
+
+  return config
 })
