@@ -5,7 +5,7 @@ import { LineChartWidget } from '../components/widgets/LineChartWidget';
 import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
 import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
-import { useWebSocket } from '../hooks/useWebSocket'; // WebSocket Hook
+import { useWebSocket } from '../hooks/useWebSocket';
 import {
   DndContext,
   closestCenter,
@@ -27,7 +27,6 @@ interface DashboardPageProps {
   currentUser: User | null;
 }
 
-// Sortable wrapper for device groups
 const SortableDeviceGroup: React.FC<{
   id: string;
   children: React.ReactNode;
@@ -49,7 +48,6 @@ const SortableDeviceGroup: React.FC<{
 
   return (
     <div ref={setNodeRef} style={style} className="relative">
-      {/* Drag Handle for Device Group */}
       <div
         {...attributes}
         {...listeners}
@@ -65,7 +63,6 @@ const SortableDeviceGroup: React.FC<{
   );
 };
 
-// Sortable wrapper for sensor cards
 const SortableSensorCard = React.memo<{
   id: string;
   sensor: Sensor;
@@ -157,9 +154,8 @@ const SensorCard = React.memo< {
   return (
     <div
       onClick={handleClick}
-      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-3 relative`}
+      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-3 relative h-full`}
     >
-      {/* Drag Handle */}
       {dragHandleProps && (
         <div
           {...dragHandleProps}
@@ -173,14 +169,14 @@ const SensorCard = React.memo< {
         </div>
       )}
       <div className="flex justify-between items-start mb-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-2">
           <h3 className="font-semibold truncate text-sm">{sensor.sensor_name}</h3>
-          <p className="text-gray-500 truncate text-xs">{sensor.sensor_id}</p>
+          <p className="text-gray-500 truncate text-[10px]">{sensor.sensor_id}</p>
         </div>
-        <div className={`rounded-full flex-shrink-0 ml-1 ${statusDotColor} w-3 h-3`}></div>
+        <div className={`rounded-full flex-shrink-0 ${statusDotColor} w-2.5 h-2.5 mt-1`}></div>
       </div>
 
-      <div className="h-20 mb-2">
+      <div className="h-16 mb-2">
         {historyData.length > 0 ? (
           <LineChartWidget
             title=""
@@ -190,17 +186,17 @@ const SensorCard = React.memo< {
             compact={true}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 text-xs">
+          <div className="flex items-center justify-center h-full text-gray-500 text-[10px]">
             No data
           </div>
         )}
       </div>
 
-      <div className="text-center">
-        <span className="font-semibold text-lg">
+      <div className="mt-auto text-center">
+        <span className="font-bold text-lg md:text-xl">
           {getSensorDisplayValue(latestValue, !!isError)}
         </span>
-        {!isError && <span className="ml-1 text-gray-400 text-sm">{unit}</span>}
+        {!isError && <span className="ml-1 text-gray-400 text-xs">{unit}</span>}
       </div>
     </div>
   );
@@ -221,78 +217,57 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   const [deviceOrder, setDeviceOrder] = useState<string[]>([]);
   const isFetchingRef = useRef(false);
   
-  // DnD sensors for sensor cards
   const dndSensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // DnD sensors for device groups
   const deviceDndSensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
   
-  // WebSocket Hook
   const { lastMessage, isConnected } = useWebSocket();
-
-  // Ref to track the latest selected company to prevent race conditions
   const selectedCompanyRef = useRef(selectedCompany);
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  // Handle WebSocket Updates
   useEffect(() => {
     if (lastMessage && lastMessage.type === 'SENSOR_UPDATE') {
       const data = lastMessage.data;
-      
-      // Filter by company if needed
       if (currentUser?.role === 'superadmin' && selectedCompany && data.company_name !== selectedCompany) {
         return;
       }
 
-      console.log('⚡ WS Update:', data);
-      
-      // Transform WS data to LatestSensorData format
       const timestamp = data.timestamp || new Date().toISOString();
-      
-      // Create updates for each sensor value in the payload
       const updates: LatestSensorData[] = [];
       const ignoreKeys = ['timestamp', 'sensor_id', 'device_id', 'status', 'company_name'];
 
       Object.entries(data.values).forEach(([key, value]) => {
         if (ignoreKeys.includes(key) || typeof value !== 'number') return;
-
-        // Construct Sensor ID (e.g. "Company_mq4_1") matches backend logic
         const uniqueId = data.company_name ? `${data.company_name}_${key}` : `${data.device_id}_${key}`;
         
         updates.push({
-          _id: uniqueId, // This might not match DB _id but metadata.sensor_id is key
+          _id: uniqueId,
           timestamp: timestamp,
           value: value as number,
           status: 'active',
           metadata: {
             sensor_id: uniqueId,
             parent_device: data.device_id,
-            type: key, // Simplified type derivation
-            unit: '' // Unit comes from catalog, hard to get here without map
+            type: key,
+            unit: ''
           }
         });
       });
 
-      // Update State: Merge new updates with existing sensorData
       setSensorData(prevData => {
         const newData = [...prevData];
         updates.forEach(update => {
           const index = newData.findIndex(d => d.metadata.sensor_id === update.metadata.sensor_id);
           if (index !== -1) {
-            // Preserve unit and other metadata from existing state
             newData[index] = {
               ...newData[index],
               value: update.value,
@@ -300,43 +275,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
               status: update.status
             };
           } else {
-            // New sensor found via WS (less common, usually loadInitialData handles it)
             newData.push(update);
           }
         });
         return newData;
       });
-      
       setLastUpdate(new Date());
     }
   }, [lastMessage, selectedCompany, currentUser]);
 
   useEffect(() => {
     selectedCompanyRef.current = selectedCompany;
-
-    // Clear data immediately when company changes to prevent ghost data
     if (currentUser?.role === 'superadmin') {
-      // Reload full data on company switch
       loadInitialData();
     }
-    
-    // Only load sensor map, no polling
     loadSensorMap();
-
   }, [selectedCompany, currentUser]);
 
-  // Auto-refresh sensor history for charts (similar to detail page)
   useEffect(() => {
-    // Initial load is handled by loadInitialData
-
-    // Auto-refresh sensor history every 3 seconds for real-time chart updates
     const historyIntervalId = setInterval(() => {
-      loadSensorData(); // This loads both latest values and history
+      loadSensorData();
     }, 3000);
-
-    return () => {
-      clearInterval(historyIntervalId);
-    };
+    return () => clearInterval(historyIntervalId);
   }, [selectedCompany, currentUser]);
 
   const loadInitialData = async () => {
@@ -347,8 +307,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       if (currentUser?.role === 'superadmin') {
         const companiesData = await getCompanies();
         setCompanies(companiesData);
-
-        // Check if the stored/current company is valid (exists in the fetched list)
         const isValidSelection = selectedCompany && companiesData.some(c => c.name === selectedCompany);
 
         if (!isValidSelection && companiesData.length > 0) {
@@ -378,31 +336,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         }
       });
       setSensorIdMap(map);
-      setAllSensors(sensors); // Store full sensor list with MongoDB ObjectIDs
+      setAllSensors(sensors);
     } catch (err) {
       console.error('Failed to load sensor map', err);
     }
   };
 
   const loadSensorData = async () => {
-    if (isFetchingRef.current) return; // Skip if already loading
-
+    if (isFetchingRef.current) return;
     const currentCompany = selectedCompanyRef.current;
 
     try {
       isFetchingRef.current = true;
       const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
-
-      // OPTIMIZED: Fetch only sensor summary here (2s loop)
       const summaryData = await getDashboardSummary(companyName);
-      console.log('Dashboard Summary loaded:', { company: companyName, count: summaryData?.length });
 
-      // Race condition check: If company changed while fetching, discard result
       if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
         return;
       }
 
-      // Transform to match existing state structure
       const latestDataFormatted: LatestSensorData[] = summaryData.map(item => ({
         _id: item.sensor_id,
         timestamp: item.latest_timestamp || new Date().toISOString(),
@@ -411,7 +363,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         metadata: {
           sensor_id: item.sensor_id,
           parent_device: item.parent_device_id || "Unknown Device",
-          type: item.sensor_name, // Dashboard displays metadata.type as name
+          type: item.sensor_name,
           unit: item.unit
         }
       }));
@@ -429,8 +381,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         });
       });
 
-      // Batch state updates
-      setSensorData(latestDataFormatted); // Triggers re-render for sensors
+      setSensorData(latestDataFormatted);
       setSensorHistory(historyMap);
       setLastUpdate(new Date());
     } catch (err) {
@@ -445,71 +396,42 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
     try {
       const alertsData = await getLatestAlerts(companyName, false);
-      setActiveAlerts(alertsData); // Triggers re-render for alerts
+      setActiveAlerts(alertsData);
     } catch (err) {
       console.error('Failed to auto-refresh alerts', err);
     }
   };
 
-  // Load sensor order from local storage
   useEffect(() => {
     const stored = localStorage.getItem('sensor_order');
-    if (stored) {
-      try {
-        setSensorOrder(JSON.parse(stored));
-      } catch (err) {
-        console.error('Failed to parse sensor order from localStorage', err);
-      }
-    }
-
+    if (stored) try { setSensorOrder(JSON.parse(stored)); } catch (e) {}
     const storedDevices = localStorage.getItem('device_order');
-    if (storedDevices) {
-      try {
-        setDeviceOrder(JSON.parse(storedDevices));
-      } catch (err) {
-        console.error('Failed to parse device order from localStorage', err);
-      }
-    }
+    if (storedDevices) try { setDeviceOrder(JSON.parse(storedDevices)); } catch (e) {}
   }, []);
 
-  // Save sensor order to local storage whenever it changes
   useEffect(() => {
-    if (Object.keys(sensorOrder).length > 0) {
-      localStorage.setItem('sensor_order', JSON.stringify(sensorOrder));
-    }
+    if (Object.keys(sensorOrder).length > 0) localStorage.setItem('sensor_order', JSON.stringify(sensorOrder));
   }, [sensorOrder]);
 
-  // Save device order to local storage whenever it changes
   useEffect(() => {
-    if (deviceOrder.length > 0) {
-      localStorage.setItem('device_order', JSON.stringify(deviceOrder));
-    }
+    if (deviceOrder.length > 0) localStorage.setItem('device_order', JSON.stringify(deviceOrder));
   }, [deviceOrder]);
 
-  // Reconcile device & sensor order when sensorData changes
   useEffect(() => {
     if (sensorData.length === 0) return;
-
-    // Build groupedByDevice map
     const uniqueMap: Record<string, typeof sensorData[0]> = {};
     sensorData.forEach(d => {
       const sid = d.metadata.sensor_id;
-      if (!uniqueMap[sid] || new Date(d.timestamp) > new Date(uniqueMap[sid].timestamp)) {
-        uniqueMap[sid] = d;
-      }
+      if (!uniqueMap[sid] || new Date(d.timestamp) > new Date(uniqueMap[sid].timestamp)) uniqueMap[sid] = d;
     });
     const uniqueSensorData = Object.values(uniqueMap);
-
     const groupedByDevice: Record<string, typeof uniqueSensorData> = {};
     uniqueSensorData.forEach(data => {
       const parentDevice = data.metadata.parent_device || 'Unknown Device';
       if (!groupedByDevice[parentDevice]) groupedByDevice[parentDevice] = [];
       groupedByDevice[parentDevice].push(data);
     });
-
     const deviceKeys = Object.keys(groupedByDevice).sort();
-
-    // Reconcile device order
     setDeviceOrder(prev => {
       const matching = prev.filter(id => groupedByDevice[id]);
       if (prev.length === 0 || matching.length === 0) return deviceKeys;
@@ -519,8 +441,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       }
       return prev;
     });
-
-    // Reconcile sensor order per device
     setSensorOrder(prev => {
       const next = { ...prev };
       let changed = false;
@@ -534,74 +454,52 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     });
   }, [sensorData]);
 
-  // Handle drag end for sensors
   const handleDragEnd = (event: any, deviceId: string) => {
     const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
+    if (!over || active.id === over.id) return;
     setSensorOrder((prev) => {
       const currentOrder = prev[deviceId] || [];
       const oldIndex = currentOrder.indexOf(active.id as string);
       const newIndex = currentOrder.indexOf(over.id as string);
-
-      if (oldIndex === -1 || newIndex === -1) {
-        return prev;
-      }
-
-      const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
-
-      return {
-        ...prev,
-        [deviceId]: newOrder,
-      };
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return { ...prev, [deviceId]: arrayMove(currentOrder, oldIndex, newIndex) };
     });
   };
 
-  // Handle drag end for device groups
   const handleDeviceDragEnd = (event: any) => {
     const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
+    if (!over || active.id === over.id) return;
     setDeviceOrder((prev) => {
       const oldIndex = prev.indexOf(active.id as string);
       const newIndex = prev.indexOf(over.id as string);
-
-      if (oldIndex === -1 || newIndex === -1) {
-        return prev;
-      }
-
+      if (oldIndex === -1 || newIndex === -1) return prev;
       return arrayMove(prev, oldIndex, newIndex);
     });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl">Loading dashboard...</div>
+      <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-lg text-cyan-400 font-medium">Loading dashboard...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+    <div className="px-1 sm:px-2 md:px-4 py-4 md:py-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold">Dashboard Overview</h2>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-sm text-gray-400">
-              Last updated: {lastUpdate.toLocaleTimeString()}
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Dashboard</h2>
+          <div className="flex items-center gap-2 mt-1.5">
+            <p className="text-xs text-gray-400">
+              {lastUpdate.toLocaleTimeString()}
             </p>
             {isConnected && (
-              <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+              <span className="flex items-center gap-1 text-[9px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                <span className="w-1 h-1 bg-green-400 rounded-full"></span>
                 Live
               </span>
             )}
@@ -609,8 +507,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
 
         {currentUser?.role === 'superadmin' && companies.length > 0 && (
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-300">Company:</label>
+          <div className="w-full sm:w-auto flex items-center gap-3 bg-gray-800/50 p-1.5 pl-3 rounded-xl border border-gray-700">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Company</label>
             <select
               value={selectedCompany}
               onChange={(e) => {
@@ -618,7 +516,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 setSelectedCompany(newValue);
                 localStorage.setItem('dashboard_selected_company', newValue);
               }}
-              className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="flex-1 sm:flex-none px-3 py-1.5 bg-gray-900 text-white border-none rounded-lg focus:ring-2 focus:ring-cyan-500 text-sm font-medium"
             >
               {companies.map((company) => (
                 <option key={company._id} value={company.name}>
@@ -631,25 +529,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       </div>
 
       {error && (
-        <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="bg-red-900/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
+          <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm font-medium">{error}</span>
         </div>
       )}
 
-      {/* Main Layout: Device Groups with their own widgets */}
       {sensorData.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {(() => {
-            // Create context map for error checking
             const sensorValueMap: Record<string, number> = {};
-            sensorData.forEach(d => {
-              sensorValueMap[d.metadata.sensor_id] = d.value;
-            });
+            sensorData.forEach(d => { sensorValueMap[d.metadata.sensor_id] = d.value; });
 
-            // Create alert status map
             const alertStatusMap: Record<string, 'critical' | 'warning'> = {};
-            // Refined Logic (Pre-computation for correctness):
-            // 1. Group active alerts by sensor (mapped ID)
             const alertsBySensor: Record<string, Alert[]> = {};
             activeAlerts.forEach(alert => {
               if (!alert.is_resolved) {
@@ -659,188 +553,135 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
               }
             });
 
-            // 2. For each sensor, find the latest alert and set status
             Object.keys(alertsBySensor).forEach(sensorId => {
-              const sortedAlerts = alertsBySensor[sensorId].sort((a, b) =>
-                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-              );
-
+              const sortedAlerts = alertsBySensor[sensorId].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
               if (sortedAlerts.length > 0) {
                 const latest = sortedAlerts[0];
-                if (latest.alert_type === 'critical') {
-                  alertStatusMap[sensorId] = 'critical';
-                } else if (latest.alert_type === 'warning') {
-                  alertStatusMap[sensorId] = 'warning';
-                }
+                alertStatusMap[sensorId] = latest.alert_type === 'critical' ? 'critical' : 'warning';
               }
             });
 
-            // Get unique sensor data
-            const uniqueSensorData = Object.values(
-              sensorData.reduce((acc, data) => {
-                const sensorId = data.metadata.sensor_id;
-                if (!acc[sensorId] || new Date(data.timestamp) > new Date(acc[sensorId].timestamp)) {
-                  acc[sensorId] = data;
-                }
-                return acc;
-              }, {} as Record<string, typeof sensorData[0]>)
-            );
+            const uniqueSensorData = Object.values(sensorData.reduce((acc, data) => {
+              const sensorId = data.metadata.sensor_id;
+              if (!acc[sensorId] || new Date(data.timestamp) > new Date(acc[sensorId].timestamp)) acc[sensorId] = data;
+              return acc;
+            }, {} as Record<string, typeof sensorData[0]>));
 
-            // Group sensors by parent_device_id
             const groupedByDevice: Record<string, typeof uniqueSensorData> = {};
             uniqueSensorData.forEach(data => {
               const parentDevice = data.metadata.parent_device || 'Unknown Device';
-              if (!groupedByDevice[parentDevice]) {
-                groupedByDevice[parentDevice] = [];
-              }
+              if (!groupedByDevice[parentDevice]) groupedByDevice[parentDevice] = [];
               groupedByDevice[parentDevice].push(data);
             });
 
-            // Apply custom order from state or sort by sensor_id
             Object.keys(groupedByDevice).forEach(device => {
               const customOrder = sensorOrder[device];
               if (customOrder && customOrder.length > 0) {
-                // Sort by custom order
                 groupedByDevice[device].sort((a, b) => {
                   const indexA = customOrder.indexOf(a.metadata.sensor_id);
                   const indexB = customOrder.indexOf(b.metadata.sensor_id);
-                  
-                  // If both are in custom order, sort by their position
-                  if (indexA !== -1 && indexB !== -1) {
-                    return indexA - indexB;
-                  }
-                  // If only A is in custom order, it comes first
+                  if (indexA !== -1 && indexB !== -1) return indexA - indexB;
                   if (indexA !== -1) return -1;
-                  // If only B is in custom order, it comes first
                   if (indexB !== -1) return 1;
-                  // If neither is in custom order, sort alphabetically
                   return a.metadata.sensor_id.localeCompare(b.metadata.sensor_id);
                 });
               } else {
-                // Default alphabetical sort
-                groupedByDevice[device].sort((a, b) => 
-                  a.metadata.sensor_id.localeCompare(b.metadata.sensor_id)
-                );
+                groupedByDevice[device].sort((a, b) => a.metadata.sensor_id.localeCompare(b.metadata.sensor_id));
               }
             });
 
-            // Compute effective device order (no setState during render!)
             const deviceKeys = Object.keys(groupedByDevice).sort();
             const matchingDevices = deviceOrder.filter(deviceId => groupedByDevice[deviceId]);
             const effectiveDeviceOrder = matchingDevices.length > 0 ? deviceOrder.filter(id => groupedByDevice[id]) : deviceKeys;
-
-            // Sort device groups by effective order
             const sortedDeviceEntries = effectiveDeviceOrder.length > 0
-              ? effectiveDeviceOrder
-                  .map(deviceId => [deviceId, groupedByDevice[deviceId]] as [string, typeof uniqueSensorData])
+              ? effectiveDeviceOrder.map(deviceId => [deviceId, groupedByDevice[deviceId]] as [string, typeof uniqueSensorData])
               : Object.entries(groupedByDevice).sort(([deviceA], [deviceB]) => deviceA.localeCompare(deviceB));
 
-            // Render groups with their own widgets wrapped in DndContext for device reordering
             return (
-              <DndContext
-                sensors={deviceDndSensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDeviceDragEnd}
-              >
-                <SortableContext
-                  items={effectiveDeviceOrder.length > 0 ? effectiveDeviceOrder : deviceKeys}
-                  strategy={rectSortingStrategy}
-                >
-                  <div className="space-y-6">
+              <DndContext sensors={deviceDndSensors} collisionDetection={closestCenter} onDragEnd={handleDeviceDragEnd}>
+                <SortableContext items={effectiveDeviceOrder.length > 0 ? effectiveDeviceOrder : deviceKeys} strategy={rectSortingStrategy}>
+                  <div className="space-y-10">
                     {sortedDeviceEntries.map(([parentDevice, sensors]) => {
-                // Filter sensor data for this device
-                const deviceSensorData = sensorData.filter(
-                  d => d.metadata.parent_device === parentDevice
-                );
+                      const deviceSensorData = sensorData.filter(d => d.metadata.parent_device === parentDevice);
+                      const sensorIdsReadable = sensors.map(s => s.metadata.sensor_id);
+                      const deviceSensorIds = allSensors.filter(s => sensorIdsReadable.includes(s.sensor_id)).map(s => s._id).filter((id): id is string => Boolean(id));
 
-                // Get MongoDB ObjectIDs for this device's sensors
-                // Match by sensor_id (readable) from uniqueSensorData to get _id (MongoDB ObjectID) from allSensors
-                const sensorIdsReadable = sensors.map(s => s.metadata.sensor_id);
-                const deviceSensorIds = allSensors
-                  .filter(s => sensorIdsReadable.includes(s.sensor_id))
-                  .map(s => s._id)
-                  .filter((id): id is string => Boolean(id));
-
-                console.log('🔍 Device:', parentDevice, 'Sensor ObjectIDs:', deviceSensorIds);
-
-                return (
-                  <SortableDeviceGroup key={parentDevice} id={parentDevice}>
-                    <div className="bg-gray-800/30 rounded-lg border border-gray-700 p-4">
-                    {/* Device Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-cyan-600/20 rounded-lg flex items-center justify-center">
-                        <span className="text-2xl">🔌</span>
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold text-cyan-400">{parentDevice}</h2>
-                        <p className="text-xs text-gray-400">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} connected</p>
-                      </div>
-                    </div>
-
-                    {/* Layout: Sensors Left + Widgets Right */}
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                      {/* Sensors Grid */}
-                      <div className="lg:col-span-3">
-                        <DndContext
-                          sensors={dndSensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={(event) => handleDragEnd(event, parentDevice)}
-                        >
-                          <SortableContext
-                            items={sensors.map(s => s.metadata.sensor_id)}
-                            strategy={rectSortingStrategy}
-                          >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
-                              {sensors.map((data) => {
-                                const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
-                                return (
-                                  <SortableSensorCard
-                                    key={data.metadata.sensor_id}
-                                    id={data.metadata.sensor_id}
-                                    sensor={{
-                                      _id: data._id,
-                                      sensor_id: data.metadata.sensor_id,
-                                      sensor_name: data.metadata.type,
-                                      sensor_type: data.metadata.unit,
-                                      parent_device_id: data.metadata.parent_device,
-                                      company_id: '',
-                                    }}
-                                    latestValue={data.value}
-                                    unit={data.metadata.unit}
-                                    isOnline={data.status === 'active'}
-                                    historyData={sensorHistory[data.metadata.sensor_id] || []}
-                                    companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
-                                    isError={isError}
-                                    alertStatus={alertStatusMap[data.metadata.sensor_id]}
-                                  />
-                                );
-                              })}
+                      return (
+                        <SortableDeviceGroup key={parentDevice} id={parentDevice}>
+                          <div className="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-4 md:p-6 shadow-xl backdrop-blur-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-inner">
+                                  <span className="text-2xl">🔌</span>
+                                </div>
+                                <div>
+                                  <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">{parentDevice}</h2>
+                                  <p className="text-[10px] md:text-xs font-semibold text-cyan-400 uppercase tracking-widest">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} active</p>
+                                </div>
+                              </div>
                             </div>
-                          </SortableContext>
-                        </DndContext>
-                      </div>
 
-                      {/* Device-specific Widgets */}
-                      <div className="lg:col-span-1 flex flex-col gap-4">
-                        <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                          <h3 className="text-xs font-semibold text-gray-400 mb-2">🧠 AI Health</h3>
-                          <AIHealthStatusWidget 
-                            companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} 
-                            sensorData={deviceSensorData}
-                          />
-                        </div>
-                        <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                          <RecentAlertsWidget 
-                            companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
-                            sensorIdsForDevice={deviceSensorIds as string[]}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  </SortableDeviceGroup>
-                );
-              })}
+                            <div className="flex flex-col xl:flex-row gap-6">
+                              <div className="flex-grow">
+                                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(event, parentDevice)}>
+                                  <SortableContext items={sensors.map(s => s.metadata.sensor_id)} strategy={rectSortingStrategy}>
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4">
+                                      {sensors.map((data) => {
+                                        const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
+                                        return (
+                                          <SortableSensorCard
+                                            key={data.metadata.sensor_id}
+                                            id={data.metadata.sensor_id}
+                                            sensor={{
+                                              _id: data._id,
+                                              sensor_id: data.metadata.sensor_id,
+                                              sensor_name: data.metadata.type,
+                                              sensor_type: data.metadata.unit,
+                                              parent_device_id: data.metadata.parent_device,
+                                              company_id: '',
+                                            }}
+                                            latestValue={data.value}
+                                            unit={data.metadata.unit}
+                                            isOnline={data.status === 'active'}
+                                            historyData={sensorHistory[data.metadata.sensor_id] || []}
+                                            companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
+                                            isError={isError}
+                                            alertStatus={alertStatusMap[data.metadata.sensor_id]}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  </SortableContext>
+                                </DndContext>
+                              </div>
+
+                              <div className="w-full xl:w-80 flex flex-col sm:flex-row xl:flex-col gap-4">
+                                <div className="flex-1 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">AI Status</h3>
+                                  </div>
+                                  <AIHealthStatusWidget 
+                                    companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} 
+                                    sensorData={deviceSensorData}
+                                  />
+                                </div>
+                                <div className="flex-1 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Alerts</h3>
+                                  </div>
+                                  <RecentAlertsWidget 
+                                    companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
+                                    sensorIdsForDevice={deviceSensorIds as string[]}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </SortableDeviceGroup>
+                      );
+                    })}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -848,12 +689,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           })()}
         </div>
       ) : (
-        <div className="text-center py-20 bg-gray-800/50 rounded-lg">
-          <h3 className="text-xl text-gray-400">No sensor data available</h3>
-          <p className="text-gray-500 mt-2">
+        <div className="text-center py-24 bg-gray-800/20 rounded-3xl border border-gray-700/50 border-dashed">
+          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-white">No sensor data</h3>
+          <p className="text-gray-500 mt-2 max-w-xs mx-auto text-sm font-medium">
             {currentUser?.role === 'superadmin' && !selectedCompany
-              ? 'Select a company to view sensors'
-              : 'Waiting for sensors to send data...'}
+              ? 'Please select a company to monitor live air quality data.'
+              : 'Waiting for devices to connect and transmit sensor readings...'}
           </p>
         </div>
       )}
