@@ -1,7 +1,8 @@
 // Test Scenario Service - Manages automated test scenarios
 
 // Backend API configuration
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+import { API_BASE_URL as BASE_API_URL } from '../constants';
+const API_BASE_URL = `${BASE_API_URL}/v1`;
 const POLLING_INTERVAL = 2000; // 2 seconds
 
 export interface SensorData {
