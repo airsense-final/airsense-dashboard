@@ -94,6 +94,8 @@ export interface WebSocketMessage {
 export interface DataPoint {
   timestamp: string;
   value: number;
+  min?: number;
+  max?: number;
   alarm?: boolean;
   time?: Date;
 }

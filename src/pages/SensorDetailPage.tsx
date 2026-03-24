@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor, getLatestSensorData, getAlertHistory, markAlertAsRead } from '../services/apiService';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { DataPoint, ThresholdConfig, Alert } from '../types/types';
 import { resolveHwKey } from '../types/types';
 import { ThresholdModal } from '../components/ThresholdModal';
@@ -53,12 +53,23 @@ interface CustomTooltipProps {
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, unit }) => {
     if (active && payload && payload.length) {
+        // Find the main value payload
+        const valuePayload = payload.find(p => p.dataKey === 'value') || payload[0];
+        const data = valuePayload.payload; // Access the original data point
+        
+        const hasMinMax = data.min !== undefined && data.max !== undefined && (data.min !== data.value || data.max !== data.value);
+
         return (
             <div className="bg-gray-700 p-3 border border-gray-600 rounded shadow-lg">
-                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}</p>
-                <p className="font-semibold" style={{ color: payload[0].color }}>
-                    {`${payload[0].name}: ${(payload[0].value as number).toFixed(4)} ${unit}`}
+                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`}</p>
+                <p className="font-semibold" style={{ color: valuePayload.color }}>
+                    {`${valuePayload.name}: ${(valuePayload.value as number).toFixed(4)} ${unit}`}
                 </p>
+                {hasMinMax && (
+                    <div className="text-xs mt-1 text-gray-400">
+                        <p>Range: {data.min.toFixed(4)} - {data.max.toFixed(4)} {unit}</p>
+                    </div>
+                )}
             </div>
         );
     }
@@ -267,6 +278,8 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 return {
                     timestamp: item.timestamp,
                     value: item.value,
+                    min: item.min !== undefined ? item.min : item.value,
+                    max: item.max !== undefined ? item.max : item.value,
                     alarm: false,
                     time: new Date(utcTimestamp),
                 };
@@ -586,10 +599,13 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                             </div>
                             <div style={{ width: '100%', height: '520px' }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart
+                                    <ComposedChart
                                         data={historyData.map((point: DataPoint) => ({
                                             time: point.time ? point.time.getTime() : new Date(point.timestamp).getTime(),
                                             value: point.value,
+                                            minMax: [point.min !== undefined ? point.min : point.value, point.max !== undefined ? point.max : point.value],
+                                            min: point.min,
+                                            max: point.max
                                         }))}
                                         margin={{ top: 5, right: 30, left: 70, bottom: 5 }}
                                     >
@@ -600,13 +616,14 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                             scale="time"
                                             domain={['dataMin', 'dataMax']}
                                             stroke="#A0AEC0"
-                                            tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                                            tickFormatter={(unixTime) => new Date(unixTime).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                         />
                                         <YAxis
                                             stroke="#A0AEC0"
                                             width={90}
                                             label={{ value: unit, angle: -90, position: 'left', fill: '#A0AEC0', offset: 10 }}
                                             tickFormatter={(value) => value.toFixed(4)}
+                                            domain={['auto', 'auto']}
                                         />
                                         <Tooltip content={<CustomTooltip unit={unit} />} />
                                         <Legend />
@@ -624,16 +641,29 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                         {thresholds?.critical_max != null && (
                                             <ReferenceLine y={thresholds.critical_max} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'Crit Max', position: 'right', fill: '#F56565', fontSize: 10 }} />
                                         )}
+                                        
+                                        {/* Area for min/max range */}
+                                        <Area 
+                                            type="monotone" 
+                                            dataKey="minMax" 
+                                            fill="#4FD1C5" 
+                                            fillOpacity={0.15} 
+                                            stroke="none" 
+                                            name="Range (Min-Max)"
+                                            isAnimationActive={false}
+                                        />
+                                        
+                                        {/* Main average line */}
                                         <Line
                                             type="monotone"
                                             dataKey="value"
-                                            name={sensorName}
+                                            name={`${sensorName} (Avg)`}
                                             stroke="#4FD1C5"
                                             strokeWidth={3}
                                             dot={false}
                                             isAnimationActive={false}
                                         />
-                                    </LineChart>
+                                    </ComposedChart>
                                 </ResponsiveContainer>
                             </div>
                         </>
