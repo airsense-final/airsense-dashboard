@@ -5,6 +5,18 @@ import { API_BASE_URL as BASE_API_URL } from '../constants';
 const API_BASE_URL = `${BASE_API_URL}/v1`;
 const POLLING_INTERVAL = 2000; // 2 seconds
 
+const createZeroSensorData = (): SensorData => ({
+  temperature: 0,
+  humidity: 0,
+  co2: 0,
+  methane: 0,
+  co: 0,
+  airQuality: 0,
+  flammableGas: 0,
+  alcohol: 0,
+  timestamp: new Date()
+});
+
 export interface SensorData {
   temperature: number;
   humidity: number;
@@ -192,19 +204,10 @@ class TestScenarioService {
   private isRunning = false;
   private currentResults: TestResult | null = null;
   private abortController: AbortController | null = null;
+  private latestRealSensorData: SensorData | null = null;
 
   // Real-time sensor data from backend
-  private sensorData: SensorData = {
-    temperature: 25,
-    humidity: 50,
-    co2: 400,
-    methane: 0,
-    co: 0,
-    airQuality: 100, // 0-1000 range, higher value = worse quality
-    flammableGas: 0,
-    alcohol: 0,
-    timestamp: new Date()
-  };
+  private sensorData: SensorData = createZeroSensorData();
 
   private listeners: Array<(data: SensorData) => void> = [];
   private alertListeners: Array<(alert: string) => void> = [];
@@ -229,6 +232,21 @@ class TestScenarioService {
 
   private notifyListeners() {
     this.listeners.forEach(callback => callback({ ...this.sensorData }));
+  }
+
+  // Sync latest live data so test scenarios start from current real values.
+  setLiveSensorData(data: SensorData): void {
+    const normalizedData: SensorData = {
+      ...data,
+      timestamp: data.timestamp ? new Date(data.timestamp) : new Date()
+    };
+
+    this.latestRealSensorData = { ...normalizedData };
+
+    if (!this.isTestMode && !this.isRunning) {
+      this.sensorData = { ...normalizedData };
+      this.notifyListeners();
+    }
   }
 
   // Fetch real-time sensor data from backend
@@ -280,14 +298,14 @@ class TestScenarioService {
         }
 
         this.sensorData = {
-          temperature: sensorMap.temperature || 0,
-          humidity: sensorMap.humidity || 0,
-          co2: sensorMap.co2 || 400,
-          methane: sensorMap.methane || 0,
-          co: sensorMap.co || 0,
-          airQuality: sensorMap.airQuality || 0,
-          flammableGas: sensorMap.flammableGas || 0,
-          alcohol: sensorMap.alcohol || 0,
+          temperature: sensorMap.temperature ?? 0,
+          humidity: sensorMap.humidity ?? 0,
+          co2: sensorMap.co2 ?? 0,
+          methane: sensorMap.methane ?? 0,
+          co: sensorMap.co ?? 0,
+          airQuality: sensorMap.airQuality ?? 0,
+          flammableGas: sensorMap.flammableGas ?? 0,
+          alcohol: sensorMap.alcohol ?? 0,
           timestamp: new Date()
         };
 
@@ -450,6 +468,15 @@ class TestScenarioService {
       throw new Error('A test is already running!');
     }
 
+    // Preserve current real data as the simulation baseline.
+    if (this.latestRealSensorData) {
+      this.sensorData = {
+        ...this.latestRealSensorData,
+        timestamp: new Date()
+      };
+      this.notifyListeners();
+    }
+
     this.isRunning = true;
     this.isTestMode = true; // Enable test mode to prevent real data updates
     this.currentScenario = scenario;
@@ -515,17 +542,12 @@ class TestScenarioService {
   // Reset sensors to initial state
   resetSensors() {
     this.isTestMode = false;
-    this.sensorData = {
-      temperature: 22,
-      humidity: 45,
-      co2: 450,
-      methane: 200,
-      co: 5,
-      airQuality: 350,
-      flammableGas: 50,
-      alcohol: 20,
-      timestamp: new Date()
-    };
+    this.sensorData = this.latestRealSensorData
+      ? {
+        ...this.latestRealSensorData,
+        timestamp: new Date()
+      }
+      : createZeroSensorData();
     this.notifyListeners();
   }
 
