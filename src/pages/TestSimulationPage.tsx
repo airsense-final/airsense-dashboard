@@ -91,16 +91,30 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       // Convert real sensor data to SensorData format for display
       // Map sensor_id patterns to expected SensorData keys
       const convertedData: SensorData = {
-        temperature: 0,
-        humidity: 0,
-        co2: 0,
-        methane: 0,
-        co: 0,
-        airQuality: 0,
-        flammableGas: 0,
-        alcohol: 0,
+        ...testScenarioService.getCurrentSensorData(),
         timestamp: new Date()
       };
+
+      if (!Array.isArray(data) || data.length === 0) {
+        const zeroData: SensorData = {
+          temperature: 0,
+          humidity: 0,
+          co2: 0,
+          methane: 0,
+          co: 0,
+          airQuality: 0,
+          flammableGas: 0,
+          alcohol: 0,
+          timestamp: new Date()
+        };
+
+        testScenarioService.setLiveSensorData(zeroData);
+        setSensorData(zeroData);
+        setLastUpdate(new Date());
+        setBackendStatus('connected');
+        return;
+      }
+
       data.forEach((sensor) => {
         const sensorId = sensor.metadata.sensor_id.toLowerCase();
 
@@ -123,6 +137,10 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
           convertedData.alcohol = sensor.value;
         }
       });
+
+      // Keep service in sync so scenario starts from the latest live values.
+      testScenarioService.setLiveSensorData(convertedData);
+
       setSensorData(convertedData);
       setLastUpdate(new Date());
       setBackendStatus('connected');
