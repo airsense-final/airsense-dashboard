@@ -39,9 +39,8 @@ const AlertHistoryPage: React.FC = () => {
 
     const loadSensorMap = async () => {
         try {
-            // Fetch for current company scope or all if superadmin
-            // Note: Optimally we would refresh this when selectedCompany changes for superadmin
-            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : currentUser?.company_name;
+            // Backend accepts target_company_name only for superadmin.
+            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : undefined;
             const sensors = await listSensors(companyName);
             const map: Record<string, string> = {};
             sensors.forEach((s: any) => {

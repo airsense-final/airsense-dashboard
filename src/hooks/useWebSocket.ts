@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { BASE_URL } from '../constants'; // Correct import
+import { WEBSOCKET_URL } from '../constants'; // Correct import
 
 // Determine WS URL from HTTP URL (http -> ws, https -> wss)
-const WS_URL = BASE_URL.replace(/^http/, 'ws') + '/ws';
+const WS_URL = WEBSOCKET_URL;
 
 interface WebSocketMessage {
   type: string;
