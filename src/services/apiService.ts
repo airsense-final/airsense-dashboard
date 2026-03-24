@@ -322,6 +322,25 @@ export function getLatestAlerts(companyName?: string, isResolved?: boolean): Pro
   return apiFetch<Alert[]>(`/api/v1/alerts/latest?${params.toString()}`);
 }
 
+export interface SimulationAlertEmailRequest {
+  message: string;
+  alert_type: 'warning' | 'critical';
+  sensor_type?: string;
+  scenario_name?: string;
+  target_company_name?: string;
+  value?: number;
+  unit?: string;
+  threshold_value?: number;
+  location?: string;
+}
+
+export function sendSimulationAlertEmail(payload: SimulationAlertEmailRequest): Promise<{ message: string; sent_count?: number }> {
+  return apiFetch<{ message: string; sent_count?: number }>('/api/v1/alerts/simulation/email', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
 export interface AlertHistoryParams {
   target_company_name?: string;
   start_date?: string;

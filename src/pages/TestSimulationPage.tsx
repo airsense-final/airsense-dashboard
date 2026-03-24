@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { getLatestSensorData, getCompanies, getLatestAlerts } from '../services/apiService';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  getLatestSensorData,
+  getCompanies,
+  getLatestAlerts,
+  sendSimulationAlertEmail,
+} from '../services/apiService';
 import type { User, Company, Alert } from '../types/types';
 import {
   testScenarioService,
@@ -30,6 +35,59 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
   const [autoRunIndex, setAutoRunIndex] = useState(0);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const sentSimulationEmailAlertsRef = useRef<Set<string>>(new Set());
+
+  const detectAlertType = (alertMessage: string): 'warning' | 'critical' | null => {
+    const normalized = alertMessage.toUpperCase();
+    if (normalized.startsWith('CRITICAL:')) return 'critical';
+    if (normalized.startsWith('WARNING:')) return 'warning';
+    return null;
+  };
+
+  const detectSensorType = (alertMessage: string): string => {
+    const normalized = alertMessage.toLowerCase();
+    if (normalized.includes('temperature')) return 'temperature';
+    if (normalized.includes('co2')) return 'co2';
+    if (normalized.includes('methane')) return 'methane';
+    if (normalized.includes('co level') || normalized.includes('dangerous co')) return 'co';
+    if (normalized.includes('air quality')) return 'airQuality';
+    if (normalized.includes('flammable gas')) return 'flammableGas';
+    if (normalized.includes('humidity')) return 'humidity';
+    if (normalized.includes('alcohol')) return 'alcohol';
+    return 'simulation';
+  };
+
+  const sendSimulationAlertMailIfNeeded = async (alertMessage: string): Promise<void> => {
+    const alertType = detectAlertType(alertMessage);
+    if (!alertType || !testScenarioService.getIsRunning()) {
+      return;
+    }
+
+    const scenarioName = currentScenario?.name || 'Test Simulation';
+    const sensorType = detectSensorType(alertMessage);
+    // Prevent SMTP flooding: send only once per scenario + sensor + severity.
+    const dedupeKey = `${scenarioName}:${sensorType}:${alertType}`;
+    if (sentSimulationEmailAlertsRef.current.has(dedupeKey)) {
+      return;
+    }
+    sentSimulationEmailAlertsRef.current.add(dedupeKey);
+
+    try {
+      const response = await sendSimulationAlertEmail({
+        message: alertMessage,
+        alert_type: alertType,
+        sensor_type: sensorType,
+        scenario_name: scenarioName,
+        target_company_name: currentUser?.role === 'superadmin' ? selectedCompany : undefined,
+      });
+      const sentCount = response?.sent_count ?? 0;
+      setAlerts(prev => [...prev, `INFO: Alert email sent to ${sentCount} user(s) (${alertType.toUpperCase()})`]);
+    } catch (error) {
+      console.error('Failed to send simulation alert email:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send alert email';
+      setAlerts(prev => [...prev, `ERROR: ${errorMessage}`]);
+    }
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -44,13 +102,14 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
     // Listen for alerts
     const unsubscribeAlerts = testScenarioService.subscribeToAlerts((alert) => {
       setAlerts(prev => [...prev, alert]);
+      void sendSimulationAlertMailIfNeeded(alert);
     });
 
     return () => {
       unsubscribeSensor();
       unsubscribeAlerts();
     };
-  }, [currentUser?.role]);
+  }, [currentUser?.role, selectedCompany, currentScenario?.name]);
 
   useEffect(() => {
     // Only load real sensor data when no test is running
@@ -181,6 +240,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
     setIsRunning(true);
     setCurrentScenario(scenario);
     setAlerts([]);
+    sentSimulationEmailAlertsRef.current.clear();
 
     try {
       const result = await testScenarioService.runScenario(scenario);
@@ -208,6 +268,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
   const handleResetSensors = () => {
     setAlerts([]);
     setLastResult(null);
+    sentSimulationEmailAlertsRef.current.clear();
     // Reset test service to initial values
     testScenarioService.resetSensors();
     // Also reload real sensor data
