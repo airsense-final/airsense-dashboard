@@ -280,6 +280,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         });
         return newData;
       });
+
+      // --- HYBRID UPDATE: Push new WebSocket points directly to Chart History ---
+      setSensorHistory(prevHistory => {
+        const newHistory = { ...prevHistory };
+        updates.forEach(update => {
+          const sensorId = update.metadata.sensor_id;
+          const ts = update.timestamp.endsWith('Z') ? update.timestamp : update.timestamp + 'Z';
+          const newPoint = {
+            timestamp: update.timestamp,
+            value: update.value,
+            alarm: false,
+            time: new Date(ts)
+          };
+          
+          if (newHistory[sensorId]) {
+            // Append and keep last 50 points to match backend summary limit
+            newHistory[sensorId] = [...newHistory[sensorId], newPoint].slice(-50);
+          } else {
+            newHistory[sensorId] = [newPoint];
+          }
+        });
+        return newHistory;
+      });
+
       setLastUpdate(new Date());
     }
   }, [lastMessage, selectedCompany, currentUser]);
@@ -293,9 +317,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   }, [selectedCompany, currentUser]);
 
   useEffect(() => {
+    // --- FALLBACK SYNC: Polling every 10s to ensure consistency ---
     const historyIntervalId = setInterval(() => {
       loadSensorData();
-    }, 3000);
+    }, 10000); 
     return () => clearInterval(historyIntervalId);
   }, [selectedCompany, currentUser]);
 
