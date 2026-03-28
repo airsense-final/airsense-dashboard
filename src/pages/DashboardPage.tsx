@@ -6,6 +6,7 @@ import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
 import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget';
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 import { useWebSocket } from '../hooks/useWebSocket';
+import DigitalTwinButton from '../components/DigitalTwinButton';
 import {
   DndContext,
   closestCenter,
@@ -154,13 +155,13 @@ const SensorCard = React.memo< {
   return (
     <div
       onClick={handleClick}
-      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-3 relative h-full`}
+      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-2 sm:p-3 relative h-full`}
     >
       {dragHandleProps && (
         <div
           {...dragHandleProps}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-1 left-1 cursor-move p-1.5 bg-gray-700/50 hover:bg-gray-600 rounded transition-colors z-10 border border-gray-600"
+          className="absolute bottom-1 left-1 cursor-move p-1 bg-gray-700/50 hover:bg-gray-600 rounded transition-colors z-10 border border-gray-600 hidden sm:block"
           title="Drag to reorder"
         >
           <svg aria-hidden="true" className="w-3 h-3 text-gray-300" fill="currentColor" viewBox="0 0 16 16">
@@ -168,15 +169,15 @@ const SensorCard = React.memo< {
           </svg>
         </div>
       )}
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1 min-w-0 pr-2">
-          <h3 className="font-semibold truncate text-sm">{sensor.sensor_name}</h3>
-          <p className="text-gray-500 truncate text-[10px]">{sensor.sensor_id}</p>
+      <div className="flex justify-between items-start mb-1 sm:mb-2">
+        <div className="flex-1 min-w-0 pr-1 sm:pr-2">
+          <h3 className="font-semibold truncate text-[10px] sm:text-sm">{sensor.sensor_name}</h3>
+          <p className="text-gray-500 truncate text-[8px] sm:text-[10px]">{sensor.sensor_id}</p>
         </div>
-        <div className={`rounded-full flex-shrink-0 ${statusDotColor} w-2.5 h-2.5 mt-1`}></div>
+        <div className={`rounded-full flex-shrink-0 ${statusDotColor} w-2 h-2 sm:w-2.5 sm:h-2.5 mt-1`}></div>
       </div>
 
-      <div className="h-16 mb-2">
+      <div className="h-10 sm:h-16 mb-1 sm:mb-2">
         {historyData.length > 0 ? (
           <LineChartWidget
             title=""
@@ -186,17 +187,17 @@ const SensorCard = React.memo< {
             compact={true}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 text-[10px]">
+          <div className="flex items-center justify-center h-full text-gray-500 text-[8px] sm:text-[10px]">
             No data
           </div>
         )}
       </div>
 
       <div className="mt-auto text-center">
-        <span className="font-bold text-lg md:text-xl">
+        <span className="font-bold text-base sm:text-lg md:text-xl">
           {getSensorDisplayValue(latestValue, !!isError)}
         </span>
-        {!isError && <span className="ml-1 text-gray-400 text-xs">{unit}</span>}
+        {!isError && <span className="ml-0.5 text-gray-400 text-[8px] sm:text-xs">{unit}</span>}
       </div>
     </div>
   );
@@ -247,7 +248,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
       Object.entries(data.values).forEach(([key, value]) => {
         if (ignoreKeys.includes(key) || typeof value !== 'number') return;
-        const uniqueId = `${data.device_id}_${key}`;
+        const uniqueId = data.company_name ? `${data.company_name}_${key}` : `${data.device_id}_${key}`;
         
         updates.push({
           _id: uniqueId,
@@ -280,30 +281,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         });
         return newData;
       });
-
-      // --- HYBRID UPDATE: Push new WebSocket points directly to Chart History ---
-      setSensorHistory(prevHistory => {
-        const newHistory = { ...prevHistory };
-        updates.forEach(update => {
-          const sensorId = update.metadata.sensor_id;
-          const ts = update.timestamp.endsWith('Z') ? update.timestamp : update.timestamp + 'Z';
-          const newPoint = {
-            timestamp: update.timestamp,
-            value: update.value,
-            alarm: false,
-            time: new Date(ts)
-          };
-          
-          if (newHistory[sensorId]) {
-            // Append and keep last 50 points to match backend summary limit
-            newHistory[sensorId] = [...newHistory[sensorId], newPoint].slice(-50);
-          } else {
-            newHistory[sensorId] = [newPoint];
-          }
-        });
-        return newHistory;
-      });
-
       setLastUpdate(new Date());
     }
   }, [lastMessage, selectedCompany, currentUser]);
@@ -317,10 +294,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   }, [selectedCompany, currentUser]);
 
   useEffect(() => {
-    // --- FALLBACK SYNC: Polling every 10s to ensure consistency ---
     const historyIntervalId = setInterval(() => {
       loadSensorData();
-    }, 10000); 
+    }, 3000);
     return () => clearInterval(historyIntervalId);
   }, [selectedCompany, currentUser]);
 
@@ -514,26 +490,38 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   }
 
   return (
-    <div className="px-1 sm:px-2 md:px-4 py-4 md:py-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Dashboard</h2>
-          <div className="flex items-center gap-2 mt-1.5">
-            <p className="text-xs text-gray-400">
-              {lastUpdate.toLocaleTimeString()}
-            </p>
-            {isConnected && (
-              <span className="flex items-center gap-1 text-[9px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
-                <span className="w-1 h-1 bg-green-400 rounded-full"></span>
-                Live
-              </span>
-            )}
+    <div className="px-1 sm:px-2 md:px-4 py-2 sm:py-4 md:py-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 bg-gray-800/20 p-4 rounded-2xl border border-gray-700/30 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Dashboard</h2>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Last Update:</span>
+                <p className="text-[10px] sm:text-xs font-mono text-cyan-400/90">
+                  {lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </p>
+              </div>
+              {isConnected && (
+                <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-semibold text-green-400 bg-green-400/5 px-2 py-0.5 rounded-full border border-green-400/10">
+                  <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></span>
+                  Live
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <DigitalTwinButton 
+              role={currentUser?.role}
+              company={currentUser?.company_name || selectedCompany}
+            />
           </div>
         </div>
 
         {currentUser?.role === 'superadmin' && companies.length > 0 && (
-          <div className="w-full sm:w-auto flex items-center gap-3 bg-gray-800/50 p-1.5 pl-3 rounded-xl border border-gray-700">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Company</label>
+          <div className="w-full sm:w-auto flex items-center gap-3 bg-gray-900/50 p-2 pl-4 rounded-xl border border-gray-700 shadow-lg">
+            <label className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">Organization</label>
             <select
               value={selectedCompany}
               onChange={(e) => {
@@ -541,7 +529,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 setSelectedCompany(newValue);
                 localStorage.setItem('dashboard_selected_company', newValue);
               }}
-              className="flex-1 sm:flex-none px-3 py-1.5 bg-gray-900 text-white border-none rounded-lg focus:ring-2 focus:ring-cyan-500 text-sm font-medium"
+              className="flex-1 sm:flex-none px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-1 focus:ring-cyan-500/50 text-xs sm:text-sm font-medium appearance-none cursor-pointer hover:bg-gray-750 transition-colors outline-none"
             >
               {companies.map((company) => (
                 <option key={company._id} value={company.name}>
@@ -625,7 +613,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
             return (
               <DndContext sensors={deviceDndSensors} collisionDetection={closestCenter} onDragEnd={handleDeviceDragEnd}>
                 <SortableContext items={effectiveDeviceOrder.length > 0 ? effectiveDeviceOrder : deviceKeys} strategy={rectSortingStrategy}>
-                  <div className="space-y-10">
+                  <div className="space-y-6 sm:space-y-10">
                     {sortedDeviceEntries.map(([parentDevice, sensors]) => {
                       const deviceSensorData = sensorData.filter(d => d.metadata.parent_device === parentDevice);
                       const sensorIdsReadable = sensors.map(s => s.metadata.sensor_id);
@@ -633,24 +621,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
                       return (
                         <SortableDeviceGroup key={parentDevice} id={parentDevice}>
-                          <div className="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-4 md:p-6 shadow-xl backdrop-blur-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-inner">
-                                  <span className="text-2xl">🔌</span>
+                          <div className="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-3 sm:p-4 md:p-6 shadow-xl backdrop-blur-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+                              <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-inner">
+                                  <span className="text-xl sm:text-2xl">🔌</span>
                                 </div>
                                 <div>
-                                  <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">{parentDevice}</h2>
-                                  <p className="text-[10px] md:text-xs font-semibold text-cyan-400 uppercase tracking-widest">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} active</p>
+                                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-white tracking-tight">{parentDevice}</h2>
+                                  <p className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-cyan-400 uppercase tracking-widest">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} active</p>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex flex-col xl:flex-row gap-6">
+                            <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
                               <div className="flex-grow">
                                 <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(event, parentDevice)}>
                                   <SortableContext items={sensors.map(s => s.metadata.sensor_id)} strategy={rectSortingStrategy}>
-                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
                                       {sensors.map((data) => {
                                         const isError = isSensorError(data.metadata.sensor_id, data.value, sensorValueMap);
                                         return (

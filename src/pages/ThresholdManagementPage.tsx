@@ -180,54 +180,54 @@ const ThresholdManagementPage: React.FC = () => {
     });
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-800/20 p-4 rounded-2xl border border-gray-700/30 backdrop-blur-sm">
                 <div>
-                    <h2 className="text-3xl font-bold text-white">Threshold Management</h2>
-                    <p className="text-gray-400 mt-1">Manage global system defaults and company-specific overrides.</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Threshold Management</h2>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">System baseline configurations & overrides</p>
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg shadow-cyan-900/20 flex items-center gap-2"
+                    className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all shadow-lg shadow-cyan-900/20 active:scale-95"
                 >
-                    <span>+</span> Add New Threshold
+                    + Add New Threshold
                 </button>
             </div>
 
-            {/* Filters */}
-            <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px]">
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Filter by Scenario</label>
+            {/* Filters - Stack on mobile, Premium on Desktop */}
+            <div className="bg-gray-800/40 backdrop-blur-md p-4 rounded-2xl border border-gray-700/50 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Scenario Scope</label>
                     <select
                         value={scenarioFilter}
                         onChange={(e) => setScenarioFilter(e.target.value)}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 outline-none"
+                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none cursor-pointer"
                     >
-                        <option value="">All Scenarios</option>
-                        {scenarios.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        <option value="">ALL SCENARIOS</option>
+                        {scenarios.map(s => <option key={s.id} value={s.id}>{s.name.toUpperCase()}</option>)}
                     </select>
                 </div>
-                <div className="flex-1 min-w-[200px]">
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Filter by Target</label>
+                <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Target Organization</label>
                     <select
                         value={companyFilter}
                         onChange={(e) => setCompanyFilter(e.target.value)}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 outline-none"
+                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none cursor-pointer"
                     >
-                        <option value="">All Targets</option>
-                        <option value="global">System Baseline (Global)</option>
-                        {companies.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                        <option value="">ALL TARGETS</option>
+                        <option value="global">GLOBAL BASELINE</option>
+                        {companies.map(c => <option key={c._id} value={c._id}>{c.name.toUpperCase()}</option>)}
                     </select>
                 </div>
-                <div className="flex-1 min-w-[200px]">
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Filter by Sensor</label>
+                <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Sensor Category</label>
                     <select
                         value={sensorFilter}
                         onChange={(e) => setSensorFilter(e.target.value)}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 outline-none"
+                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none cursor-pointer"
                     >
-                        <option value="">All Sensors</option>
-                        {sensorTypes.map(st => <option key={st.id} value={st.id}>{st.name}</option>)}
+                        <option value="">ALL SENSORS</option>
+                        {sensorTypes.map(st => <option key={st.id} value={st.id}>{st.name.toUpperCase()}</option>)}
                     </select>
                 </div>
             </div>
@@ -246,9 +246,10 @@ const ThresholdManagementPage: React.FC = () => {
                 </div>
                 )}
 
-            {/* Table */}
+            {/* Table / Card List */}
             <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
-                <div className="overflow-x-auto">
+                {/* Desktop Table - ORIGINAL */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-700/50 text-gray-300 text-xs font-bold uppercase tracking-wider">
@@ -325,6 +326,58 @@ const ThresholdManagementPage: React.FC = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List - NEW */}
+                <div className="md:hidden divide-y divide-gray-700">
+                    {loading ? (
+                        <div className="p-10 text-center text-gray-400 text-sm">Loading...</div>
+                    ) : filteredThresholds.length === 0 ? (
+                        <div className="p-10 text-center text-gray-400 text-sm italic">No configurations found.</div>
+                    ) : (
+                        filteredThresholds.map((t) => (
+                            <div key={t._id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="text-sm font-bold text-white uppercase tracking-tight">{t.scenario.replace('_', ' ')}</div>
+                                        <div className="text-[10px] text-cyan-400 font-mono mt-0.5">{t.sensor_type}</div>
+                                    </div>
+                                    <div className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border border-gray-700">
+                                        {t.unit || 'NO UNIT'}
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-gray-900/50 p-2 rounded border border-gray-700/50 space-y-1">
+                                    <div className="flex justify-between text-[10px]">
+                                        <span className="text-amber-500 font-bold uppercase">Warning:</span>
+                                        <span className="text-gray-300 font-mono">{t.warning_min ?? '—'} ↔ {t.warning_max ?? '—'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-[10px]">
+                                        <span className="text-red-500 font-bold uppercase">Critical:</span>
+                                        <span className="text-gray-300 font-mono">{t.critical_min ?? '—'} ↔ {t.critical_max ?? '—'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-1">
+                                    {!t.company_id ? (
+                                        <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest bg-blue-400/10 px-2 py-0.5 rounded">SYSTEM BASELINE</span>
+                                    ) : (
+                                        <span className="text-[9px] font-bold text-amber-400 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded truncate max-w-[150px]">
+                                            {companies.find(c => c._id === t.company_id)?.name || 'ORG'}
+                                        </span>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <button onClick={() => openModal(t)} className="p-2 bg-gray-700 text-white rounded">
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                        </button>
+                                        <button onClick={() => t._id && handleDelete(t._id)} className="p-2 bg-red-900/20 text-red-500 border border-red-900/30 rounded">
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

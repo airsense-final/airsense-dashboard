@@ -1,5 +1,5 @@
 import React from 'react';
-import { getToken } from '../services/apiService'; // Senin apiService yoluna göre ayarla
+import { getToken } from '../services/apiService';
 
 interface DigitalTwinButtonProps {
   role?: string;
@@ -9,36 +9,27 @@ interface DigitalTwinButtonProps {
 const DigitalTwinButton: React.FC<DigitalTwinButtonProps> = ({ role, company }) => {
 
   const handleOpenTwin = () => {
-    // 1. Token'ı al (Senin servisinden)
     const token = getToken();
-    
     if (!token) {
       alert("Oturum hatası: Token bulunamadı.");
       return;
     }
 
-    // 2. Parametreleri hazırla
-    // Eğer company yoksa boş string gönder
     const safeCompany = company ? encodeURIComponent(company) : "";
     const safeRole = role ? role.toLowerCase() : "viewer";
-
-    // 3. URL'yi oluştur ( Digital Twin Projesi)
-    const TWIN_BASE_URL = 
-      "https://airsensedigitaltwin.netlify.app"; 
-
+    const TWIN_BASE_URL = "https://airsensedigitaltwin.netlify.app"; 
     const twinUrl = `${TWIN_BASE_URL}/?token=${token}&role=${safeRole}&company=${safeCompany}`;
-    // 4. Yeni sekmede aç
     window.open(twinUrl, '_blank');
   };
 
   return (
     <button 
       onClick={handleOpenTwin}
-      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2 transition-colors shadow-lg"
-      title="3D Fabrika Simülasyonunu Başlat"
+      className="flex items-center gap-2.5 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-all duration-300 active:scale-95 group shadow-lg shadow-indigo-900/10"
+      title="Launch 3D Environment"
     >
-      <span>🏭</span>
-      <span>Start 3D Monitoring</span>
+      <span className="text-base group-hover:rotate-12 transition-transform duration-500">🛰️</span>
+      <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Start 3D Monitoring</span>
     </button>
   );
 };

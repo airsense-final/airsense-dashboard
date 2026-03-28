@@ -84,15 +84,15 @@ export function AdminUsersPage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'superadmin':
-        return 'bg-purple-500';
+        return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
       case 'companyadmin':
-        return 'bg-blue-500';
+        return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
       case 'manager':
-        return 'bg-green-500';
+        return 'bg-green-500/10 text-green-400 border border-green-500/20';
       case 'viewer':
-        return 'bg-gray-500';
+        return 'bg-gray-500/10 text-gray-400 border border-gray-500/20';
       default:
-        return 'bg-gray-500';
+        return 'bg-gray-500/10 text-gray-400 border border-gray-500/20';
     }
   };
 
@@ -123,34 +123,34 @@ export function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">User Management</h1>
-          <p className="text-gray-400">Manage user roles and access permissions</p>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">User Management</h1>
+          <p className="text-gray-400 text-xs sm:text-sm">Manage user roles and access permissions</p>
         </div>
 
         {/* Tab Navigation */}
         <div className="mb-6 flex gap-2">
           <button
             onClick={() => setActiveTab('active')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${activeTab === 'active'
+            className={`flex-1 sm:flex-none px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeTab === 'active'
               ? 'bg-cyan-600 text-white'
               : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
           >
-            Active Users ({users.length})
+            Active ({users.length})
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors relative ${activeTab === 'pending'
+            className={`flex-1 sm:flex-none px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${activeTab === 'pending'
               ? 'bg-cyan-600 text-white'
               : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
           >
-            Pending Approvals ({pendingUsers.length})
+            Pending ({pendingUsers.length})
             {pendingUsers.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-[10px] sm:text-xs text-white">
                 {pendingUsers.length}
               </span>
             )}
@@ -162,24 +162,24 @@ export function AdminUsersPage() {
           <>
             {/* Company Filter - only for superadmin */}
             {currentUser && currentUser.role === 'superadmin' && (
-              <div className="mb-6 flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-300">Filter by Company:</label>
+              <div className="mb-6 bg-gray-800/40 backdrop-blur-md p-4 rounded-2xl border border-gray-700/50 shadow-xl flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">Filter Context</label>
                 <select
                   value={selectedCompany}
                   onChange={(e) => setSelectedCompany(e.target.value)}
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  className="flex-1 max-w-md px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white text-xs font-bold outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="all">All Companies ({users.length} users)</option>
+                  <option value="all">ALL COMPANIES ({users.length})</option>
                   {companies.map((company) => (
                     <option key={company._id} value={company._id}>
-                      {company.name} ({usersByCompany[company._id] || 0} users)
+                      {company.name.toUpperCase()} ({usersByCompany[company._id] || 0})
                     </option>
                   ))}
                 </select>
                 {selectedCompany !== 'all' && (
                   <button
                     onClick={() => setSelectedCompany('all')}
-                    className="text-sm text-blue-400 hover:text-blue-300 underline"
+                    className="text-xs font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-widest ml-2"
                   >
                     Clear filter
                   </button>
@@ -207,8 +207,9 @@ export function AdminUsersPage() {
               </div>
             )}
 
-            <div className="bg-gray-800 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+              {/* Desktop Table View - ORIGINAL */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-700">
                     <tr>
@@ -268,14 +269,14 @@ export function AdminUsersPage() {
                             {user.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                          <div className="flex justify-center gap-3">
                             <button
                               onClick={() => handleStatusToggle(user._id, user.is_active)}
-                              className={`px-4 py-2 rounded ${user.is_active
-                                ? 'bg-red-600 hover:bg-red-700'
-                                : 'bg-green-600 hover:bg-green-700'
-                                } transition-colors`}
+                              className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all border ${user.is_active
+                                ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500 hover:text-white'
+                                : 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500 hover:text-white'
+                                }`}
                             >
                               {user.is_active ? 'Deactivate' : 'Activate'}
                             </button>
@@ -285,7 +286,7 @@ export function AdminUsersPage() {
                             ) && currentUser._id !== user._id && (
                                 <button
                                   onClick={() => setDeleteTarget(user)}
-                                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                                  className="px-4 py-1.5 bg-gray-800 text-gray-400 hover:bg-red-600 hover:text-white border border-gray-700 hover:border-red-600 rounded-xl text-xs font-semibold transition-all"
                                 >
                                   Delete
                                 </button>
@@ -296,6 +297,48 @@ export function AdminUsersPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card View - NEW */}
+              <div className="md:hidden divide-y divide-gray-700">
+                {filteredUsers.map((user) => (
+                  <div key={user._id} className="p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="text-sm font-bold text-white tracking-tight">{user.username}</div>
+                        <div className="text-[10px] text-gray-500 mt-0.5">{user.email}</div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${user.is_active ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                        {user.is_active ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest bg-cyan-400/5 px-2 py-0.5 rounded">
+                        {getCompanyName(user.company_id, user.company_name)}
+                      </span>
+                      <select 
+                        value={user.role} 
+                        onChange={(e) => handleRoleChange(user._id, e.target.value)} 
+                        className="bg-gray-900 text-white text-[10px] px-2 py-1 rounded border border-gray-700 outline-none"
+                      >
+                        <option value="superadmin">SUPER</option>
+                        <option value="companyadmin">ADMIN</option>
+                        <option value="manager">MGR</option>
+                        <option value="viewer">VIEW</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => handleStatusToggle(user._id, user.is_active)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${user.is_active ? 'bg-red-600/10 text-red-500 border border-red-500/20' : 'bg-green-600/10 text-green-500 border border-green-500/20'}`}>
+                        {user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
+                      </button>
+                      {currentUser && ((currentUser.role === 'superadmin') || (currentUser.role === 'companyadmin' && currentUser.company_id === user.company_id)) && currentUser._id !== user._id && (
+                        <button onClick={() => setDeleteTarget(user)} className="px-3 py-2 bg-gray-900 border border-gray-700 text-red-500 rounded-lg">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -318,8 +361,9 @@ export function AdminUsersPage() {
               </div>
             )}
 
-            <div className="bg-gray-800 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+              {/* Desktop Table View - ORIGINAL */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-700">
                     <tr>
@@ -371,6 +415,28 @@ export function AdminUsersPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card View - NEW */}
+              <div className="md:hidden divide-y divide-gray-700">
+                {pendingUsers.map((user) => (
+                  <div key={user._id} className="p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="text-sm font-bold text-white tracking-tight">{user.username}</div>
+                        <div className="text-[10px] text-gray-500 mt-0.5">{user.email}</div>
+                      </div>
+                      <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-black uppercase">PENDING</span>
+                    </div>
+                    <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest bg-cyan-400/5 px-2 py-0.5 rounded inline-block">
+                      {getCompanyName(user.company_id, user.company_name)}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => handleStatusToggle(user._id, user.is_active)} className="flex-1 py-2 bg-green-600 text-white rounded-lg text-[10px] font-bold shadow-lg shadow-green-900/20">APPROVE</button>
+                      <button onClick={() => setDeleteTarget(user)} className="px-4 py-2 bg-gray-900 border border-gray-700 text-red-500 rounded-lg text-[10px] font-bold">REJECT</button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

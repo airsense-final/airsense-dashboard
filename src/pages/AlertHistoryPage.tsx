@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -22,6 +21,7 @@ const AlertHistoryPage: React.FC = () => {
     const [sensorFilter, setSensorFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'resolved'>('all');
     const [readFilter, setReadFilter] = useState<'all' | 'read' | 'unread'>('all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
 
     const loadUserAndCompanies = async () => {
         try {
@@ -36,11 +36,9 @@ const AlertHistoryPage: React.FC = () => {
         }
     };
 
-
     const loadSensorMap = async () => {
         try {
-            // Backend accepts target_company_name only for superadmin.
-            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : undefined;
+            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : currentUser?.company_name;
             const sensors = await listSensors(companyName);
             const map: Record<string, string> = {};
             sensors.forEach((s: any) => {
@@ -58,18 +56,11 @@ const AlertHistoryPage: React.FC = () => {
         const end = new Date();
         let start = new Date();
 
-        if (preset === '1h') {
-            start.setHours(end.getHours() - 1);
-        } else if (preset === '24h') {
-            start.setHours(end.getHours() - 24);
-        } else if (preset === '7d') {
-            start.setDate(end.getDate() - 7);
-        } else if (preset === '30d') {
-            start.setDate(end.getDate() - 30);
-        } else {
-            // custom, do nothing to dates unless they are empty
-            return;
-        }
+        if (preset === '1h') start.setHours(end.getHours() - 1);
+        else if (preset === '24h') start.setHours(end.getHours() - 24);
+        else if (preset === '7d') start.setDate(end.getDate() - 7);
+        else if (preset === '30d') start.setDate(end.getDate() - 30);
+        else return;
 
         setStartDate(start.toISOString());
         setEndDate(end.toISOString());
@@ -78,7 +69,6 @@ const AlertHistoryPage: React.FC = () => {
     const handleMarkAsRead = async (alertId: string) => {
         try {
             await markAlertAsRead(alertId);
-            // Optimistic update
             setAlerts(prev => prev.map(a => a._id === alertId ? { ...a, is_read: true } : a));
         } catch (err) {
             console.error('Failed to mark alert as read', err);
@@ -88,9 +78,7 @@ const AlertHistoryPage: React.FC = () => {
     const handleMarkAllRead = async () => {
         try {
             await markAllAlertsAsRead(currentUser?.role === 'superadmin' ? selectedCompany : undefined);
-            // Optimistic update
             setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
-            // Optionally reload to be sure
             loadAlerts();
         } catch (err) {
             console.error('Failed to mark all as read', err);
@@ -100,56 +88,21 @@ const AlertHistoryPage: React.FC = () => {
     const handleExportPDF = async () => {
         try {
             setError(null);
-            
-            // Prepare export parameters based on current filters
-            const exportParams: {
-                target_company_name?: string;
-                start_date?: string;
-                end_date?: string;
-                is_resolved?: boolean;
-                include_anomalies: boolean;
-            } = {
-                include_anomalies: true, // Always include anomalies
-            };
-
-            // Add company filter for superadmin
-            if (currentUser?.role === 'superadmin' && selectedCompany) {
-                exportParams.target_company_name = selectedCompany;
-            }
-
-            // Add date range if set
-            if (startDate) {
-                exportParams.start_date = startDate;
-            }
-            if (endDate) {
-                exportParams.end_date = endDate;
-            }
-
-            // Add resolution status filter
-            if (statusFilter === 'active') {
-                exportParams.is_resolved = false;
-            } else if (statusFilter === 'resolved') {
-                exportParams.is_resolved = true;
-            }
-
-            // Show loading state (you can add a loading indicator if needed)
-            console.log('Exporting PDF with params:', exportParams);
-            
+            const exportParams: any = { include_anomalies: true };
+            if (currentUser?.role === 'superadmin' && selectedCompany) exportParams.target_company_name = selectedCompany;
+            if (startDate) exportParams.start_date = startDate;
+            if (endDate) exportParams.end_date = endDate;
+            if (statusFilter === 'active') exportParams.is_resolved = false;
+            else if (statusFilter === 'resolved') exportParams.is_resolved = true;
             await exportAlertsPDF(exportParams);
-            
-            // Success notification (optional)
-            console.log('PDF exported successfully');
         } catch (err: any) {
-            console.error('Failed to export PDF', err);
             setError(err.message || 'Failed to export PDF report');
         }
     };
 
     const loadAlerts = async () => {
         if (!currentUser) return;
-
         setLoading(true);
-
         if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
             setError('Start Date cannot be after End Date.');
             setAlerts([]);
@@ -160,42 +113,26 @@ const AlertHistoryPage: React.FC = () => {
         try {
             const isResolved = statusFilter === 'all' ? undefined : (statusFilter === 'resolved');
             const isRead = readFilter === 'all' ? undefined : (readFilter === 'read');
-
-            const params = {
-                start_date: startDate,
-                end_date: endDate,
-                // sensor_id: sensorFilter, 
-                is_resolved: isResolved,
-                is_read: isRead,
-                limit: 100
-            };
+            const params = { start_date: startDate, end_date: endDate, is_resolved: isResolved, is_read: isRead, limit: 100 };
 
             let data: Alert[] = [];
-
-            // Special handling for Super Admin with "All Companies" selected
             if (currentUser.role === 'superadmin' && !selectedCompany && companies.length > 0) {
                 data = await getAggregatedAlertHistory(companies, params);
             } else {
-                // Standard fetch
-                const singleParams = {
-                    ...params,
-                    target_company_name: currentUser.role === 'superadmin' ? selectedCompany : undefined,
-                };
+                const singleParams = { ...params, target_company_name: currentUser.role === 'superadmin' ? selectedCompany : undefined };
                 data = await getAlertHistory(singleParams);
             }
 
-            // Client-side Fuzzy Search (Sensor ID or Type)
             if (sensorFilter) {
                 const lowerFilter = sensorFilter.toLowerCase();
-                data = data.filter(alert =>
-                    alert.sensor_id.toLowerCase().includes(lowerFilter) ||
-                    alert.sensor_type.toLowerCase().includes(lowerFilter)
-                );
+                data = data.filter(alert => alert.sensor_id.toLowerCase().includes(lowerFilter) || alert.sensor_type.toLowerCase().includes(lowerFilter));
+            }
+            
+            if (typeFilter !== 'all') {
+                data = data.filter(alert => alert.alert_type === typeFilter);
             }
 
-            // Sort by timestamp descending (newest first)
             data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
             setAlerts(data);
             setError(null);
         } catch (err: any) {
@@ -206,38 +143,15 @@ const AlertHistoryPage: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        loadUserAndCompanies();
-    }, []);
-
-    useEffect(() => {
-        applyPreset(rangePreset);
-    }, [rangePreset]);
-
-    useEffect(() => {
-        // Debounce or just load on effective changes
-        loadAlerts();
-        loadSensorMap();
-    }, [startDate, endDate, selectedCompany, sensorFilter, statusFilter, readFilter, currentUser]);
-
-    // Auto-refresh every 30 seconds (Resets timer on filter change)
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            if (rangePreset !== 'custom') {
-                applyPreset(rangePreset); // This updates start/end date, which triggers loadAlerts via dependency
-            } else {
-                loadAlerts(); // Just reload for fixed custom range
-            }
-        }, 30000);
-        return () => clearInterval(intervalId);
-    }, [rangePreset, startDate, endDate, selectedCompany, sensorFilter, statusFilter, readFilter, currentUser]);
+    useEffect(() => { loadUserAndCompanies(); }, []);
+    useEffect(() => { applyPreset(rangePreset); }, [rangePreset]);
+    useEffect(() => { loadAlerts(); loadSensorMap(); }, [startDate, endDate, selectedCompany, sensorFilter, statusFilter, readFilter, typeFilter, currentUser]);
 
     const stats = useMemo(() => {
         return alerts.reduce((acc, alert) => {
             acc.total++;
-            if (alert.is_resolved) {
-                acc.resolved++;
-            } else {
+            if (alert.is_resolved) acc.resolved++;
+            else {
                 acc.activeTotal++;
                 if (alert.alert_type === 'critical') acc.activeCritical++;
                 if (alert.alert_type === 'warning') acc.activeWarning++;
@@ -247,314 +161,165 @@ const AlertHistoryPage: React.FC = () => {
     }, [alerts]);
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-6">
+        <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-                <div className="flex flex-wrap justify-between items-center gap-4">
+                {/* 1. Header Section */}
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
-                        <div className="flex items-center gap-4">
-                            <h1 className="text-3xl font-bold">Alert History</h1>
-                            <button
-                                onClick={handleMarkAllRead}
-                                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-xs font-medium rounded-full text-gray-300 transition-colors border border-gray-600"
-                            >
-                                Mark All Read
-                            </button>
-                            <button
-                                onClick={handleExportPDF}
-                                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-sm font-medium rounded-lg text-white transition-colors shadow-lg flex items-center gap-2"
-                                title="Export filtered alerts and anomalies as PDF report"
-                            >
-                                <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Export PDF Report
-                            </button>
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Alert History</h1>
+                            <div className="flex gap-2">
+                                <button onClick={handleMarkAllRead} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-xs sm:text-sm font-semibold rounded-full text-gray-300 border border-gray-600 transition-colors">Mark All Read</button>
+                                <button onClick={handleExportPDF} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-xs sm:text-sm font-semibold rounded-full text-white shadow-lg flex items-center gap-2 transition-all"><svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>PDF Report</button>
+                            </div>
                         </div>
-                        <p className="text-gray-400 mt-1">Review past and ongoing sensor alerts</p>
+                        <p className="text-gray-400 text-xs sm:text-sm">Review past and ongoing sensor alerts</p>
                     </div>
 
-                    {/* Presets */}
-                    <div className="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
-                        {(['1h', '24h', '7d', '30d', 'custom'] as const).map((preset) => (
-                            <button
-                                key={preset}
-                                onClick={() => {
-                                    setRangePreset(preset);
-                                    applyPreset(preset);
-                                }}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${rangePreset === preset
-                                    ? 'bg-cyan-600 text-white'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                    }`}
-                            >
-                                {preset === 'custom' ? 'Custom Range' : `Last ${preset}`}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Futuristic Donut Chart (Alert Distribution) */}
-                <div className="w-full mb-6">
-                    <AlertDistributionChart 
-                        total={stats.total} 
-                        activeCritical={stats.activeCritical} 
-                        activeWarning={stats.activeWarning} 
-                        resolved={stats.resolved} 
-                    />
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Active Alerts</p>
-                            <p className="text-2xl font-bold text-white">{stats.activeTotal} <span className="text-sm text-gray-500 font-normal">/ {stats.total}</span></p>
-                        </div>
-                        <div className="p-3 bg-gray-700/50 rounded-full">
-                            <svg aria-hidden="true" className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg border border-red-900/50 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-red-400 text-sm">Active Critical</p>
-                            <p className="text-2xl font-bold text-red-100">{stats.activeCritical}</p>
-                        </div>
-                        <div className="p-3 bg-red-900/20 rounded-full">
-                            <svg aria-hidden="true" className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg border border-yellow-900/50 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-yellow-400 text-sm">Active Warning</p>
-                            <p className="text-2xl font-bold text-yellow-100">{stats.activeWarning}</p>
-                        </div>
-                        <div className="p-3 bg-yellow-900/20 rounded-full">
-                            <svg aria-hidden="true" className="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg border border-green-900/50 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-green-400 text-sm">Resolved</p>
-                            <p className="text-2xl font-bold text-green-100">{stats.resolved}</p>
-                        </div>
-                        <div className="p-3 bg-green-900/20 rounded-full">
-                            <svg aria-hidden="true" className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                    <div className="w-full lg:w-auto overflow-x-auto no-scrollbar pb-1">
+                        <div className="flex bg-gray-800 rounded-lg p-1 border border-gray-700 w-max lg:w-auto">
+                            {(['1h', '24h', '7d', '30d', 'custom'] as const).map((preset) => (
+                                <button key={preset} onClick={() => { setRangePreset(preset); applyPreset(preset); }} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-[10px] sm:text-sm font-semibold transition-colors whitespace-nowrap ${rangePreset === preset ? 'bg-cyan-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}>{preset === 'custom' ? 'Custom' : `Last ${preset}`}</button>
+                            ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Filters Bar */}
-                <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-12 gap-4">
-                    {/* Date Inputs */}
-                    <div className="space-y-1 xl:col-span-2">
-                        <label className="text-xs font-semibold text-gray-400 uppercase">Start Date</label>
+                {/* 2. Donut Chart - RESTORED TO ORIGINAL POSITION (TOP) */}
+                <div className="w-full">
+                    <AlertDistributionChart total={stats.total} activeCritical={stats.activeCritical} activeWarning={stats.activeWarning} resolved={stats.resolved} />
+                </div>
+
+                {/* 3. Summary Stats Cards - UNDER CHART */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                    <div className="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex items-center justify-between">
+                        <div><p className="text-gray-400 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Active</p><p className="text-lg sm:text-2xl font-bold text-white">{stats.activeTotal}</p></div>
+                        <div className="p-2 bg-gray-700/50 rounded-full hidden sm:block"><svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                    </div>
+                    <div className="bg-gray-800 p-3 sm:p-4 rounded-xl border border-red-900/30 shadow-sm flex items-center justify-between">
+                        <div><p className="text-red-400 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Critical</p><p className="text-lg sm:text-2xl font-bold text-red-100">{stats.activeCritical}</p></div>
+                        <div className="p-2 bg-red-900/20 rounded-full hidden sm:block"><svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
+                    </div>
+                    <div className="bg-gray-800 p-3 sm:p-4 rounded-xl border border-yellow-900/30 shadow-sm flex items-center justify-between">
+                        <div><p className="text-yellow-400 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Warning</p><p className="text-lg sm:text-2xl font-bold text-yellow-100">{stats.activeWarning}</p></div>
+                        <div className="p-2 bg-yellow-900/20 rounded-full hidden sm:block"><svg className="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                    </div>
+                    <div className="bg-gray-800 p-3 sm:p-4 rounded-xl border border-green-900/30 shadow-sm flex items-center justify-between">
+                        <div><p className="text-green-400 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Resolved</p><p className="text-lg sm:text-2xl font-bold text-green-100">{stats.resolved}</p></div>
+                        <div className="p-2 bg-green-900/20 rounded-full hidden sm:block"><svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                    </div>
+                </div>
+
+                {/* 4. Filters Grid - UNDER STATS */}
+                <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">Start Date</label>
                         <DatePicker
                             selected={startDate ? new Date(startDate) : null}
-                            onChange={(date: Date | null) => {
-                                setRangePreset('custom');
-                                setStartDate(date ? date.toISOString() : '');
-                            }}
-                            showTimeSelect
-                            maxDate={endDate ? new Date(endDate) : new Date()}
-                            filterTime={(date) => date.getTime() <= new Date().getTime()}
-                            timeFormat="HH:mm"
-                            timeIntervals={15}
-                            dateFormat="dd-MM-yyyy HH:mm"
-                            placeholderText="Select start date"
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            onChange={(date: Date | null) => { setRangePreset('custom'); setStartDate(date ? date.toISOString() : ''); }}
+                            showTimeSelect maxDate={endDate ? new Date(endDate) : new Date()} timeFormat="HH:mm" timeIntervals={15} dateFormat="dd-MM-yyyy HH:mm" placeholderText="Start"
+                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500"
                         />
                     </div>
-                    <div className="space-y-1 xl:col-span-2">
-                        <label className="text-xs font-semibold text-gray-400 uppercase">End Date</label>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">End Date</label>
                         <DatePicker
                             selected={endDate ? new Date(endDate) : null}
-                            onChange={(date: Date | null) => {
-                                setRangePreset('custom');
-                                setEndDate(date ? date.toISOString() : '');
-                            }}
-                            showTimeSelect
-                            minDate={startDate ? new Date(startDate) : undefined}
-                            maxDate={new Date()}
-                            filterTime={(date) => date.getTime() <= new Date().getTime()}
-                            timeFormat="HH:mm"
-                            timeIntervals={15}
-                            dateFormat="dd-MM-yyyy HH:mm"
-                            placeholderText="Select end date"
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            onChange={(date: Date | null) => { setRangePreset('custom'); setEndDate(date ? date.toISOString() : ''); }}
+                            showTimeSelect minDate={startDate ? new Date(startDate) : undefined} maxDate={new Date()} timeFormat="HH:mm" timeIntervals={15} dateFormat="dd-MM-yyyy HH:mm" placeholderText="End"
+                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500"
                         />
                     </div>
-
-                    {/* Sensor Filter */}
-                    <div className={`space-y-1 ${currentUser?.role !== 'superadmin' ? 'xl:col-span-4' : 'xl:col-span-2'}`}>
-                        <label className="text-xs font-semibold text-gray-400 uppercase">Sensor ID</label>
-                        <input
-                            type="text"
-                            placeholder="e.g. MQ3"
-                            value={sensorFilter}
-                            onChange={(e) => setSensorFilter(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                        />
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">Sensor Search</label>
+                        <input type="text" placeholder="ID or Type..." value={sensorFilter} onChange={(e) => setSensorFilter(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500" />
                     </div>
-
-                    {/* Company (Superadmin) */}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">Severity</label>
+                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500">
+                            <option value="all">All</option>
+                            <option value="critical">Critical</option>
+                            <option value="warning">Warning</option>
+                        </select>
+                    </div>
                     {currentUser?.role === 'superadmin' && (
-                        <div className="space-y-1 xl:col-span-2">
-                            <label className="text-xs font-semibold text-gray-400 uppercase">Company</label>
-                            <select
-                                value={selectedCompany}
-                                onChange={(e) => setSelectedCompany(e.target.value)}
-                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                            >
-                                <option value="">All Companies</option>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">Org</label>
+                            <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500">
+                                <option value="">All Org</option>
                                 {companies.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                             </select>
                         </div>
                     )}
-
-                    {/* Status Filter */}
-                    <div className="space-y-1 xl:col-span-2">
-                        <label className="text-xs font-semibold text-gray-400 uppercase">Status</label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value as any)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                        >
-                            <option value="all">All Statuses</option>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">Resolution</label>
+                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500">
+                            <option value="all">All</option>
                             <option value="active">Active</option>
                             <option value="resolved">Resolved</option>
                         </select>
                     </div>
-
-                    {/* Read Status Filter */}
-                    <div className="space-y-1 xl:col-span-2">
-                        <label className="text-xs font-semibold text-gray-400 uppercase">Read Status</label>
-                        <select
-                            value={readFilter}
-                            onChange={(e) => setReadFilter(e.target.value as any)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                        >
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest ml-1">Seen Status</label>
+                        <select value={readFilter} onChange={(e) => setReadFilter(e.target.value as any)} className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500">
                             <option value="all">All</option>
-                            <option value="unread">Unread Only</option>
-                            <option value="read">Read Only</option>
+                            <option value="unread">Unread</option>
+                            <option value="read">Read</option>
                         </select>
                     </div>
                 </div>
 
                 {error && (
-                    <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg">
+                    <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-xs font-semibold uppercase">
                         {error}
                     </div>
                 )}
 
-                {/* Data Table */}
+                {/* 5. Alert List - AT THE BOTTOM */}
                 <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-left">
-                            <thead className="bg-gray-700/50 text-gray-300 text-xs font-bold uppercase tracking-wider">
-                                <tr>
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="min-w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-700/50 text-gray-300 text-xs font-bold uppercase tracking-wider">
                                     <th className="px-6 py-4">Severity</th>
                                     <th className="px-6 py-4">Time</th>
                                     <th className="px-6 py-4">Sensor</th>
                                     <th className="px-6 py-4">Value</th>
                                     <th className="px-6 py-4">Message</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    {currentUser?.role === 'superadmin' && <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Company</th>}
-                                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                        Actions
-                                    </th>
+                                    <th className="px-6 py-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-10 text-center text-gray-400">Loading alerts...</td>
-                                    </tr>
-                                ) : alerts.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-10 text-center text-gray-400">No alerts found matching current filters.</td>
-                                    </tr>
-                                ) : (
+                                {loading ? (<tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400">Loading alerts...</td></tr>) : alerts.length === 0 ? (<tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400 italic">No alerts found.</td></tr>) : (
                                     alerts.map((alert) => (
                                         <tr key={alert._id} className={`border-b border-gray-700 hover:bg-gray-700/50 transition-colors ${!alert.is_read ? 'bg-gray-800/80' : ''}`}>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${alert.alert_type === 'critical' ? 'bg-red-900/50 text-red-200 border border-red-800' :
-                                                        alert.alert_type === 'warning' ? 'bg-amber-900/50 text-amber-200 border border-amber-800' :
-                                                            'bg-blue-900/50 text-blue-200 border border-blue-800'}`}>
-                                                    {alert.alert_type.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${!alert.is_read ? 'text-white font-semibold' : 'text-gray-300'}`}>
-                                                {new Date(alert.timestamp.endsWith('Z') ? alert.timestamp : alert.timestamp + 'Z').toLocaleString('tr-TR')}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className={`text-sm font-medium ${!alert.is_read ? 'text-white' : 'text-white'}`}>{alert.sensor_type}</div>
-                                                <div className="text-xs text-gray-500">{sensorMap[alert.sensor_id] || alert.sensor_id}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className={`text-sm ${!alert.is_read ? 'text-white font-medium' : 'text-gray-300'}`}>
-                                                    {alert.value.toFixed(2)} <span className="text-gray-500 text-xs">{alert.unit}</span>
-                                                </div>
-                                                <div className="text-xs text-gray-500">vs {alert.threshold_value}</div>
-                                            </td>
-                                            <td className={`px-6 py-4 text-sm ${!alert.is_read ? 'text-white font-medium' : 'text-gray-300'}`}>
-                                                {alert.message}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {alert.is_resolved ? (
-                                                    <span className="flex items-center text-green-400 text-sm">
-                                                        <svg aria-hidden="true" className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        Resolved
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center text-red-400 text-sm animate-pulse">
-                                                        <svg aria-hidden="true" className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        Active
-                                                    </span>
-                                                )}
-                                            </td>
-                                            {currentUser?.role === 'superadmin' && (
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200 font-medium">
-                                                    {alert.company_name}
-                                                </td>
-                                            )}
+                                            <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 inline-flex text-[10px] font-semibold rounded-full border ${alert.alert_type === 'critical' ? 'bg-red-900/50 text-red-200 border-red-800' : 'bg-amber-900/50 text-amber-200 border-amber-800'}`}>{alert.alert_type.toUpperCase()}</span></td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{new Date(alert.timestamp).toLocaleString('tr-TR')}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-white">{alert.sensor_type}</div><div className="text-xs text-gray-500 font-mono">{sensorMap[alert.sensor_id] || alert.sensor_id}</div></td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm"><span className="text-white font-medium">{alert.value.toFixed(2)}</span> <span className="text-gray-500 text-xs ml-1">{alert.unit}</span></td>
+                                            <td className="px-6 py-4 text-sm text-gray-300 max-w-xs truncate">{alert.message}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                                {!alert.is_read ? (
-                                                    <button
-                                                        onClick={() => handleMarkAsRead(alert._id)}
-                                                        className="text-cyan-400 hover:text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 px-3 py-1 rounded border border-cyan-800/50 transition-colors"
-                                                    >
-                                                        Mark as Read
-                                                    </button>
-                                                ) : (
-                                                    <span className="text-blue-400 flex items-center justify-center gap-1">
-                                                        <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        Read
-                                                    </span>
-                                                )}
+                                                {!alert.is_read ? (<button onClick={() => handleMarkAsRead(alert._id)} className="text-cyan-400 hover:text-cyan-300 transition-colors">Mark Read</button>) : (<span className="text-gray-600">Seen</span>)}
                                             </td>
                                         </tr>
                                     ))
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    <div className="md:hidden divide-y divide-gray-700">
+                        {loading ? (<div className="p-10 text-center text-gray-400 text-sm">Loading alerts...</div>) : alerts.length === 0 ? (<div className="p-10 text-center text-gray-400 text-sm italic">No alerts found.</div>) : (
+                            alerts.map((alert) => (
+                                <div key={alert._id} className={`p-4 ${!alert.is_read ? 'bg-cyan-900/10' : ''} relative overflow-hidden`}>
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${alert.alert_type === 'critical' ? 'bg-red-600' : 'bg-amber-500'}`} />
+                                    <div className="flex justify-between items-start mb-2"><span className={`text-[10px] font-semibold uppercase tracking-wider ${alert.alert_type === 'critical' ? 'text-red-400' : 'text-amber-400'}`}>{alert.alert_type}</span><span className="text-[10px] text-gray-500 font-mono">{new Date(alert.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                                    <div className="mb-2"><div className="text-sm font-semibold text-white">{alert.sensor_type}</div><div className="text-[10px] text-gray-500 font-mono truncate">{sensorMap[alert.sensor_id] || alert.sensor_id}</div></div>
+                                    <div className="text-xs text-gray-300 leading-relaxed mb-3">{alert.message}</div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-gray-700/50"><div className="flex items-baseline gap-1"><span className="text-white font-medium text-base">{alert.value.toFixed(2)}</span> <span className="text-gray-500 text-[10px] font-medium uppercase">{alert.unit}</span></div>{!alert.is_read ? (<button onClick={() => handleMarkAsRead(alert._id)} className="text-[10px] font-semibold text-cyan-400 border border-cyan-400/30 px-3 py-1.5 rounded bg-cyan-400/5 transition-all active:scale-95">MARK READ</button>) : (<span className="text-[10px] text-gray-600 uppercase font-medium">Seen</span>)}</div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
