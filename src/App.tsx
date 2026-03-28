@@ -1,7 +1,6 @@
 import React, { useState, useEffect, lazy } from 'react';
 import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
-import DigitalTwinButton from './components/DigitalTwinButton'; 
 import type { User } from './types/types';
 
 // Lazy load pages for performance optimization
@@ -199,19 +198,7 @@ function App() {
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
       <Header isAuthed={isAuthed} onLogout={handleLogout} currentUser={currentUser} />
-      <main className="container mx-auto p-6">
-        
-        {/* --- 3D İZLEME BUTONU BURAYA EKLENDİ --- */}
-        {isAuthed && currentUser && (
-            <div className="flex justify-end mb-4">
-                <DigitalTwinButton 
-                    role={currentUser.role}
-                    // Typescript artık kızmayacak çünkü User içinde company_name var
-                    company={currentUser.company_name || "Karacan"}
-                />
-            </div>
-        )}
-        
+      <main className="container mx-auto p-3 sm:p-6">
         {content}
       </main>
     </div>

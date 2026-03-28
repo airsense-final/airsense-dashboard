@@ -125,16 +125,16 @@ export function AdminCompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Company Management</h1>
-            <p className="text-gray-400">Manage companies and their access</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Company Management</h1>
+            <p className="text-gray-400 text-xs sm:text-sm">Manage companies and their access</p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="w-full sm:w-auto px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-xs sm:text-sm font-medium"
           >
             {showAddForm ? 'Cancel' : '+ Add Company'}
           </button>
@@ -251,8 +251,9 @@ export function AdminCompaniesPage() {
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+          {/* Desktop Table View - ORIGINAL */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-700">
                 <tr>
@@ -262,7 +263,7 @@ export function AdminCompaniesPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                     Company Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -277,17 +278,41 @@ export function AdminCompaniesPage() {
                       <div className="text-sm font-medium">{company.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleDeleteCompany(company._id)}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => handleDeleteCompany(company._id)}
+                          className="px-4 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white rounded-lg text-xs font-semibold transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View - NEW */}
+          <div className="md:hidden divide-y divide-gray-700">
+            {companies.map((company) => (
+              <div key={company._id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-sm font-bold text-white tracking-tight">{company.name}</div>
+                    <div className="text-[10px] text-gray-500 font-mono mt-1">{company._id}</div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteCompany(company._id)}
+                    className="p-2 bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 active:scale-90 transition-transform"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

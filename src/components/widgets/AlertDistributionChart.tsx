@@ -93,16 +93,16 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
   };
 
   return (
-    <div className="relative w-full h-[350px] md:h-[400px] bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900 rounded-2xl overflow-hidden border border-gray-800 shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-center justify-between p-6 md:px-12">
+    <div className="relative w-full h-auto min-h-[450px] md:h-[400px] bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900 rounded-2xl overflow-hidden border border-gray-800 shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-center justify-between p-4 sm:p-6 md:px-12">
       
       {/* Left: Legend / Stats Breakdown */}
-      <div className="w-full md:w-1/3 flex flex-col justify-center space-y-6 mb-8 md:mb-0 relative z-10">
-          <div>
-            <h3 className="text-2xl font-bold text-white tracking-wide">Alert Overview</h3>
-            <p className="text-gray-400 text-sm mt-1">Real-time status of all reported anomalies.</p>
+      <div className="w-full md:w-1/3 flex flex-col justify-center space-y-4 md:space-y-6 mb-4 md:mb-0 relative z-10">
+          <div className="text-center md:text-left">
+            <h3 className="text-xl md:text-2xl font-bold text-white tracking-wide">Alert Overview</h3>
+            <p className="text-gray-400 text-[10px] md:text-sm mt-1">Real-time status of all reported anomalies.</p>
           </div>
           
-          <div className="flex flex-col space-y-5 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-5 mt-2 md:mt-4">
               {data.map((item, index) => {
                   const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
                   const color = item.color;
@@ -111,28 +111,28 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
                   return (
                       <div 
                           key={item.name} 
-                          className={`flex items-center justify-between p-3 rounded-lg transition-all duration-300 cursor-pointer ${isActive ? 'bg-gray-800/80 shadow-lg' : 'hover:bg-gray-800/50'}`}
+                          className={`flex items-center justify-between p-2 md:p-3 rounded-lg transition-all duration-300 cursor-pointer ${isActive ? 'bg-gray-800/80 shadow-lg' : 'hover:bg-gray-800/50'}`}
                           onMouseEnter={() => setActiveIndex(index)}
                           onMouseLeave={() => setActiveIndex(null)}
                           style={{
                               borderLeft: isActive ? `3px solid ${color}` : '3px solid transparent'
                           }}
                       >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2 md:space-x-3">
                               <div 
-                                  className={`w-3 h-3 rounded-full transition-shadow duration-300 ${isActive ? 'scale-125' : ''}`} 
+                                  className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-shadow duration-300 ${isActive ? 'scale-125' : ''}`} 
                                   style={{ 
                                       backgroundColor: color, 
                                       boxShadow: isActive ? `0 0 12px ${color}` : `0 0 4px ${color}` 
                                   }} 
                               />
-                              <span className={`text-sm font-medium transition-colors ${isActive ? 'text-white' : 'text-gray-300'}`}>
+                              <span className={`text-[10px] md:text-sm font-medium transition-colors ${isActive ? 'text-white' : 'text-gray-300'}`}>
                                   {item.name}
                               </span>
                           </div>
                           <div className="text-right">
-                              <span className="text-white font-bold block">{item.value}</span>
-                              <span className="text-xs text-gray-500">{percentage}%</span>
+                              <span className="text-white text-xs md:text-base font-bold block">{item.value}</span>
+                              <span className="text-[9px] md:text-xs text-gray-500">{percentage}%</span>
                           </div>
                       </div>
                   );
@@ -141,7 +141,7 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
       </div>
 
       {/* Right: Main Chart Content */}
-      <div className="w-full md:w-2/3 h-full flex justify-center items-center relative z-10">
+      <div className="w-full md:w-2/3 h-[250px] sm:h-[300px] md:h-full flex justify-center items-center relative z-10">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -182,7 +182,7 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
               dominantBaseline="middle"
               style={{
                 fill: "#F8FAFC", // Tailwind slate-50
-                fontSize: "56px",
+                fontSize: window.innerWidth < 640 ? "32px" : "56px",
                 fontWeight: "700",
                 filter: "drop-shadow(0 0 15px rgba(255,255,255,0.2))"
               }}
@@ -192,14 +192,14 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
 
             <text
               x="50%"
-              y="64%"
+              y={window.innerWidth < 640 ? "60%" : "64%"}
               textAnchor="middle"
               dominantBaseline="middle"
               style={{
                 fill: "#94A3B8", // Tailwind slate-400
-                fontSize: "14px",
+                fontSize: window.innerWidth < 640 ? "10px" : "14px",
                 fontWeight: "600",
-                letterSpacing: "4px",
+                letterSpacing: window.innerWidth < 640 ? "2px" : "4px",
                 textTransform: "uppercase"
               }}
             >

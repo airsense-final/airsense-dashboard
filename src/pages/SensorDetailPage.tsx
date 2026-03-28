@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getSensorHistory, listThresholds, getCurrentUser, listSensors, updateSensor, getLatestSensorData, getAlertHistory, markAlertAsRead } from '../services/apiService';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { DataPoint, ThresholdConfig, Alert } from '../types/types';
 import { resolveHwKey } from '../types/types';
 import { ThresholdModal } from '../components/ThresholdModal';
@@ -53,23 +53,12 @@ interface CustomTooltipProps {
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, unit }) => {
     if (active && payload && payload.length) {
-        // Find the main value payload
-        const valuePayload = payload.find(p => p.dataKey === 'value') || payload[0];
-        const data = valuePayload.payload; // Access the original data point
-        
-        const hasMinMax = data.min !== undefined && data.max !== undefined && (data.min !== data.value || data.max !== data.value);
-
         return (
             <div className="bg-gray-700 p-3 border border-gray-600 rounded shadow-lg">
-                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`}</p>
-                <p className="font-semibold" style={{ color: valuePayload.color }}>
-                    {`${valuePayload.name}: ${(valuePayload.value as number).toFixed(4)} ${unit}`}
+                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}</p>
+                <p className="font-semibold" style={{ color: payload[0].color }}>
+                    {`${payload[0].name}: ${(payload[0].value as number).toFixed(4)} ${unit}`}
                 </p>
-                {hasMinMax && (
-                    <div className="text-xs mt-1 text-gray-400">
-                        <p>Range: {data.min.toFixed(4)} - {data.max.toFixed(4)} {unit}</p>
-                    </div>
-                )}
             </div>
         );
     }
@@ -278,8 +267,6 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 return {
                     timestamp: item.timestamp,
                     value: item.value,
-                    min: item.min !== undefined ? item.min : item.value,
-                    max: item.max !== undefined ? item.max : item.value,
                     alarm: false,
                     time: new Date(utcTimestamp),
                 };
@@ -389,26 +376,26 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-6">
+        <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-6">
             <button
                 onClick={handleBackToDashboard}
-                className="mb-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                className="mb-4 sm:mb-6 px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 flex items-center gap-2 text-xs sm:text-base"
             >
-                <span>←</span> Back to Dashboard
+                <span>←</span> <span className="hidden sm:inline">Back to Dashboard</span><span className="sm:hidden">Dashboard</span>
             </button>
 
-            <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-                <div className="flex items-start justify-between mb-4">
+            <div className="bg-gray-800 rounded-lg p-4 sm:p-6 shadow-lg">
+                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">{displayTitle}</h1>
-                        <p className="text-gray-400 mb-1">Sensor ID: {sensorId}</p>
-                        <p className="text-gray-400">Type: {displayType}</p>
+                        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">{displayTitle}</h1>
+                        <p className="text-gray-400 text-xs sm:text-sm mb-0.5 sm:mb-1">Sensor ID: {sensorId}</p>
+                        <p className="text-gray-400 text-xs sm:text-sm">Type: {displayType}</p>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap justify-end">
+                    <div className="text-left lg:text-right flex flex-col items-start lg:items-end gap-3 sm:gap-2">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-2 flex-wrap">
                             <button
                                 onClick={() => setIsFilterPanelOpen(prev => !prev)}
-                                className={`px-3 py-1.5 font-semibold rounded-lg transition-colors flex items-center justify-center text-sm ${filterApplied ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
+                                className={`px-2.5 py-1.5 font-semibold rounded-lg transition-colors flex items-center justify-center text-[10px] sm:text-sm ${filterApplied ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
                             >
                                 <FilterIcon />
                                 <span>{filterApplied ? 'Filter Active' : 'Time Range'}</span>
@@ -416,7 +403,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                             {filterApplied && (
                                 <button
                                     onClick={handleClearFilter}
-                                    className="px-3 py-1.5 font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center justify-center text-sm"
+                                    className="px-2.5 py-1.5 font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center justify-center text-[10px] sm:text-sm"
                                 >
                                     <LiveIcon />
                                     <span>Live</span>
@@ -424,22 +411,24 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                             )}
                             <button
                                 onClick={handleDownloadData}
-                                className="px-3 py-1.5 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center text-sm"
+                                className="px-2.5 py-1.5 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center text-[10px] sm:text-sm"
                             >
                                 <DownloadIcon />
-                                <span>Download</span>
+                                <span>Export</span>
                             </button>
                         </div>
-                        <div className={`text-3xl font-semibold ${isError ? 'text-red-500 animate-pulse' : ''}`}>
-                            {getSensorDisplayValue(currentValue, isError)}
-                            {!isError && <span className="text-md ml-1 text-gray-400">{unit}</span>}
+                        <div className="flex items-baseline gap-2">
+                            <div className={`text-2xl sm:text-3xl font-semibold ${isError ? 'text-red-500 animate-pulse' : ''}`}>
+                                {getSensorDisplayValue(currentValue, isError)}
+                            </div>
+                            {!isError && <span className="text-sm sm:text-md text-gray-400 font-medium">{unit}</span>}
                         </div>
                         {currentUser?.role !== 'viewer' && (
                             <button
                                 onClick={() => setShowThresholdModal(true)}
-                                className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-600/50 rounded-lg text-sm transition-all duration-200 flex items-center gap-2"
+                                className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-600/50 rounded-lg text-[10px] sm:text-sm transition-all duration-200 flex items-center gap-2"
                             >
-                                ⚙️ Configure Threshold
+                                ⚙️ <span className="hidden sm:inline">Configure Threshold</span><span className="sm:hidden">Threshold</span>
                             </button>
                         )}
                     </div>
@@ -597,17 +586,14 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                     </div>
                                 )}
                             </div>
-                            <div style={{ width: '100%', height: '520px' }}>
+                            <div className="w-full h-[300px] sm:h-[450px] lg:h-[520px]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart
+                                    <LineChart
                                         data={historyData.map((point: DataPoint) => ({
                                             time: point.time ? point.time.getTime() : new Date(point.timestamp).getTime(),
                                             value: point.value,
-                                            minMax: [point.min !== undefined ? point.min : point.value, point.max !== undefined ? point.max : point.value],
-                                            min: point.min,
-                                            max: point.max
                                         }))}
-                                        margin={{ top: 5, right: 30, left: 70, bottom: 5 }}
+                                        margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
                                         <XAxis
@@ -615,55 +601,47 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                             type="number"
                                             scale="time"
                                             domain={['dataMin', 'dataMax']}
-                                            stroke="#A0AEC0"
-                                            tickFormatter={(unixTime) => new Date(unixTime).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                            stroke="#718096"
+                                            fontSize={10}
+                                            tickFormatter={(unixTime) => {
+                                                const date = new Date(unixTime);
+                                                return window.innerWidth < 640 
+                                                    ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                    : date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                                            }}
                                         />
                                         <YAxis
-                                            stroke="#A0AEC0"
-                                            width={90}
-                                            label={{ value: unit, angle: -90, position: 'left', fill: '#A0AEC0', offset: 10 }}
-                                            tickFormatter={(value) => value.toFixed(4)}
-                                            domain={['auto', 'auto']}
+                                            stroke="#718096"
+                                            width={window.innerWidth < 640 ? 40 : 80}
+                                            fontSize={10}
+                                            tickFormatter={(value) => value.toFixed(window.innerWidth < 640 ? 2 : 4)}
                                         />
                                         <Tooltip content={<CustomTooltip unit={unit} />} />
-                                        <Legend />
+                                        <Legend wrapperStyle={{ fontSize: '10px' }} />
 
                                         {/* Threshold Reference Lines */}
                                         {thresholds?.warning_min != null && (
-                                            <ReferenceLine y={thresholds.warning_min} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'Warn Min', position: 'right', fill: '#ECC94B', fontSize: 10 }} />
+                                            <ReferenceLine y={thresholds.warning_min} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'W-Min', position: 'right', fill: '#ECC94B', fontSize: 8 }} />
                                         )}
                                         {thresholds?.warning_max != null && (
-                                            <ReferenceLine y={thresholds.warning_max} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'Warn Max', position: 'right', fill: '#ECC94B', fontSize: 10 }} />
+                                            <ReferenceLine y={thresholds.warning_max} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'W-Max', position: 'right', fill: '#ECC94B', fontSize: 8 }} />
                                         )}
                                         {thresholds?.critical_min != null && (
-                                            <ReferenceLine y={thresholds.critical_min} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'Crit Min', position: 'right', fill: '#F56565', fontSize: 10 }} />
+                                            <ReferenceLine y={thresholds.critical_min} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'C-Min', position: 'right', fill: '#F56565', fontSize: 8 }} />
                                         )}
                                         {thresholds?.critical_max != null && (
-                                            <ReferenceLine y={thresholds.critical_max} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'Crit Max', position: 'right', fill: '#F56565', fontSize: 10 }} />
+                                            <ReferenceLine y={thresholds.critical_max} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'C-Max', position: 'right', fill: '#F56565', fontSize: 8 }} />
                                         )}
-                                        
-                                        {/* Area for min/max range */}
-                                        <Area 
-                                            type="monotone" 
-                                            dataKey="minMax" 
-                                            fill="#4FD1C5" 
-                                            fillOpacity={0.15} 
-                                            stroke="none" 
-                                            name="Range (Min-Max)"
-                                            isAnimationActive={false}
-                                        />
-                                        
-                                        {/* Main average line */}
                                         <Line
                                             type="monotone"
                                             dataKey="value"
-                                            name={`${sensorName} (Avg)`}
+                                            name={sensorName}
                                             stroke="#4FD1C5"
-                                            strokeWidth={3}
+                                            strokeWidth={window.innerWidth < 640 ? 2 : 3}
                                             dot={false}
                                             isAnimationActive={false}
                                         />
-                                    </ComposedChart>
+                                    </LineChart>
                                 </ResponsiveContainer>
                             </div>
                         </>
