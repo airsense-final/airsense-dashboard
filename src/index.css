@@ -23,6 +23,73 @@ body {
   min-height: 100vh;
 }
 
+/* Light Mode Global Overrides */
+.light-mode {
+  color: #111827;
+  background-color: #f9fafb;
+}
+
+.light-mode .custom-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6; 
+}
+.light-mode .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db; 
+}
+.light-mode .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; 
+}
+
+/* Light Mode Datepicker Overrides */
+.light-mode .react-datepicker {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #111827 !important;
+}
+.light-mode .react-datepicker__header {
+  background-color: #f9fafb !important;
+  border-bottom-color: #e5e7eb !important;
+}
+.light-mode .react-datepicker__current-month, 
+.light-mode .react-datepicker-time__header, 
+.light-mode .react-datepicker-year-header {
+  color: #111827 !important;
+}
+.light-mode .react-datepicker__day-name, 
+.light-mode .react-datepicker__day, 
+.light-mode .react-datepicker__time-name {
+  color: #374151 !important;
+}
+.light-mode .react-datepicker__day:hover {
+  background-color: #f3f4f6 !important;
+}
+.light-mode .react-datepicker__time {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+.light-mode .react-datepicker__time-container {
+  border-left-color: #e5e7eb !important;
+}
+.light-mode .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Light Mode Select Overrides */
+.light-mode select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+.light-mode select:focus {
+  background-color: #ffffff !important;
+}
+.light-mode select option {
+  background-color: #ffffff;
+  color: #111827;
+  font-weight: 700; /* Bolder text for dropdowns */
+}
+
+select option {
+  font-weight: 700; /* Globally bolder options */
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -105,4 +172,26 @@ body {
 }
 input.react-datepicker-ignore-onclickoutside {
   border: 1px solid #4b5563;
+}
+
+/* Global Select Styling Fix */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1em;
+  padding-right: 2.5rem !important;
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  background-color: #111827 !important; /* Gray-900 */
+}
+
+/* Ensure options have dark background in some browsers */
+select option {
+  background-color: #1f2937; /* Gray-800 */
+  color: white;
 }

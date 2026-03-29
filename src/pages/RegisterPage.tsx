@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { register, getCompanies } from '../services/apiService';
 import type { Company } from '../types/types';
 
-export const RegisterPage: React.FC = () => {
+interface RegisterPageProps {
+    isDarkMode: boolean;
+}
+
+export const RegisterPage: React.FC<RegisterPageProps> = ({ isDarkMode: _isDarkMode }) => {
+    void _isDarkMode;
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -96,13 +101,13 @@ export const RegisterPage: React.FC = () => {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-                <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md border border-green-500 text-center">
-                    <h2 className="text-2xl font-bold text-white mb-2">Registration Successful!</h2>
-                    <p className="text-gray-300 mb-6">
+            <div className="min-h-screen bg-gray-900 light:bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-gray-800 light:bg-white rounded-lg shadow-xl p-8 w-full max-w-md border border-green-500 light:border-green-700 text-center">
+                    <h2 className="text-2xl font-bold text-white light:text-gray-900 mb-2">Registration Successful!</h2>
+                    <p className="text-gray-300 light:text-gray-600 mb-6">
                         Your account has been created successfully. It is currently pending approval by admin.
                     </p>
-                    <a href="#/login" className="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                    <a href="#/login" className="inline-block bg-cyan-600 light:bg-cyan-800 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition-colors shadow-lg shadow-cyan-600/20">
                         Return to Login
                     </a>
                 </div>
@@ -111,22 +116,22 @@ export const RegisterPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-            <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md border border-gray-700">
+        <div className="min-h-screen bg-gray-900 light:bg-gray-50 flex items-center justify-center p-4">
+            <div className="bg-gray-800 light:bg-white rounded-lg shadow-xl p-8 w-full max-w-md border border-gray-700 light:border-gray-200">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-cyan-400">Create Account</h1>
-                    <p className="text-gray-400 mt-2">Join AirSense Dashboard</p>
+                    <h1 className="text-3xl font-bold text-cyan-400 light:text-cyan-800">Create Account</h1>
+                    <p className="text-gray-400 light:text-gray-500 mt-2">Join AirSense Dashboard</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/20 border border-red-500 text-red-100 px-4 py-3 rounded mb-6 text-sm">
+                    <div className="bg-red-500/20 light:bg-red-50 border border-red-500 light:border-red-700 text-red-100 light:text-red-900 px-4 py-3 rounded mb-6 text-sm font-medium">
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                        <label htmlFor="username" className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-1">Username</label>
                         <input
                             id="username"
                             type="text"
@@ -135,13 +140,13 @@ export const RegisterPage: React.FC = () => {
                             onChange={(e) => setUsername(e.target.value)}
                             onInvalid={(e) => handleInvalid(e, 'Please enter a username.')}
                             onInput={handleInput}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            className="w-full bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg px-4 py-2 text-white light:text-gray-900 focus:outline-none focus:border-cyan-500 light:focus:border-cyan-700 focus:ring-1 focus:ring-cyan-500 light:focus:ring-cyan-700"
                             placeholder="your_username"
                             autoComplete="username"
                         />
                     </div>
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-1">Email Address</label>
                         <input
                             id="email"
                             type="email"
@@ -150,13 +155,13 @@ export const RegisterPage: React.FC = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             onInvalid={(e) => handleInvalid(e, 'Please enter a valid email address.')}
                             onInput={handleInput}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            className="w-full bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg px-4 py-2 text-white light:text-gray-900 focus:outline-none focus:border-cyan-500 light:focus:border-cyan-700 focus:ring-1 focus:ring-cyan-500 light:focus:ring-cyan-700"
                             placeholder="you@example.com"
                             autoComplete="email"
                         />
                     </div>
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-1">Password</label>
                         <input
                             id="password"
                             type="password"
@@ -165,13 +170,13 @@ export const RegisterPage: React.FC = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             onInvalid={(e) => handleInvalid(e, 'Please choose a password.')}
                             onInput={handleInput}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            className="w-full bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg px-4 py-2 text-white light:text-gray-900 focus:outline-none focus:border-cyan-500 light:focus:border-cyan-700 focus:ring-1 focus:ring-cyan-500 light:focus:ring-cyan-700"
                             placeholder="••••••••"
                             autoComplete="new-password"
                         />
                     </div>
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-1">Confirm Password</label>
                         <input
                             id="confirmPassword"
                             type="password"
@@ -180,13 +185,13 @@ export const RegisterPage: React.FC = () => {
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             onInvalid={(e) => handleInvalid(e, 'Please confirm your password.')}
                             onInput={handleInput}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            className="w-full bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg px-4 py-2 text-white light:text-gray-900 focus:outline-none focus:border-cyan-500 light:focus:border-cyan-700 focus:ring-1 focus:ring-cyan-500 light:focus:ring-cyan-700"
                             placeholder="••••••••"
                             autoComplete="new-password"
                         />
                     </div>
                     <div>
-                        <label htmlFor="company" className="block text-sm font-medium text-gray-300 mb-1">Company</label>
+                        <label htmlFor="company" className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-1">Company</label>
                         <select
                             id="company"
                             required
@@ -194,7 +199,7 @@ export const RegisterPage: React.FC = () => {
                             onChange={(e) => setCompanyName(e.target.value)}
                             onInvalid={(e) => handleInvalid(e, 'Please select a company.')}
                             onInput={handleInput}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                            className="w-full bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg px-4 py-2 text-white light:text-gray-900 focus:outline-none focus:border-cyan-500 light:focus:border-cyan-700 focus:ring-1 focus:ring-cyan-500 light:focus:ring-cyan-700"
                         >
                             {companies.length === 0 && <option value="">Loading companies...</option>}
                             {companies.map((company) => (
@@ -208,15 +213,15 @@ export const RegisterPage: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4 disabled:opacity-50"
+                        className="w-full bg-cyan-600 light:bg-cyan-800 hover:bg-cyan-700 light:hover:bg-cyan-900 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4 disabled:opacity-50 shadow-lg shadow-cyan-600/20"
                     >
                         {loading ? 'Registering...' : 'Register'}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-gray-400">
+                <div className="mt-6 text-center text-sm text-gray-400 light:text-gray-500 font-medium">
                     Already have an account?{' '}
-                    <a href="#/login" className="text-cyan-400 hover:text-cyan-300">
+                    <a href="#/login" className="text-cyan-400 light:text-cyan-800 hover:text-cyan-300 light:hover:text-cyan-900">
                         Login here
                     </a>
                 </div>

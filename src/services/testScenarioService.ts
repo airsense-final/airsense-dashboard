@@ -33,9 +33,11 @@ export interface TestScenario {
   id: string;
   name: string;
   description: string;
+  type: 'normal' | 'warning' | 'critical';
   steps: TestStep[];
   expectedResult: string;
   duration: number; // milliseconds
+  data: Partial<SensorData>;
 }
 
 export interface TestStep {
@@ -73,8 +75,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'fire-scenario',
     name: 'Fire Detection Test',
     description: 'Tests fire sensors - increases temperature, decreases air quality, and raises CO levels',
+    type: 'critical',
     duration: 10000,
     expectedResult: 'Fire alarm should trigger, system should initiate response',
+    data: { temperature: 65, airQuality: 800, co: 120 },
     steps: [
       { action: 'Increase Temperature', sensorType: 'temperature', sensorModel: 'DHT-11', targetValue: 60, duration: 3000, delay: 0 },
       { action: 'Decrease Air Quality', sensorType: 'airQuality', sensorModel: 'MQ-135', targetValue: 800, duration: 3000, delay: 2000 },
@@ -85,8 +89,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'temperature-high',
     name: 'High Temperature Test',
     description: 'Tests only temperature increase',
+    type: 'warning',
     duration: 8000,
     expectedResult: 'High temperature warning should be received',
+    data: { temperature: 48 },
     steps: [
       { action: 'Temperature 45°C', sensorType: 'temperature', sensorModel: 'DHT-11', targetValue: 45, duration: 3000, delay: 0 },
       { action: 'Temperature 55°C', sensorType: 'temperature', sensorModel: 'DHT-11', targetValue: 55, duration: 3000, delay: 3000 }
@@ -96,8 +102,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'temperature-low',
     name: 'Low Temperature Test',
     description: 'Tests temperature decrease',
+    type: 'warning',
     duration: 6000,
     expectedResult: 'Low temperature warning should be received',
+    data: { temperature: 8 },
     steps: [
       { action: 'Temperature 10°C', sensorType: 'temperature', sensorModel: 'DHT-11', targetValue: 10, duration: 3000, delay: 0 },
       { action: 'Temperature 5°C', sensorType: 'temperature', sensorModel: 'DHT-11', targetValue: 5, duration: 2000, delay: 3000 }
@@ -107,8 +115,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'methane-detection',
     name: 'Methane Detection Test',
     description: 'Tests methane gas sensor',
+    type: 'critical',
     duration: 6000,
     expectedResult: 'Methane gas alarm should trigger',
+    data: { methane: 1800 },
     steps: [
       { action: 'Increase Methane Level', sensorType: 'methane', sensorModel: 'MQ-4', targetValue: 1000, duration: 3000, delay: 0 },
       { action: 'Methane Maximum', sensorType: 'methane', sensorModel: 'MQ-4', targetValue: 2000, duration: 2000, delay: 3000 }
@@ -118,8 +128,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'co2-high',
     name: 'High CO2 Test',
     description: 'Increases CO2 level',
+    type: 'warning',
     duration: 7000,
     expectedResult: 'Ventilation system should activate',
+    data: { co2: 2200 },
     steps: [
       { action: 'CO2 1500 ppm', sensorType: 'co2', sensorModel: 'SCD-40', targetValue: 1500, duration: 3000, delay: 0 },
       { action: 'CO2 2500 ppm', sensorType: 'co2', sensorModel: 'SCD-40', targetValue: 2500, duration: 3000, delay: 3000 }
@@ -129,8 +141,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'flammable-gas',
     name: 'Flammable Gas Test',
     description: 'Tests flammable gas sensor',
+    type: 'critical',
     duration: 6000,
     expectedResult: 'Flammable gas alarm should trigger',
+    data: { flammableGas: 850 },
     steps: [
       { action: 'Flammable Gas Level 1', sensorType: 'flammableGas', sensorModel: 'MQ-9', targetValue: 500, duration: 3000, delay: 0 },
       { action: 'Flammable Gas Level 2', sensorType: 'flammableGas', sensorModel: 'MQ-9', targetValue: 900, duration: 2000, delay: 3000 }
@@ -140,8 +154,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'air-quality',
     name: 'Air Quality Test',
     description: 'Tests air quality sensor (NH3, NOx, Benzene, Smoke)',
+    type: 'warning',
     duration: 6000,
     expectedResult: 'Air quality warning should be received',
+    data: { airQuality: 650 },
     steps: [
       { action: 'Decrease Air Quality', sensorType: 'airQuality', sensorModel: 'MQ-135', targetValue: 400, duration: 3000, delay: 0 },
       { action: 'Poor Air Quality', sensorType: 'airQuality', sensorModel: 'MQ-135', targetValue: 700, duration: 2000, delay: 3000 }
@@ -151,8 +167,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'humidity-extreme',
     name: 'Extreme Humidity Test',
     description: 'Increases humidity to extreme levels',
+    type: 'warning',
     duration: 6000,
     expectedResult: 'Humidity control system should activate',
+    data: { humidity: 92 },
     steps: [
       { action: 'Humidity 80%', sensorType: 'humidity', sensorModel: 'DHT-11', targetValue: 80, duration: 3000, delay: 0 },
       { action: 'Humidity 95%', sensorType: 'humidity', sensorModel: 'DHT-11', targetValue: 95, duration: 2000, delay: 3000 }
@@ -162,8 +180,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'co-leak',
     name: 'CO Leak Test',
     description: 'Tests carbon monoxide sensor in isolation',
+    type: 'critical',
     duration: 5000,
     expectedResult: 'CO alarm should sound',
+    data: { co: 95 },
     steps: [
       { action: 'CO Level 1', sensorType: 'co', sensorModel: 'MQ-7', targetValue: 50, duration: 2000, delay: 0 },
       { action: 'CO Level 2', sensorType: 'co', sensorModel: 'MQ-7', targetValue: 100, duration: 2000, delay: 2000 }
@@ -173,8 +193,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'alcohol-detection',
     name: 'Alcohol Detection Test',
     description: 'Tests alcohol sensor - detects presence of alcohol vapors',
+    type: 'warning',
     duration: 6000,
     expectedResult: 'Alcohol warning and critical alerts should trigger',
+    data: { alcohol: 550 },
     steps: [
       { action: 'Alcohol Level 350ppm', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 350, duration: 3000, delay: 0 },
       { action: 'Alcohol Level 600ppm', sensorType: 'alcohol', sensorModel: 'MQ-3', targetValue: 600, duration: 2000, delay: 3000 }
@@ -184,8 +206,10 @@ export const TEST_SCENARIOS: TestScenario[] = [
     id: 'multi-sensor-stress',
     name: 'Multi-Sensor Stress Test',
     description: 'Tests all sensors simultaneously',
+    type: 'critical',
     duration: 14000,
     expectedResult: 'System should trigger all alarms in correct sequence',
+    data: { temperature: 55, co2: 2100, airQuality: 650, methane: 1600, co: 90, flammableGas: 850, humidity: 95, alcohol: 580 },
     steps: [
       { action: 'Increase Temperature', sensorType: 'temperature', sensorModel: 'DHT-11', targetValue: 50, duration: 2000, delay: 0 },
       { action: 'Increase CO2', sensorType: 'co2', sensorModel: 'SCD-40', targetValue: 2000, duration: 2000, delay: 2000 },

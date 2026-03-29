@@ -26,7 +26,7 @@ interface CustomTooltipProps {
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, unit }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-gray-700 p-2 border border-gray-600 rounded">
+            <div className="bg-gray-700 light:bg-gray-100 p-2 border border-gray-600 light:border-gray-300 rounded">
                 <p className="label">{`${new Date(label as number).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}</p>
                 <p className="intro" style={{ color: payload[0].color }}>{`${payload[0].name} : ${(payload[0].value as number).toFixed(4)} ${unit}`}</p>
             </div>
@@ -80,52 +80,57 @@ export const LineChartWidget: React.FC<LineChartWidgetProps> = ({ title, metric,
 
     const displayName = typeof metric === 'string' ? metric.replace(/_/g, ' ') : 'Value';
 
+    const isLight = document.body.classList.contains('light-mode');
+    const chartColor = isLight ? "#155e75" : "#22d3ee"; // Matching text-cyan-800 and text-cyan-400
+    const gridColor = isLight ? "#e5e7eb" : "#4A5568"; // Gray-200 and Gray-700
+    const axisColor = isLight ? "#4b5563" : "#A0AEC0"; // Gray-600 and Gray-400
+
     const chart = (
         <ResponsiveContainer width="100%" height="100%">
             <LineChart
                 data={chartData}
                 margin={compact ? { top: 5, right: 10, left: 0, bottom: 0 } : { top: 5, right: 20, left: 40, bottom: 5 }}>
 
-                {!compact && <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />}
+                {!compact && <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />}
 
                 <XAxis
                     dataKey="time"
                     type="number"
                     scale="time"
                     domain={xAxisDomain}
-                    stroke="#A0AEC0"
+                    stroke={axisColor}
                     tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
                     tickCount={compact ? 3 : undefined}
-                    tick={compact ? { fontSize: 9 } : undefined}
+                    tick={compact ? { fontSize: 9 } : { fontSize: 10, fontWeight: 'bold' }}
                     height={compact ? 18 : undefined}
                     allowDataOverflow={!!filterApplied} // Allow zooming in strictly on data if filtered
                 />
                 <YAxis
-                    stroke="#A0AEC0"
+                    stroke={axisColor}
                     unit={compact ? undefined : unit}
                     width={compact ? 70 : undefined}
                     tickCount={compact ? 3 : undefined}
-                    tick={compact ? { fontSize: 9, dx: -2 } : undefined}
-                    tickFormatter={(value) => value.toFixed(4)}
+                    tick={compact ? { fontSize: 9, dx: -2 } : { fontSize: 10, fontWeight: 'bold' }}
+                    tickFormatter={(value) => value.toFixed(compact ? 2 : 4)}
                     domain={yAxisDomain}
                 />
 
                 {!compact && <Tooltip content={<CustomTooltip unit={unit} />} />}
-                {!compact && <Legend />}
+                {!compact && <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />}
 
                 <Line
                     type="monotone"
                     dataKey="value"
                     name={displayName}
-                    stroke="#4FD1C5"
-                    strokeWidth={2}
+                    stroke={chartColor}
+                    strokeWidth={compact ? 2 : 3}
                     dot={false}
                     isAnimationActive={false}
                     connectNulls={true} // This connects the dots if there are missing timestamps in a sequence
                 />
 
                 {threshold !== undefined && !compact && (
-                    <ReferenceLine y={threshold} label={{ value: `Threshold`, position: 'insideTopRight', fill: '#F56565' }} stroke="#F56565" strokeDasharray="3 3" />
+                    <ReferenceLine y={threshold} label={{ value: `Threshold`, position: 'insideTopRight', fill: '#ef4444', fontSize: 10, fontWeight: 'bold' }} stroke="#ef4444" strokeDasharray="3 3" />
                 )}
             </LineChart>
         </ResponsiveContainer>

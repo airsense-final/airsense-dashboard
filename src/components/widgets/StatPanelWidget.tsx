@@ -13,13 +13,13 @@ export const StatPanelWidget: React.FC<StatPanelWidgetProps> = ({
     value,
     unit = '',
     icon,
-    color = 'text-cyan-400'
+    color = 'text-cyan-400 light:text-cyan-800'
 }) => {
     return (
-        <div className="bg-gray-800 rounded-lg p-4 shadow-lg">
+        <div className="bg-gray-800 light:bg-white rounded-lg p-4 shadow-lg">
             <div className="flex items-center justify-between">
                 <div className="flex-1">
-                    <p className="text-sm text-gray-400 mb-1">{label}</p>
+                    <p className="text-sm text-gray-400 light:text-gray-500 mb-1">{label}</p>
                     <p className={`text-2xl font-bold ${color}`}>
                         {value} {unit && <span className="text-sm ml-1">{unit}</span>}
                     </p>

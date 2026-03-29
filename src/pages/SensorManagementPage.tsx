@@ -158,26 +158,26 @@ const SensorManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-xl text-white">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 light:bg-gray-50">
+        <div className="text-xl text-white light:text-gray-900">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Sensor Management</h1>
-            <p className="text-gray-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Sensor Management</h1>
+            <p className="text-gray-400 light:text-gray-500 text-xs sm:text-sm mt-1">
               Manage sensors for {currentUser?.role === 'superadmin' ? 'all companies' : currentUser?.company_name}
             </p>
           </div>
           <button
             onClick={openCreateModal}
-            className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
+            className="w-full sm:w-auto bg-cyan-600 light:bg-cyan-800 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition text-xs sm:text-sm font-medium"
           >
             + Add Sensor
           </button>
@@ -185,17 +185,17 @@ const SensorManagementPage: React.FC = () => {
 
         {/* Company Filter (Super Admin Only) */}
         {currentUser?.role === 'superadmin' && (
-          <div className="mb-6 bg-gray-800 p-4 rounded-lg">
-            <label className="block text-sm font-medium mb-2">Filter by Company</label>
+          <div className="mb-6 bg-gray-800/40 backdrop-blur-md p-4 rounded-2xl border border-gray-700/50 shadow-xl flex flex-col sm:flex-row sm:items-center gap-4">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">Organization Filter</label>
             <select
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
-              className="w-full max-w-md px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              className="flex-1 max-w-md px-4 py-2.5 bg-gray-900 light:bg-gray-50 border border-gray-700 light:border-gray-200 rounded-xl text-white light:text-gray-900 text-xs font-bold outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none cursor-pointer"
             >
-              <option value="">All Companies</option>
+              <option value="">ALL COMPANIES</option>
               {companies.map((company) => (
                 <option key={company._id} value={company.name}>
-                  {company.name}
+                  {company.name.toUpperCase()}
                 </option>
               ))}
             </select>
@@ -204,62 +204,95 @@ const SensorManagementPage: React.FC = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg">
+          <div className="mb-6 bg-red-900/50 light:bg-red-100 border border-red-500 light:border-red-700 text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
-        {/* Sensors Table */}
-        <div className="bg-gray-800 rounded-lg overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Sensor ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {sensors.length === 0 ? (
+        <div className="bg-gray-800 light:bg-white rounded-lg overflow-hidden border border-gray-700 light:border-gray-200 shadow-lg">
+          {/* Desktop Table View - ORIGINAL */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-gray-700 light:bg-gray-100">
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
-                    No sensors found. Click "Add Sensor" to create one.
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase">Sensor ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase">Actions</th>
                 </tr>
-              ) : (
-                sensors.map((sensor) => (
-                  <tr key={sensor._id} className="hover:bg-gray-700/50">
-                    <td className="px-6 py-4 text-sm font-mono">{sensor.sensor_id}</td>
-                    <td className="px-6 py-4 text-sm">{sensor.sensor_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{sensor.sensor_type}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{sensor.location}</td>
-                    <td className="px-6 py-4 text-sm space-x-2">
-                      <button
-                        onClick={() => openEditModal(sensor)}
-                        className="text-cyan-400 hover:text-cyan-300"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(sensor.sensor_id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        Delete
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-gray-700 light:divide-gray-200">
+                {sensors.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-400 light:text-gray-500">
+                      No sensors found. Click "Add Sensor" to create one.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  sensors.map((sensor) => (
+                    <tr key={sensor._id} className="hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-sm font-mono">{sensor.sensor_id}</td>
+                      <td className="px-6 py-4 text-sm">{sensor.sensor_name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-300 light:text-gray-700 light:text-gray-600">{sensor.sensor_type}</td>
+                      <td className="px-6 py-4 text-sm text-gray-300 light:text-gray-700 light:text-gray-600">{sensor.location}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => openEditModal(sensor)}
+                            className="text-cyan-400 light:text-cyan-800 hover:text-cyan-300 light:hover:text-cyan-600 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(sensor.sensor_id)}
+                            className="text-red-400 light:text-red-800 hover:text-red-300 light:hover:text-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View - NEW */}
+          <div className="md:hidden divide-y divide-gray-700 light:divide-gray-200">
+            {sensors.length === 0 ? (
+              <div className="p-10 text-center text-gray-400 light:text-gray-500 text-sm italic">No sensors found.</div>
+            ) : (
+              sensors.map((sensor) => (
+                <div key={sensor._id} className="p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-sm font-bold text-white light:text-gray-900 tracking-tight">{sensor.sensor_name}</div>
+                      <div className="text-[10px] text-gray-500 font-mono mt-0.5">{sensor.sensor_id}</div>
+                    </div>
+                    <span className="px-2 py-0.5 bg-cyan-500 light:bg-cyan-700/10 text-cyan-400 light:text-cyan-800 border border-cyan-500 light:border-cyan-700/20 rounded text-[9px] font-black uppercase">
+                      {sensor.sensor_type}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-medium text-gray-400 light:text-gray-500 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-gray-600 light:bg-gray-200 rounded-full"></span>
+                    {sensor.location}
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => openEditModal(sensor)} className="flex-1 py-2 bg-gray-700 light:bg-gray-100 hover:bg-gray-600 light:hover:bg-gray-300 text-white light:text-gray-900 rounded-lg text-[10px] font-bold transition-all">EDIT</button>
+                    <button onClick={() => handleDelete(sensor.sensor_id)} className="flex-1 py-2 bg-red-900/20 border border-red-900/30 text-red-400 light:text-red-800 rounded-lg text-[10px] font-bold">DELETE</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Create Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full">
+            <div className="bg-gray-800 light:bg-white rounded-lg p-6 max-w-2xl w-full">
               <h2 className="text-2xl font-bold mb-4">Create New Sensor</h2>
               <form onSubmit={handleCreate}>
                 {currentUser?.role === 'superadmin' && (
@@ -268,7 +301,7 @@ const SensorManagementPage: React.FC = () => {
                     <select
                       value={formData.company_name}
                       onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                      className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                     >
                       <option value="">Select Company</option>
                       {companies.map((company) => (
@@ -285,7 +318,7 @@ const SensorManagementPage: React.FC = () => {
                   <input
                     type="text"
                     value={formData.sensor_id}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-gray-400 light:text-gray-500 cursor-not-allowed"
                     placeholder="Select sensor type and company first"
                     readOnly
                   />
@@ -297,7 +330,7 @@ const SensorManagementPage: React.FC = () => {
                   <input
                     type="text"
                     value={formData.sensor_name}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-gray-400 light:text-gray-500 cursor-not-allowed"
                     placeholder="Will be auto-filled based on sensor type"
                     readOnly
                   />
@@ -316,7 +349,7 @@ const SensorManagementPage: React.FC = () => {
                         sensor_name: sensor ? sensor.name : ''
                       });
                     }}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                     required
                   >
                     <option value="">Select Type</option>
@@ -332,7 +365,7 @@ const SensorManagementPage: React.FC = () => {
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                     placeholder="e.g., Production Floor A"
                   />
                 </div>
@@ -343,7 +376,7 @@ const SensorManagementPage: React.FC = () => {
                     type="text"
                     value={formData.parent_device_id}
                     onChange={(e) => setFormData({ ...formData, parent_device_id: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                     placeholder="e.g., ESP32_AirSense"
                     required
                   />
@@ -353,13 +386,13 @@ const SensorManagementPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700"
+                    className="px-4 py-2 border border-gray-600 light:border-gray-300 rounded-lg hover:bg-gray-700 light:hover:bg-gray-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                    className="px-4 py-2 bg-cyan-600 light:bg-cyan-800 text-white rounded-lg hover:bg-cyan-700"
                   >
                     Create Sensor
                   </button>
@@ -372,7 +405,7 @@ const SensorManagementPage: React.FC = () => {
         {/* Edit Modal */}
         {showEditModal && selectedSensor && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full">
+            <div className="bg-gray-800 light:bg-white rounded-lg p-6 max-w-2xl w-full">
               <h2 className="text-2xl font-bold mb-4">Edit Sensor</h2>
               <form onSubmit={handleUpdate}>
                 <div className="mb-4">
@@ -380,7 +413,7 @@ const SensorManagementPage: React.FC = () => {
                   <input
                     type="text"
                     value={formData.sensor_id}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-400"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-gray-400 light:text-gray-500"
                     disabled
                   />
                 </div>
@@ -391,7 +424,7 @@ const SensorManagementPage: React.FC = () => {
                     type="text"
                     value={formData.sensor_name}
                     onChange={(e) => setFormData({ ...formData, sensor_name: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                   />
                 </div>
 
@@ -408,7 +441,7 @@ const SensorManagementPage: React.FC = () => {
                         sensor_name: sensor ? sensor.name : formData.sensor_name
                       });
                     }}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                   >
                     {sensorTypes.map((sensor) => (
                       <option key={sensor.key} value={sensor.type}>{sensor.type}</option>
@@ -422,7 +455,7 @@ const SensorManagementPage: React.FC = () => {
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg text-white light:text-gray-900"
                   />
                 </div>
 
@@ -433,13 +466,13 @@ const SensorManagementPage: React.FC = () => {
                       setShowEditModal(false);
                       setSelectedSensor(null);
                     }}
-                    className="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700"
+                    className="px-4 py-2 border border-gray-600 light:border-gray-300 rounded-lg hover:bg-gray-700 light:hover:bg-gray-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                    className="px-4 py-2 bg-cyan-600 light:bg-cyan-800 text-white rounded-lg hover:bg-cyan-700"
                   >
                     Update Sensor
                   </button>

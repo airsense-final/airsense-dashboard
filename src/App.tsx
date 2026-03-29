@@ -1,7 +1,6 @@
 import React, { useState, useEffect, lazy } from 'react';
 import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
-import DigitalTwinButton from './components/DigitalTwinButton'; 
 import type { User } from './types/types';
 
 // Lazy load pages for performance optimization
@@ -19,7 +18,7 @@ const AlertHistoryPage = lazy(() => import('./pages/AlertHistoryPage'));
 // Loading fallback component — used by lazy-loaded routes
 const _PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="text-cyan-400 text-xl animate-pulse font-medium">Loading...</div>
+    <div className="text-cyan-400 light:text-cyan-800 text-xl animate-pulse font-medium">Loading...</div>
   </div>
 );
 void _PageLoader; // suppress unused warning until Suspense is wired up
@@ -29,6 +28,22 @@ function App() {
   const [isAuthed, setIsAuthed] = useState<boolean>(!!getToken());
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    // Default to light (false) if no theme is saved
+    return saved ? saved === 'dark' : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    if (!isDarkMode) {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -117,8 +132,12 @@ function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-        Loading...
+      <div className={`min-h-screen bg-gray-900 light:bg-gray-50 flex flex-col items-center justify-center text-white light:text-gray-900 ${!isDarkMode ? 'light-mode' : ''}`}>
+        <svg className="animate-spin h-10 w-10 text-cyan-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <div className="text-cyan-400 light:text-cyan-800 text-xl animate-pulse font-bold tracking-tight uppercase">Loading AirSense...</div>
       </div>
     );
   }
@@ -126,11 +145,19 @@ function App() {
   let content: React.ReactNode = null;
 
   if (currentRoute.includes('login')) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <div className={`min-h-screen bg-gray-900 light:bg-gray-50 ${!isDarkMode ? 'light-mode' : ''}`}>
+        <LoginPage onLoginSuccess={handleLoginSuccess} isDarkMode={isDarkMode} />
+      </div>
+    );
   }
 
   if (currentRoute.includes('register')) {
-    return <RegisterPage />;
+    return (
+      <div className={`min-h-screen bg-gray-900 light:bg-gray-50 ${!isDarkMode ? 'light-mode' : ''}`}>
+        <RegisterPage isDarkMode={isDarkMode} />
+      </div>
+    );
   }
 
   if (isAuthed && currentUser) {
@@ -160,58 +187,52 @@ function App() {
     } else if (currentRoute === '#/admin/users') {
       // Viewer can't access users page
       if (currentUser.role === 'viewer') {
-        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+        content = <div className="text-white light:text-gray-900 text-center mt-10">403 - Access Denied</div>;
       } else {
         content = <AdminUsersPage />;
       }
     } else if (currentRoute === '#/admin/companies') {
       // Only superadmin can access companies page
       if (currentUser.role !== 'superadmin') {
-        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+        content = <div className="text-white light:text-gray-900 text-center mt-10">403 - Access Denied</div>;
       } else {
         content = <AdminCompaniesPage />;
       }
     } else if (currentRoute === '#/sensors') {
       // Only admins can access sensor management
       if (currentUser.role !== 'superadmin' && currentUser.role !== 'companyadmin') {
-        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+        content = <div className="text-white light:text-gray-900 text-center mt-10">403 - Access Denied</div>;
       } else {
         content = <SensorManagementPage />;
       }
     } else if (currentRoute === '#/admin/thresholds') {
       // Only superadmin can access global threshold management
       if (currentUser.role !== 'superadmin') {
-        content = <div className="text-white text-center mt-10">403 - Access Denied</div>;
+        content = <div className="text-white light:text-gray-900 text-center mt-10">403 - Access Denied</div>;
       } else {
         content = <ThresholdManagementPage />;
       }
     } else if (currentRoute === '#/alerts/history') {
       content = <AlertHistoryPage />;
     } else {
-      content = <div className="text-white text-center mt-10">404 - Page Not Found</div>;
+      content = <div className="text-white light:text-gray-900 text-center mt-10">404 - Page Not Found</div>;
     }
   } else if (isAuthed) {
-    content = <div className="text-white text-center mt-10">Loading user data...</div>;
+    content = <div className="text-white light:text-gray-900 text-center mt-10">Loading user data...</div>;
   } else {
     return null;
   }
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen font-sans">
-      <Header isAuthed={isAuthed} onLogout={handleLogout} currentUser={currentUser} />
-      <main className="container mx-auto p-6">
-        
-        {/* --- 3D İZLEME BUTONU BURAYA EKLENDİ --- */}
-        {isAuthed && currentUser && (
-            <div className="flex justify-end mb-4">
-                <DigitalTwinButton 
-                    role={currentUser.role}
-                    // Typescript artık kızmayacak çünkü User içinde company_name var
-                    company={currentUser.company_name || "Karacan"}
-                />
-            </div>
-        )}
-        
+    <div className={`bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 min-h-screen font-sans ${!isDarkMode ? 'light-mode' : ''}`}>
+      <Header 
+        isAuthed={isAuthed} 
+        onLogout={handleLogout} 
+        currentUser={currentUser} 
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+      />
+      <main className="container mx-auto p-3 sm:p-6">
         {content}
       </main>
     </div>

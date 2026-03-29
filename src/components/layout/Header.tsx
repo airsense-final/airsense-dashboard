@@ -6,9 +6,11 @@ interface HeaderProps {
     isAuthed: boolean;
     onLogout: () => void;
     currentUser: User | null;
+    isDarkMode: boolean;
+    toggleTheme: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser }) => {
+export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser, isDarkMode, toggleTheme }) => {
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -18,14 +20,14 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
         <>
             <a
                 href="#/"
-                className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 block md:inline-block"
+                className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 block md:inline-block"
                 onClick={() => setIsMenuOpen(false)}
             >
                 Dashboard
             </a>
             <a
                 href="#/test-simulation"
-                className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 flex items-center space-x-2"
+                className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
                 onClick={() => setIsMenuOpen(false)}
             >
                 <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -37,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
             {currentUser.role !== 'viewer' && (
                 <a
                     href="#/admin/users"
-                    className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 flex items-center space-x-2"
+                    className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
                     onClick={() => setIsMenuOpen(false)}
                 >
                     <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
             {currentUser.role === 'superadmin' && (
                 <a
                     href="#/admin/companies"
-                    className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 flex items-center space-x-2"
+                    className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
                     onClick={() => setIsMenuOpen(false)}
                 >
                     <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
             {currentUser.role === 'superadmin' && (
                 <a
                     href="#/admin/thresholds"
-                    className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 flex items-center space-x-2"
+                    className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
                     onClick={() => setIsMenuOpen(false)}
                 >
                     <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
             {(currentUser.role === 'superadmin' || currentUser.role === 'companyadmin') && (
                 <a
                     href="#/sensors"
-                    className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 flex items-center space-x-2"
+                    className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
                     onClick={() => setIsMenuOpen(false)}
                 >
                     <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
             )}
             <a
                 href="#/alerts/history"
-                className="text-gray-300 hover:text-cyan-400 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 flex items-center space-x-2"
+                className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
                 onClick={() => setIsMenuOpen(false)}
             >
                 <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,43 +98,71 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
     );
 
     return (
-        <header className="bg-gray-800/80 backdrop-blur-md sticky top-0 z-50 shadow-lg border-b border-gray-700">
+        <header className="bg-gray-800/80 light:bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-lg border-b border-gray-700 light:border-gray-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Brand & Desktop Nav */}
                     <div className="flex items-center space-x-4 lg:space-x-8">
                         <a href="#/" className="flex-shrink-0 flex items-center space-x-2 group">
-                            <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-cyan-500/20">
+                            <div className="w-8 h-8 bg-cyan-500 light:bg-cyan-700 light:bg-cyan-600 light:bg-cyan-800 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-cyan-500/20 light:shadow-cyan-600/10">
                                 <span className="text-white font-bold text-xl">A</span>
                             </div>
-                            <span className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors hidden sm:block">AirSense</span>
+                            <span className="text-xl font-bold text-white light:text-gray-900 group-hover:text-cyan-400 light:text-cyan-800 light:group-hover:text-cyan-700 transition-colors hidden sm:block">AirSense</span>
                         </a>
                         
                         {/* Desktop Navigation */}
-                        <nav className="hidden xl:flex space-x-1">
+                        <nav className="hidden xl:flex items-center space-x-1">
                             <NavLinks />
                         </nav>
                     </div>
 
                     {/* Right side: User Profile & Actions */}
                     <div className="flex items-center space-x-2 md:space-x-4">
+                        {/* Theme Toggle - iPhone style switch */}
+                        <div className="flex items-center pr-1 sm:pr-2">
+                            <button
+                                onClick={toggleTheme}
+                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 focus:outline-none shadow-inner ${
+                                    isDarkMode ? 'bg-cyan-600 light:bg-cyan-800' : 'bg-gray-300'
+                                }`}
+                                title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            >
+                                <span className="sr-only">Toggle theme</span>
+                                <div
+                                    className={`flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-lg ring-0 transition-all duration-300 transform ${
+                                        isDarkMode ? 'translate-x-5' : 'translate-x-1'
+                                    }`}
+                                >
+                                    {isDarkMode ? (
+                                        <svg className="h-3.5 w-3.5 text-cyan-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="h-3.5 w-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+
                         {/* User Profile - Compact on mobile */}
-                        <div className="hidden sm:flex items-center space-x-3 px-3 py-1.5 bg-gray-700/50 rounded-lg border border-gray-600">
-                            <div className="flex items-center justify-center w-8 h-8 bg-cyan-500/20 rounded-full border border-cyan-500/50">
-                                <svg aria-hidden="true" className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="hidden sm:flex items-center space-x-3 px-3 py-1.5 bg-gray-700/50 light:bg-gray-100/50 rounded-lg border border-gray-600 light:border-gray-200">
+                            <div className="flex items-center justify-center w-8 h-8 bg-gray-800 light:bg-cyan-600/10 rounded-full border border-gray-600 light:border-cyan-600/30">
+                                <svg aria-hidden="true" className="w-5 h-5 text-gray-400 light:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                             </div>
                             <div className="text-right leading-tight">
-                                <div className="text-xs font-semibold text-white truncate max-w-[100px]">{currentUser.username}</div>
-                                <div className="text-[10px] text-gray-400 capitalize">{currentUser.role}</div>
+                                <div className="text-xs font-semibold text-white light:text-gray-900 truncate max-w-[100px]">{currentUser.username}</div>
+                                <div className="text-[10px] text-gray-400 light:text-gray-600 capitalize">{currentUser.role}</div>
                             </div>
                         </div>
 
                         <div className="flex items-center space-x-1">
                             <button
                                 onClick={() => setIsChangePasswordModalOpen(true)}
-                                className="text-gray-400 hover:text-cyan-400 p-2 hover:bg-cyan-500/10 rounded-lg transition-all"
+                                className="text-gray-400 light:text-gray-600 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 p-2 hover:bg-cyan-500 light:bg-cyan-700/10 light:hover:bg-cyan-600 light:bg-cyan-800/10 rounded-lg transition-all"
                                 title="Change Password"
                             >
                                 <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
 
                             <button
                                 onClick={onLogout}
-                                className="text-gray-400 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                                className="text-gray-400 light:text-gray-600 hover:text-red-400 light:text-red-800 light:hover:text-red-700 p-2 hover:bg-red-500/10 light:hover:bg-red-600/10 rounded-lg transition-all"
                                 title="Logout"
                             >
                                 <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
                             {/* Mobile menu button */}
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="xl:hidden p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg focus:outline-none"
+                                className="xl:hidden p-2 text-gray-400 light:text-gray-600 hover:text-white light:hover:text-gray-900 hover:bg-gray-700 light:hover:bg-gray-200 rounded-lg focus:outline-none"
                             >
                                 <span className="sr-only">Open main menu</span>
                                 {isMenuOpen ? (
@@ -173,17 +203,17 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser 
 
             {/* Mobile Navigation Menu */}
             {isMenuOpen && (
-                <div className="xl:hidden bg-gray-800 border-t border-gray-700 py-4 px-4 space-y-2 shadow-2xl animate-in slide-in-from-top duration-200">
+                <div className="xl:hidden bg-gray-800 light:bg-white border-t border-gray-700 light:border-gray-200 py-4 px-4 space-y-2 shadow-2xl animate-in slide-in-from-top duration-200">
                     {/* User profile inside mobile menu */}
-                    <div className="flex sm:hidden items-center space-x-3 p-3 bg-gray-900/50 rounded-lg mb-4">
-                        <div className="flex items-center justify-center w-10 h-10 bg-cyan-500/20 rounded-full border border-cyan-500">
-                            <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex sm:hidden items-center space-x-3 p-3 bg-gray-900/50 light:bg-gray-100/50 rounded-lg mb-4">
+                        <div className="flex items-center justify-center w-10 h-10 bg-cyan-500 light:bg-cyan-700/20 rounded-full border border-cyan-500 light:border-cyan-700">
+                            <svg aria-hidden="true" className="w-6 h-6 text-cyan-400 light:text-cyan-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </div>
                         <div>
-                            <div className="font-semibold text-white">{currentUser.username}</div>
-                            <div className="text-xs text-gray-400 capitalize">{currentUser.role}</div>
+                            <div className="font-semibold text-white light:text-gray-900">{currentUser.username}</div>
+                            <div className="text-xs text-gray-400 light:text-gray-600 capitalize">{currentUser.role}</div>
                         </div>
                     </div>
                     

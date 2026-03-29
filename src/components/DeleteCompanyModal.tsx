@@ -58,12 +58,12 @@ export const DeleteCompanyModal: React.FC<DeleteCompanyModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="w-full max-w-lg rounded-lg bg-gray-800 p-6 shadow-xl">
+            <div className="w-full max-w-lg rounded-lg bg-gray-800 light:bg-white p-6 shadow-xl">
                 <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-white">Confirm Company Deletion</h3>
+                    <h3 className="text-2xl font-bold text-white light:text-gray-900">Confirm Company Deletion</h3>
                     <button
                         onClick={handleClose}
-                        className="text-2xl text-gray-400 hover:text-white"
+                        className="text-2xl text-gray-400 light:text-gray-500 hover:text-white light:hover:text-gray-900"
                         disabled={isLoading}
                     >
                         ×
@@ -71,35 +71,35 @@ export const DeleteCompanyModal: React.FC<DeleteCompanyModalProps> = ({
                 </div>
 
                 {(error || (!canDelete && permissionMessage)) && (
-                    <div className="mb-4 rounded border border-red-500 bg-red-500/10 p-3 text-red-200">
+                    <div className="mb-4 rounded border border-red-500 light:border-red-700 bg-red-500/10 p-3 text-red-200">
                         {error || permissionMessage}
                     </div>
                 )}
 
-                <div className="mb-6 space-y-3 rounded-lg bg-gray-700 p-4">
+                <div className="mb-6 space-y-3 rounded-lg bg-gray-700 light:bg-gray-100 p-4">
                     <div className="flex items-center justify-between">
-                        <span className="text-gray-300">Company ID</span>
-                        <span className="font-mono text-sm text-white">{company._id}</span>
+                        <span className="text-gray-300 light:text-gray-700 light:text-gray-600">Company ID</span>
+                        <span className="font-mono text-sm text-white light:text-gray-900">{company._id}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-gray-300">Company Name</span>
-                        <span className="font-semibold text-white">{company.name}</span>
+                        <span className="text-gray-300 light:text-gray-700 light:text-gray-600">Company Name</span>
+                        <span className="font-semibold text-white light:text-gray-900">{company.name}</span>
                     </div>
-                    <div className="pt-3 border-t border-gray-600">
-                        <div className="text-gray-300 mb-2 font-medium">Company Admins</div>
+                    <div className="pt-3 border-t border-gray-600 light:border-gray-300">
+                        <div className="text-gray-300 light:text-gray-700 light:text-gray-600 mb-2 font-medium">Company Admins</div>
                         {adminsLoading ? (
-                            <div className="text-sm text-gray-400">Loading admins...</div>
+                            <div className="text-sm text-gray-400 light:text-gray-500">Loading admins...</div>
                         ) : companyAdmins.length > 0 ? (
                             <ul className="space-y-2">
                                 {companyAdmins.map((admin) => (
                                     <li key={admin._id} className="flex items-center justify-between rounded bg-gray-800/60 px-3 py-2">
-                                        <div className="text-sm text-white">{admin.username}</div>
-                                        <div className="text-xs text-gray-400">{admin.email}</div>
+                                        <div className="text-sm text-white light:text-gray-900">{admin.username}</div>
+                                        <div className="text-xs text-gray-400 light:text-gray-500">{admin.email}</div>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <div className="text-sm text-gray-400">No company admins found.</div>
+                            <div className="text-sm text-gray-400 light:text-gray-500">No company admins found.</div>
                         )}
                     </div>
                 </div>
@@ -118,12 +118,12 @@ export const DeleteCompanyModal: React.FC<DeleteCompanyModalProps> = ({
                     </div>
                 </div>
 
-                <p className="mb-4 text-center text-gray-300">Are you sure you want to proceed?</p>
+                <p className="mb-4 text-center text-gray-300 light:text-gray-700 light:text-gray-600">Are you sure you want to proceed?</p>
 
                 <div className="flex gap-3">
                     <button
                         onClick={handleClose}
-                        className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-gray-100 hover:bg-gray-700"
+                        className="flex-1 rounded-lg bg-gray-600 light:bg-gray-200 px-4 py-2 text-gray-100 hover:bg-gray-700 light:hover:bg-gray-200"
                         disabled={isLoading}
                     >
                         No, Cancel
