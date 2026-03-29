@@ -46,7 +46,7 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ title, value, max, uni
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-4xl font-bold" style={{ color: fill }}>{value.toFixed(1)}</span>
-                    <span className="text-lg text-gray-400">{unit}</span>
+                    <span className="text-lg text-gray-400 light:text-gray-500">{unit}</span>
                 </div>
             </div>
         </WidgetWrapper>

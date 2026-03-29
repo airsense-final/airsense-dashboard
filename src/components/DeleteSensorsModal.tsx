@@ -58,13 +58,13 @@ export const DeleteSensorsModal: React.FC<DeleteSensorsModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-96 overflow-y-auto">
+        <div className="fixed inset-0 bg-black light:bg-white bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 light:bg-white rounded-lg p-6 w-full max-w-md max-h-96 overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-2xl font-bold">Delete Sensors</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white text-2xl"
+                        className="text-gray-400 light:text-gray-500 hover:text-white light:hover:text-gray-900 text-2xl"
                         disabled={isLoading}
                     >
                         ×
@@ -72,16 +72,16 @@ export const DeleteSensorsModal: React.FC<DeleteSensorsModalProps> = ({
                 </div>
 
                 {error && (
-                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-200">
+                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500 light:border-red-700 rounded text-red-200">
                         {error}
                     </div>
                 )}
 
                 {sensors.length === 0 ? (
-                    <p className="text-gray-400">No sensors available to delete</p>
+                    <p className="text-gray-400 light:text-gray-500">No sensors available to delete</p>
                 ) : (
                     <>
-                        <div className="mb-4 p-3 bg-gray-700 rounded">
+                        <div className="mb-4 p-3 bg-gray-700 light:bg-gray-100 rounded">
                             <label className="flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -100,7 +100,7 @@ export const DeleteSensorsModal: React.FC<DeleteSensorsModalProps> = ({
                             {sensors.map(sensor => (
                                 <label
                                     key={sensor.sensor_id}
-                                    className="flex items-center p-3 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer transition-colors"
+                                    className="flex items-center p-3 bg-gray-700 light:bg-gray-100 rounded hover:bg-gray-600 light:hover:bg-gray-300 cursor-pointer transition-colors"
                                 >
                                     <input
                                         type="checkbox"
@@ -110,8 +110,8 @@ export const DeleteSensorsModal: React.FC<DeleteSensorsModalProps> = ({
                                         className="mr-3"
                                     />
                                     <div className="flex-1">
-                                        <p className="font-semibold text-white">{sensor.sensor_name}</p>
-                                        <p className="text-xs text-gray-400">
+                                        <p className="font-semibold text-white light:text-gray-900">{sensor.sensor_name}</p>
+                                        <p className="text-xs text-gray-400 light:text-gray-500">
                                             {sensor.sensor_id} • {sensor.sensor_type.toUpperCase()}
                                         </p>
                                     </div>
@@ -123,7 +123,7 @@ export const DeleteSensorsModal: React.FC<DeleteSensorsModalProps> = ({
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                                className="flex-1 px-4 py-2 bg-gray-600 light:bg-gray-200 rounded-lg hover:bg-gray-700 light:hover:bg-gray-200 transition-colors"
                                 disabled={isLoading}
                             >
                                 Cancel

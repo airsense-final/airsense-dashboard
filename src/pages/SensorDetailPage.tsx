@@ -54,9 +54,9 @@ interface CustomTooltipProps {
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, unit }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-gray-700 p-3 border border-gray-600 rounded shadow-lg">
-                <p className="text-gray-300 text-sm mb-1">{`${new Date(label as number).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}</p>
-                <p className="font-semibold" style={{ color: payload[0].color }}>
+            <div className="bg-gray-700 light:bg-gray-50 p-3 border border-gray-600 light:border-gray-200 rounded shadow-lg">
+                <p className="text-gray-300 light:text-gray-600 text-sm mb-1">{`${new Date(label as number).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}</p>
+                <p className="font-bold" style={{ color: payload[0].color }}>
                     {`${payload[0].name}: ${(payload[0].value as number).toFixed(4)} ${unit}`}
                 </p>
             </div>
@@ -367,35 +367,35 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-900 text-white p-6">
+            <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-6">
                 <div className="flex items-center justify-center h-64">
-                    <div className="text-xl">Loading sensor data...</div>
+                    <div className="text-xl font-bold text-cyan-400 light:text-cyan-800 animate-pulse">Loading sensor data...</div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-6">
+        <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6">
             <button
                 onClick={handleBackToDashboard}
-                className="mb-4 sm:mb-6 px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 flex items-center gap-2 text-xs sm:text-base"
+                className="mb-4 sm:mb-6 px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-700 light:bg-gray-100 hover:bg-gray-600 light:hover:bg-gray-200 rounded-lg transition-colors duration-200 flex items-center gap-2 text-xs sm:text-base font-bold"
             >
                 <span>←</span> <span className="hidden sm:inline">Back to Dashboard</span><span className="sm:hidden">Dashboard</span>
             </button>
 
-            <div className="bg-gray-800 rounded-lg p-4 sm:p-6 shadow-lg">
+            <div className="bg-gray-800 light:bg-white rounded-lg p-4 sm:p-6 shadow-lg border border-gray-700 light:border-gray-200">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">{displayTitle}</h1>
-                        <p className="text-gray-400 text-xs sm:text-sm mb-0.5 sm:mb-1">Sensor ID: {sensorId}</p>
-                        <p className="text-gray-400 text-xs sm:text-sm">Type: {displayType}</p>
+                        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2 text-white light:text-gray-900">{displayTitle}</h1>
+                        <p className="text-gray-400 light:text-gray-600 text-xs sm:text-sm mb-0.5 sm:mb-1 font-mono">Sensor ID: {sensorId}</p>
+                        <p className="text-gray-400 light:text-gray-600 text-xs sm:text-sm font-semibold">Type: {displayType}</p>
                     </div>
                     <div className="text-left lg:text-right flex flex-col items-start lg:items-end gap-3 sm:gap-2">
                         <div className="flex items-center gap-2 mb-1 sm:mb-2 flex-wrap">
                             <button
                                 onClick={() => setIsFilterPanelOpen(prev => !prev)}
-                                className={`px-2.5 py-1.5 font-semibold rounded-lg transition-colors flex items-center justify-center text-[10px] sm:text-sm ${filterApplied ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
+                                className={`px-2.5 py-1.5 font-bold rounded-lg transition-colors flex items-center justify-center text-[10px] sm:text-sm border ${filterApplied ? 'bg-cyan-600 light:bg-cyan-800 text-white border-cyan-500' : 'bg-gray-700 light:bg-gray-100 text-gray-200 light:text-gray-800 border-gray-600 light:border-gray-300'} hover:opacity-90`}
                             >
                                 <FilterIcon />
                                 <span>{filterApplied ? 'Filter Active' : 'Time Range'}</span>
@@ -403,7 +403,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                             {filterApplied && (
                                 <button
                                     onClick={handleClearFilter}
-                                    className="px-2.5 py-1.5 font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center justify-center text-[10px] sm:text-sm"
+                                    className="px-2.5 py-1.5 font-bold rounded-lg bg-green-600 light:bg-green-800 border border-green-500 text-white flex items-center justify-center text-[10px] sm:text-sm"
                                 >
                                     <LiveIcon />
                                     <span>Live</span>
@@ -411,22 +411,22 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                             )}
                             <button
                                 onClick={handleDownloadData}
-                                className="px-2.5 py-1.5 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center text-[10px] sm:text-sm"
+                                className="px-2.5 py-1.5 bg-gray-700 light:bg-gray-100 text-gray-200 light:text-gray-800 border border-gray-600 light:border-gray-300 font-bold rounded-lg hover:bg-gray-600 light:hover:bg-gray-200 transition-colors flex items-center justify-center text-[10px] sm:text-sm"
                             >
                                 <DownloadIcon />
                                 <span>Export</span>
                             </button>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <div className={`text-2xl sm:text-3xl font-semibold ${isError ? 'text-red-500 animate-pulse' : ''}`}>
+                            <div className={`text-2xl sm:text-3xl font-bold ${isError ? 'text-red-500 animate-pulse light:text-red-800' : 'text-cyan-400 light:text-cyan-800'}`}>
                                 {getSensorDisplayValue(currentValue, isError)}
                             </div>
-                            {!isError && <span className="text-sm sm:text-md text-gray-400 font-medium">{unit}</span>}
+                            {!isError && <span className="text-sm sm:text-md text-gray-400 light:text-gray-600 font-black uppercase tracking-widest">{unit}</span>}
                         </div>
                         {currentUser?.role !== 'viewer' && (
                             <button
                                 onClick={() => setShowThresholdModal(true)}
-                                className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-600/50 rounded-lg text-[10px] sm:text-sm transition-all duration-200 flex items-center gap-2"
+                                className="px-3 py-1.5 bg-amber-600/20 light:bg-amber-100 hover:bg-amber-600 light:hover:bg-amber-800 text-amber-400 light:text-amber-900 hover:text-white light:hover:text-white border border-amber-600/50 light:border-amber-300 rounded-lg text-[10px] sm:text-sm font-bold transition-all duration-200 flex items-center gap-2"
                             >
                                 ⚙️ <span className="hidden sm:inline">Configure Threshold</span><span className="sm:hidden">Threshold</span>
                             </button>
@@ -436,10 +436,10 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
 
 
                 {/* Filter Panel */}
-                <div className={`bg-gray-800/60 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gray-700 overflow-hidden transition-all duration-300 ease-in-out ${isFilterPanelOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 !p-0 !mb-0'}`}>
-                    <h4 className="text-lg font-semibold text-gray-200 mb-4">Filter by Time Range</h4>
+                <div className={`bg-gray-800/60 light:bg-gray-50 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gray-700 light:border-gray-200 overflow-hidden transition-all duration-300 ease-in-out ${isFilterPanelOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 !p-0 !mb-0'}`}>
+                    <h4 className="text-lg font-bold text-gray-200 light:text-gray-900 mb-4 uppercase tracking-tight">Filter by Time Range</h4>
                     <div className="mb-4">
-                        <p className="text-sm text-gray-400 mb-2">Quick Ranges</p>
+                        <p className="text-xs font-bold text-gray-400 light:text-gray-600 mb-2 uppercase tracking-widest">Quick Ranges</p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {[
                                 { label: 'Last 15m', minutes: 15 },
@@ -447,7 +447,7 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                 { label: 'Last 6h', minutes: 360 },
                                 { label: 'Last 24h', minutes: 1440 },
                             ].map(({ label, minutes }) => (
-                                <button key={minutes} onClick={() => handleQuickFilter(minutes)} className={`w-full text-center px-3 py-2 text-sm rounded-md transition-colors ${activeQuickFilter === minutes ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}>
+                                <button key={minutes} onClick={() => handleQuickFilter(minutes)} className={`w-full text-center px-3 py-2 text-sm font-bold rounded-xl transition-all border ${activeQuickFilter === minutes ? 'bg-cyan-600 light:bg-cyan-800 text-white border-cyan-500' : 'bg-gray-700 light:bg-white hover:bg-gray-600 light:hover:bg-gray-100 text-gray-200 light:text-gray-800 border-gray-600 light:border-gray-300'}`}>
                                     {label}
                                 </button>
                             ))}
@@ -455,43 +455,41 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                     </div>
                     
                     <div>
-                        <p className="text-sm text-gray-400 mb-2">Custom Range</p>
+                        <p className="text-xs font-bold text-gray-400 light:text-gray-600 mb-2 uppercase tracking-widest">Custom Range</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="startDate" className="block mb-1 text-xs font-medium text-gray-300">Start Time</label>
+                                <label htmlFor="startDate" className="block mb-1 text-xs font-bold text-gray-300 light:text-gray-700 uppercase tracking-wide ml-1">Start Time</label>
                                 <input
                                     type="datetime-local"
                                     id="startDate"
                                     value={startDateString}
                                     onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
-                                    className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
-                                    style={{colorScheme: 'dark'}}
+                                    className="bg-gray-700 light:bg-white border border-gray-600 light:border-gray-300 text-white light:text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none block w-full p-2.5 font-medium"
                                 />
                             </div>
                             <div>
-                                <label htmlFor="endDate" className="block mb-1 text-xs font-medium text-gray-300">End Time</label>
+                                <label htmlFor="endDate" className="block mb-1 text-xs font-bold text-gray-300 light:text-gray-700 uppercase tracking-wide ml-1">End Time</label>
                                 <input
                                     type="datetime-local"
                                     id="endDate"
                                     value={endDateString}
                                     onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
-                                    className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
-                                    style={{colorScheme: 'dark'}}
+                                    className="bg-gray-700 light:bg-white border border-gray-600 light:border-gray-300 text-white light:text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none block w-full p-2.5 font-medium"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end gap-3">
+                    <div className="mt-4 pt-4 border-t border-gray-700 light:border-gray-200 flex justify-end gap-3">
                         <button
                             onClick={handleClearFilter}
-                            className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors"
+                            className="px-4 py-2 bg-gray-600 light:bg-white border border-gray-500 light:border-gray-300 text-white light:text-gray-800 font-bold rounded-xl hover:bg-gray-700 light:hover:bg-gray-50 transition-colors text-sm"
                         >
                             Clear Filter
                         </button>
                         <button
                             onClick={handleApplyCustomFilter}
-                            className="px-4 py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-colors"
+                            className="px-4 py-2 bg-cyan-600 light:bg-cyan-800 border border-cyan-500 light:border-cyan-700 text-white font-bold rounded-xl hover:bg-cyan-700 transition-colors text-sm shadow-lg shadow-cyan-600/20"
                         >
                             Apply Custom Filter
                         </button>
@@ -499,52 +497,53 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                 </div>
 
                 {filterApplied && (
-                    <div className="bg-gray-800 border border-blue-500/50 rounded-lg p-3 mb-6 text-sm">
-                        <p className="font-semibold text-blue-300">
-                            Filter Active <span className="ml-2 text-yellow-400">(Live updates paused)</span>
+                    <div className="bg-cyan-900/20 light:bg-cyan-50 border border-cyan-500/50 rounded-xl p-3 mb-6 text-sm">
+                        <p className="font-bold text-cyan-400 light:text-cyan-800 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                            Filter Active <span className="font-medium text-xs opacity-80">(Live updates paused)</span>
                         </p>
-                        <p className="text-gray-400 mt-1">
-                            Showing data from <span className="font-medium text-gray-300">{startDate ? startDate.toLocaleString() : 'the beginning'}</span> to <span className="font-medium text-gray-300">{endDate ? endDate.toLocaleString() : 'now'}</span>.
+                        <p className="text-gray-400 light:text-gray-600 mt-1 font-medium">
+                            Showing data from <span className="font-bold text-gray-300 light:text-gray-800">{startDate ? startDate.toLocaleString() : 'the beginning'}</span> to <span className="font-bold text-gray-300 light:text-gray-800">{endDate ? endDate.toLocaleString() : 'now'}</span>.
                         </p>
                     </div>
                 )}
 
                 {error && (
-                    <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
+                    <div className="bg-red-900/50 light:bg-red-50 border border-red-500 light:border-red-200 text-red-200 light:text-red-800 px-4 py-3 rounded-xl mb-4 font-bold text-sm">
                         {error}
                     </div>
                 )}
 
-                <div className="bg-gray-800 rounded-lg p-6 shadow-lg min-h-[600px]">
+                <div className="bg-gray-800 light:bg-white rounded-xl p-4 sm:p-6 shadow-lg min-h-[600px] border border-gray-700 light:border-gray-100">
 
                     {/* Active Alerts Banner */}
                     {activeAlerts.length > 0 && (
-                        <div className="mb-4 space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                        <div className="mb-6 space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                             {activeAlerts.map(alert => (
                                 <div
                                     key={alert._id}
-                                    className={`p-4 rounded-lg border grid grid-cols-[auto_1fr_auto] gap-4 items-center ${alert.alert_type === 'critical'
-                                        ? 'bg-red-900/20 border-red-500/30 text-red-200'
-                                        : 'bg-amber-900/20 border-amber-500/30 text-amber-200'
+                                    className={`p-4 rounded-xl border-2 grid grid-cols-[auto_1fr_auto] gap-4 items-center shadow-sm ${alert.alert_type === 'critical'
+                                        ? 'bg-red-900/20 light:bg-red-50 border-red-500 light:border-red-200 text-red-200 light:text-red-900'
+                                        : 'bg-amber-900/20 light:bg-amber-50 border-amber-500 light:border-amber-200 text-amber-200 light:text-amber-900'
                                         }`}
                                 >
-                                    <span className={`text-2xl ${alert.alert_type === 'critical' ? 'animate-pulse' : ''}`}>
+                                    <span className={`text-2xl ${alert.alert_type === 'critical' ? 'animate-bounce' : ''}`}>
                                         {alert.alert_type === 'critical' ? '🚨' : '⚠️'}
                                     </span>
 
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-sm uppercase tracking-wide">
+                                            <span className="font-black text-xs uppercase tracking-widest">
                                                 {alert.alert_type} ALERT
                                             </span>
                                             {alert.is_read && (
-                                                <span className="text-[10px] bg-gray-700/80 px-1.5 py-0.5 rounded text-gray-300 uppercase tracking-wider">
+                                                <span className="text-[9px] bg-gray-700 light:bg-white/50 px-2 py-0.5 rounded-full text-gray-300 light:text-gray-700 uppercase font-black border border-white/10">
                                                     Read
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="text-sm font-medium opacity-90">{alert.message}</div>
-                                        <div className="text-xs opacity-60 mt-1 font-mono">
+                                        <div className="text-sm font-bold opacity-100">{alert.message}</div>
+                                        <div className="text-[10px] opacity-70 mt-1 font-mono font-bold uppercase tracking-wider">
                                             {new Date(alert.timestamp.endsWith('Z') ? alert.timestamp : alert.timestamp + 'Z').toLocaleString()}
                                         </div>
                                     </div>
@@ -552,15 +551,17 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                     {!alert.is_read ? (
                                         <button
                                             onClick={(e) => handleMarkAsRead(alert._id, e)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 whitespace-nowrap ${alert.alert_type === 'critical'
-                                                ? 'bg-red-600 hover:bg-red-500 text-white'
-                                                : 'bg-amber-600 hover:bg-amber-500 text-white'
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 whitespace-nowrap ${alert.alert_type === 'critical'
+                                                ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
+                                                : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20'
                                                 }`}
                                         >
-                                            Mark as Read
+                                            Mark Read
                                         </button>
                                     ) : (
-                                        <div className="w-[88px]"></div> // Spacer to keep layout consistent if needed, or just nothing
+                                        <div className="w-[88px] flex justify-center opacity-50">
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Seen</span>
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -569,15 +570,15 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
 
                     {historyData.length > 0 ? (
                         <>
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-semibold text-cyan-400">{sensorName} - {filterApplied ? 'Historical Data' : 'Real-Time Data'}</h2>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <h2 className="text-lg sm:text-xl font-bold text-cyan-400 light:text-cyan-800 uppercase tracking-tight">{sensorName} - {filterApplied ? 'Historical' : 'Real-Time'}</h2>
                                 {currentUser?.role !== 'viewer' && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-gray-400">Environment:</span>
+                                    <div className="flex items-center gap-3 bg-gray-900/50 light:bg-gray-50 px-3 py-1.5 rounded-full border border-gray-700 light:border-gray-200">
+                                        <span className="text-[10px] font-black text-gray-400 light:text-gray-600 uppercase tracking-widest">Env:</span>
                                         <select
                                             value={scenario}
                                             onChange={handleScenarioChange}
-                                            className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white"
+                                            className="bg-transparent text-xs font-bold text-white light:text-gray-900 outline-none cursor-pointer"
                                         >
                                             <option value="indoor_small">Indoor Small</option>
                                             <option value="indoor_large">Indoor Large</option>
@@ -595,13 +596,13 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                         }))}
                                         margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                                     >
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={document.body.classList.contains('light-mode') ? "#E2E8F0" : "#4A5568"} />
                                         <XAxis
                                             dataKey="time"
                                             type="number"
                                             scale="time"
                                             domain={['dataMin', 'dataMax']}
-                                            stroke="#718096"
+                                            stroke={document.body.classList.contains('light-mode') ? "#4A5568" : "#718096"}
                                             fontSize={10}
                                             tickFormatter={(unixTime) => {
                                                 const date = new Date(unixTime);
@@ -611,32 +612,32 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                                             }}
                                         />
                                         <YAxis
-                                            stroke="#718096"
+                                            stroke={document.body.classList.contains('light-mode') ? "#4A5568" : "#718096"}
                                             width={window.innerWidth < 640 ? 40 : 80}
                                             fontSize={10}
                                             tickFormatter={(value) => value.toFixed(window.innerWidth < 640 ? 2 : 4)}
                                         />
                                         <Tooltip content={<CustomTooltip unit={unit} />} />
-                                        <Legend wrapperStyle={{ fontSize: '10px' }} />
+                                        <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }} />
 
                                         {/* Threshold Reference Lines */}
                                         {thresholds?.warning_min != null && (
-                                            <ReferenceLine y={thresholds.warning_min} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'W-Min', position: 'right', fill: '#ECC94B', fontSize: 8 }} />
+                                            <ReferenceLine y={thresholds.warning_min} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'W-Min', position: 'right', fill: '#ECC94B', fontSize: 8, fontWeight: 'bold' }} />
                                         )}
                                         {thresholds?.warning_max != null && (
-                                            <ReferenceLine y={thresholds.warning_max} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'W-Max', position: 'right', fill: '#ECC94B', fontSize: 8 }} />
+                                            <ReferenceLine y={thresholds.warning_max} stroke="#ECC94B" strokeDasharray="5 5" label={{ value: 'W-Max', position: 'right', fill: '#ECC94B', fontSize: 8, fontWeight: 'bold' }} />
                                         )}
                                         {thresholds?.critical_min != null && (
-                                            <ReferenceLine y={thresholds.critical_min} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'C-Min', position: 'right', fill: '#F56565', fontSize: 8 }} />
+                                            <ReferenceLine y={thresholds.critical_min} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'C-Min', position: 'right', fill: '#F56565', fontSize: 8, fontWeight: 'bold' }} />
                                         )}
                                         {thresholds?.critical_max != null && (
-                                            <ReferenceLine y={thresholds.critical_max} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'C-Max', position: 'right', fill: '#F56565', fontSize: 8 }} />
+                                            <ReferenceLine y={thresholds.critical_max} stroke="#F56565" strokeDasharray="3 3" label={{ value: 'C-Max', position: 'right', fill: '#F56565', fontSize: 8, fontWeight: 'bold' }} />
                                         )}
                                         <Line
                                             type="monotone"
                                             dataKey="value"
                                             name={sensorName}
-                                            stroke="#4FD1C5"
+                                            stroke={document.body.classList.contains('light-mode') ? "#155e75" : "#22d3ee"}
                                             strokeWidth={window.innerWidth < 640 ? 2 : 3}
                                             dot={false}
                                             isAnimationActive={false}
@@ -646,8 +647,8 @@ export const SensorDetailPage: React.FC<SensorDetailPageProps> = ({
                             </div>
                         </>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500 text-lg">
-                            No data available for this sensor
+                        <div className="flex items-center justify-center h-full text-gray-500 text-lg font-bold uppercase tracking-widest animate-pulse">
+                            No sensor data available
                         </div>
                     )}
                 </div>

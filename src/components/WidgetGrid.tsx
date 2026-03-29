@@ -46,8 +46,8 @@ export const WidgetGrid: React.FC<WidgetGridProps> = ({ sensor, latestData, data
 
     if (metricsConfig.length === 0) {
         return (
-            <div className="text-center py-10 bg-gray-800 rounded-lg">
-                <p className="text-gray-400">No metric configuration found for sensor type: {sensor.sensor_type}</p>
+            <div className="text-center py-10 bg-gray-800 light:bg-white rounded-lg">
+                <p className="text-gray-400 light:text-gray-500">No metric configuration found for sensor type: {sensor.sensor_type}</p>
             </div>
         );
     }

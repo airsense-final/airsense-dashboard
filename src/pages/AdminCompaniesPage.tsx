@@ -116,7 +116,7 @@ export function AdminCompaniesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
+      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-xl">Loading companies...</div>
         </div>
@@ -125,39 +125,39 @@ export function AdminCompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-6">
+    <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Company Management</h1>
-            <p className="text-gray-400 text-xs sm:text-sm">Manage companies and their access</p>
+            <p className="text-gray-400 light:text-gray-500 text-xs sm:text-sm">Manage companies and their access</p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="w-full sm:w-auto px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-xs sm:text-sm font-medium"
+            className="w-full sm:w-auto px-5 py-2.5 bg-cyan-600 light:bg-cyan-800 hover:bg-cyan-700 text-white rounded-xl transition-all shadow-lg shadow-cyan-900/20 active:scale-95 text-xs sm:text-sm font-semibold"
           >
             {showAddForm ? 'Cancel' : '+ Add Company'}
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500">
+          <div className="mb-4 p-4 bg-red-500/10 border border-red-500 light:border-red-700 rounded-lg text-red-500">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 p-4 bg-green-500/10 border border-green-500 rounded-lg text-green-500">
+          <div className="mb-4 p-4 bg-green-500/10 border border-green-500 light:border-green-700 rounded-lg text-green-500">
             {successMessage}
           </div>
         )}
 
         {showAddForm && (
-          <div className="mb-6 bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="mb-6 bg-gray-800 light:bg-white p-6 rounded-lg border border-gray-700 light:border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Add New Company & Admin</h2>
             <form onSubmit={handleCreateCompany} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 light:text-gray-700 light:text-gray-600 mb-2">
                   Company Name *
                 </label>
                 <input
@@ -165,18 +165,18 @@ export function AdminCompaniesPage() {
                   value={newCompanyName}
                   onChange={(e) => setNewCompanyName(e.target.value)}
                   placeholder="e.g. Acme Corporation"
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                   disabled={submitting}
                   required
                 />
               </div>
 
-              <div className="border-t border-gray-700 pt-4 mt-4">
-                <h3 className="text-lg font-medium mb-3 text-gray-300">Company Admin Details</h3>
+              <div className="border-t border-gray-700 light:border-gray-200 pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-3 text-gray-300 light:text-gray-700 light:text-gray-600">Company Admin Details</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 light:text-gray-700 light:text-gray-600 mb-2">
                       Admin Username *
                     </label>
                     <input
@@ -184,14 +184,14 @@ export function AdminCompaniesPage() {
                       value={adminUsername}
                       onChange={(e) => setAdminUsername(e.target.value)}
                       placeholder="admin.john"
-                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                       disabled={submitting}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 light:text-gray-700 light:text-gray-600 mb-2">
                       Admin Email *
                     </label>
                     <input
@@ -199,14 +199,14 @@ export function AdminCompaniesPage() {
                       value={adminEmail}
                       onChange={(e) => setAdminEmail(e.target.value)}
                       placeholder="admin@company.com"
-                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                       disabled={submitting}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 light:text-gray-700 light:text-gray-600 mb-2">
                       Admin Password *
                     </label>
                     <input
@@ -214,7 +214,7 @@ export function AdminCompaniesPage() {
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       placeholder="Min. 6 characters"
-                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                       disabled={submitting}
                       required
                       minLength={6}
@@ -242,7 +242,7 @@ export function AdminCompaniesPage() {
                     setError(null);
                   }}
                   disabled={submitting}
-                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                  className="px-6 py-2 bg-gray-600 light:bg-gray-200 hover:bg-gray-700 light:hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -251,28 +251,28 @@ export function AdminCompaniesPage() {
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+        <div className="bg-gray-800 light:bg-white rounded-lg overflow-hidden border border-gray-700 light:border-gray-200 shadow-lg">
           {/* Desktop Table View - ORIGINAL */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-700">
+              <thead className="bg-gray-700 light:bg-gray-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase tracking-wider">
                     Company ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase tracking-wider">
                     Company Name
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-300 light:text-gray-700 light:text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
+              <tbody className="divide-y divide-gray-700 light:divide-gray-200">
                 {companies.map((company) => (
                   <tr key={company._id} className="hover:bg-gray-750">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-400 font-mono">{company._id}</div>
+                      <div className="text-sm text-gray-400 light:text-gray-500 font-mono">{company._id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium">{company.name}</div>
@@ -281,7 +281,7 @@ export function AdminCompaniesPage() {
                       <div className="flex justify-center">
                         <button
                           onClick={() => handleDeleteCompany(company._id)}
-                          className="px-4 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white rounded-lg text-xs font-semibold transition-all"
+                          className="px-4 py-1.5 bg-red-500/10 text-red-400 light:text-red-800 border border-red-500 light:border-red-700/20 hover:bg-red-500 hover:text-white light:hover:text-gray-900 rounded-lg text-xs font-semibold transition-all"
                         >
                           Delete
                         </button>
@@ -294,17 +294,17 @@ export function AdminCompaniesPage() {
           </div>
 
           {/* Mobile Card View - NEW */}
-          <div className="md:hidden divide-y divide-gray-700">
+          <div className="md:hidden divide-y divide-gray-700 light:divide-gray-200">
             {companies.map((company) => (
               <div key={company._id} className="p-4 space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm font-bold text-white tracking-tight">{company.name}</div>
+                    <div className="text-sm font-bold text-white light:text-gray-900 tracking-tight">{company.name}</div>
                     <div className="text-[10px] text-gray-500 font-mono mt-1">{company._id}</div>
                   </div>
                   <button
                     onClick={() => handleDeleteCompany(company._id)}
-                    className="p-2 bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 active:scale-90 transition-transform"
+                    className="p-2 bg-red-600/10 text-red-500 rounded-lg border border-red-500 light:border-red-700/20 active:scale-90 transition-transform"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -317,7 +317,7 @@ export function AdminCompaniesPage() {
         </div>
 
         {companies.length === 0 && !loading && (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 light:text-gray-500">
             No companies found. Click "Add Company" to create one.
           </div>
         )}

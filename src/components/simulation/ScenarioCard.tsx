@@ -45,44 +45,44 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
 
   return (
     <div
-      className={`bg-gray-800 rounded-lg p-6 border-2 transition-all duration-300 ${isCurrentlyRunning
-          ? 'border-cyan-400 shadow-lg shadow-cyan-400/50 animate-pulse'
-          : 'border-gray-700 hover:border-gray-600'
+      className={`bg-gray-800 light:bg-white rounded-lg p-6 border-2 transition-all duration-300 ${isCurrentlyRunning
+          ? 'border-cyan-400 light:border-cyan-600 shadow-lg shadow-cyan-400/50 light:shadow-cyan-600/10 animate-pulse'
+          : 'border-gray-700 light:border-gray-200 hover:border-gray-600 light:hover:border-cyan-300'
         }`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">{getScenarioIcon(scenario.id)}</div>
           <div>
-            <h3 className="text-xl font-bold text-white">{scenario.name}</h3>
-            <p className="text-gray-400 text-sm mt-1">{scenario.description}</p>
+            <h3 className="text-xl font-bold text-white light:text-gray-900">{scenario.name}</h3>
+            <p className="text-gray-400 light:text-gray-500 text-sm mt-1">{scenario.description}</p>
           </div>
         </div>
       </div>
 
       <div className="space-y-2 mb-4">
-        <div className="text-sm text-gray-300">
+        <div className="text-sm text-gray-300 light:text-gray-700">
           <span className="font-semibold">Steps:</span> {scenario.steps.length}
         </div>
-        <div className="text-sm text-gray-300">
+        <div className="text-sm text-gray-300 light:text-gray-700">
           <span className="font-semibold">Duration:</span> ~{(scenario.duration / 1000).toFixed(0)} seconds
         </div>
-        <div className="text-sm text-gray-300">
+        <div className="text-sm text-gray-300 light:text-gray-700">
           <span className="font-semibold">Expected Result:</span>
-          <p className="text-cyan-300 mt-1">{scenario.expectedResult}</p>
+          <p className="text-cyan-300 light:text-cyan-800 mt-1 font-bold">{scenario.expectedResult}</p>
         </div>
       </div>
 
       <div className="space-y-2 mb-4">
-        <p className="text-xs text-gray-400 font-semibold">Test Steps:</p>
+        <p className="text-xs text-gray-400 light:text-gray-600 font-semibold uppercase tracking-wider">Test Steps:</p>
         <ul className="space-y-1">
           {scenario.steps.map((step, idx) => (
-            <li key={idx} className="text-xs text-gray-400 flex items-start">
-              <span className="text-cyan-400 mr-2">•</span>
+            <li key={idx} className="text-xs text-gray-400 light:text-gray-700 flex items-start">
+              <span className="text-cyan-400 light:text-cyan-700 mr-2">•</span>
               <div className="flex-1">
-                <div>{step.action} ({step.targetValue})</div>
+                <div className="font-medium">{step.action} ({step.targetValue})</div>
                 {step.sensorModel && (
-                  <div className="text-gray-500 text-xs mt-0.5">{step.sensorModel}</div>
+                  <div className="text-[10px] text-gray-500 light:text-gray-500 font-mono mt-0.5">{step.sensorModel}</div>
                 )}
               </div>
             </li>
@@ -96,8 +96,8 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
         className={`w-full py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${isRunning
             ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
             : isCurrentlyRunning
-              ? 'bg-cyan-500 text-white animate-pulse'
-              : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+              ? 'bg-cyan-500 light:bg-cyan-700 text-white animate-pulse'
+              : 'bg-cyan-600 light:bg-cyan-800 hover:bg-cyan-500 light:hover:bg-cyan-700 text-white'
           }`}
       >
         {isCurrentlyRunning ? '▶ Running...' : '▶ Start Test'}

@@ -52,10 +52,10 @@ const SortableDeviceGroup: React.FC<{
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 right-2 cursor-move p-2 bg-cyan-600/20 hover:bg-cyan-600/40 rounded transition-colors z-10 border border-cyan-500/30"
+        className="absolute top-2 right-2 cursor-move p-2 bg-cyan-600 light:bg-cyan-800/20 hover:bg-cyan-600 light:bg-cyan-800/40 rounded transition-colors z-10 border border-cyan-500 light:border-cyan-700/30"
         title="Drag to reorder device"
       >
-        <svg aria-hidden="true" className="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 16 16">
+        <svg aria-hidden="true" className="w-4 h-4 text-cyan-400 light:text-cyan-800" fill="currentColor" viewBox="0 0 16 16">
           <path d="M5 3h2v2H5V3zm4 0h2v2H9V3zM5 7h2v2H5V7zm4 0h2v2H9V7zm-4 4h2v2H5v-2zm4 0h2v2H9v-2z"/>
         </svg>
       </div>
@@ -118,7 +118,7 @@ const SensorCard = React.memo< {
   alertStatus?: 'critical' | 'warning' | null;
   dragHandleProps?: any;
 }>(({ sensor, latestValue, unit, isOnline, historyData, companyName, isError, alertStatus, dragHandleProps }) => {
-  let statusColor = 'border-gray-700 hover:border-cyan-400';
+  let statusColor = 'border-gray-700 hover:border-cyan-400 light:border-cyan-600';
   let statusDotColor = 'bg-gray-500';
 
   if (isError) {
@@ -133,7 +133,7 @@ const SensorCard = React.memo< {
   } else if (isOnline) {
     statusDotColor = 'bg-green-500';
   } else {
-    statusColor = 'border-red-500';
+    statusColor = 'border-red-500 light:border-red-700';
     statusDotColor = 'bg-red-500';
   }
 
@@ -155,16 +155,16 @@ const SensorCard = React.memo< {
   return (
     <div
       onClick={handleClick}
-      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-2 sm:p-3 relative h-full`}
+      className={`bg-gray-800 rounded-lg shadow-md transition-all duration-200 border ${statusColor} flex flex-col cursor-pointer hover:shadow-lg hover:scale-[1.02] p-2 sm:p-3 relative h-full light:bg-white`}
     >
       {dragHandleProps && (
         <div
           {...dragHandleProps}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-1 left-1 cursor-move p-1 bg-gray-700/50 hover:bg-gray-600 rounded transition-colors z-10 border border-gray-600 hidden sm:block"
+          className="absolute bottom-1 left-1 cursor-move p-1 bg-gray-700/50 light:bg-gray-200/50 hover:bg-gray-600 light:hover:bg-gray-300 rounded transition-colors z-10 border border-gray-600 light:border-gray-300 hidden sm:block"
           title="Drag to reorder"
         >
-          <svg aria-hidden="true" className="w-3 h-3 text-gray-300" fill="currentColor" viewBox="0 0 16 16">
+          <svg aria-hidden="true" className="w-3 h-3 text-gray-300 light:text-gray-700 light:text-gray-600" fill="currentColor" viewBox="0 0 16 16">
             <path d="M5 3h2v2H5V3zm4 0h2v2H9V3zM5 7h2v2H5V7zm4 0h2v2H9V7zm-4 4h2v2H5v-2zm4 0h2v2H9v-2z"/>
           </svg>
         </div>
@@ -197,7 +197,7 @@ const SensorCard = React.memo< {
         <span className="font-bold text-base sm:text-lg md:text-xl">
           {getSensorDisplayValue(latestValue, !!isError)}
         </span>
-        {!isError && <span className="ml-0.5 text-gray-400 text-[8px] sm:text-xs">{unit}</span>}
+        {!isError && <span className="ml-0.5 text-gray-400 light:text-gray-500 text-[8px] sm:text-xs">{unit}</span>}
       </div>
     </div>
   );
@@ -480,10 +480,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-4 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-lg text-cyan-400 font-medium">Loading dashboard...</div>
+          <div className="w-12 h-12 border-4 border-cyan-500 light:border-cyan-700 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-lg text-cyan-400 light:text-cyan-800 font-medium">Loading dashboard...</div>
         </div>
       </div>
     );
@@ -494,16 +494,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 bg-gray-800/20 p-4 rounded-2xl border border-gray-700/30 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Dashboard</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white light:text-gray-900 tracking-tight">Dashboard</h2>
             <div className="flex items-center gap-1.5 mt-1.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Last Update:</span>
-                <p className="text-[10px] sm:text-xs font-mono text-cyan-400/90">
+                <span className="text-[10px] font-medium text-gray-500 light:text-gray-600 uppercase tracking-wider">Last Update:</span>
+                <p className="text-[10px] sm:text-xs font-mono text-cyan-400/90 light:text-cyan-800 font-bold">
                   {lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </p>
               </div>
               {isConnected && (
-                <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-semibold text-green-400 bg-green-400/5 px-2 py-0.5 rounded-full border border-green-400/10">
+                <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-semibold text-green-400 light:text-green-800 bg-green-400/5 px-2 py-0.5 rounded-full border border-green-400/10">
                   <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></span>
                   Live
                 </span>
@@ -520,8 +520,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
 
         {currentUser?.role === 'superadmin' && companies.length > 0 && (
-          <div className="w-full sm:w-auto flex items-center gap-3 bg-gray-900/50 p-2 pl-4 rounded-xl border border-gray-700 shadow-lg">
-            <label className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">Organization</label>
+          <div className="w-full sm:w-auto flex items-center gap-3 bg-gray-900/50 light:bg-gray-100/50 p-2 pl-4 rounded-xl border border-gray-700 light:border-gray-200 shadow-lg">
+            <label className="text-[10px] sm:text-xs font-semibold text-gray-400 light:text-gray-500 uppercase tracking-wider">Organization</label>
             <select
               value={selectedCompany}
               onChange={(e) => {
@@ -529,7 +529,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 setSelectedCompany(newValue);
                 localStorage.setItem('dashboard_selected_company', newValue);
               }}
-              className="flex-1 sm:flex-none px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-1 focus:ring-cyan-500/50 text-xs sm:text-sm font-medium appearance-none cursor-pointer hover:bg-gray-750 transition-colors outline-none"
+              className="flex-1 sm:flex-none px-4 py-2 bg-gray-800 light:bg-white text-white light:text-gray-900 border border-gray-700 light:border-gray-200 rounded-lg focus:ring-1 focus:ring-cyan-500/50 text-xs sm:text-sm font-medium appearance-none cursor-pointer hover:bg-gray-750 transition-colors outline-none"
             >
               {companies.map((company) => (
                 <option key={company._id} value={company.name}>
@@ -542,7 +542,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       </div>
 
       {error && (
-        <div className="bg-red-900/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
+        <div className="bg-red-900/20 border border-red-500 light:border-red-700/50 text-red-200 px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
           <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -624,12 +624,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                           <div className="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-3 sm:p-4 md:p-6 shadow-xl backdrop-blur-sm">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
                               <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-inner">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-500 light:bg-cyan-700/10 rounded-xl flex items-center justify-center border border-cyan-500 light:border-cyan-700/20 shadow-inner">
                                   <span className="text-xl sm:text-2xl">🔌</span>
                                 </div>
                                 <div>
-                                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-white tracking-tight">{parentDevice}</h2>
-                                  <p className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-cyan-400 uppercase tracking-widest">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} active</p>
+                                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-white light:text-gray-900 tracking-tight">{parentDevice}</h2>
+                                  <p className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-cyan-400 light:text-cyan-800 uppercase tracking-widest">{sensors.length} sensor{sensors.length !== 1 ? 's' : ''} active</p>
                                 </div>
                               </div>
                             </div>
@@ -669,20 +669,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                               </div>
 
                               <div className="w-full xl:w-80 flex flex-col sm:flex-row xl:flex-col gap-4">
-                                <div className="flex-1 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+                                <div className="flex-1 bg-gray-900/50 light:bg-gray-100/50 rounded-xl p-4 border border-gray-700/50">
                                   <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">AI Status</h3>
+                                    <div className="w-1.5 h-1.5 bg-cyan-500 light:bg-cyan-700 rounded-full"></div>
+                                    <h3 className="text-[10px] font-bold text-gray-400 light:text-gray-500 uppercase tracking-widest">AI Status</h3>
                                   </div>
                                   <AIHealthStatusWidget 
                                     companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined} 
                                     sensorData={deviceSensorData}
                                   />
                                 </div>
-                                <div className="flex-1 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+                                <div className="flex-1 bg-gray-900/50 light:bg-gray-100/50 rounded-xl p-4 border border-gray-700/50">
                                   <div className="flex items-center gap-2 mb-4">
                                     <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Alerts</h3>
+                                    <h3 className="text-[10px] font-bold text-gray-400 light:text-gray-500 uppercase tracking-widest">Recent Alerts</h3>
                                   </div>
                                   <RecentAlertsWidget 
                                     companyName={currentUser?.role === 'superadmin' ? selectedCompany : undefined}
@@ -703,12 +703,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
       ) : (
         <div className="text-center py-24 bg-gray-800/20 rounded-3xl border border-gray-700/50 border-dashed">
-          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-gray-800 light:bg-white rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-white">No sensor data</h3>
+          <h3 className="text-xl font-bold text-white light:text-gray-900">No sensor data</h3>
           <p className="text-gray-500 mt-2 max-w-xs mx-auto text-sm font-medium">
             {currentUser?.role === 'superadmin' && !selectedCompany
               ? 'Please select a company to monitor live air quality data.'

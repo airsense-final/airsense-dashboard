@@ -12,39 +12,39 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
   const getSensorStatus = (type: string, value: number) => {
     switch (type) {
       case 'temperature':
-        if (value > 50) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
-        if (value > 35) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'HIGH' };
-        if (value < 10) return { color: 'text-blue-400', bg: 'bg-blue-900/30', status: 'LOW' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 50) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
+        if (value > 35) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'HIGH' };
+        if (value < 10) return { color: 'text-blue-400 light:text-blue-800', bg: 'bg-blue-900/30 light:bg-blue-50', status: 'LOW' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       case 'co2':
-        if (value > 2000) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
-        if (value > 1000) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'HIGH' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 2000) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
+        if (value > 1000) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'HIGH' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       case 'methane':
-        if (value > 1500) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
-        if (value > 1000) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'DETECTED' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 1500) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
+        if (value > 1000) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'DETECTED' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       case 'co':
-        if (value > 70) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
-        if (value > 35) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'HIGH' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 70) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
+        if (value > 35) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'HIGH' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       case 'airQuality':
-        if (value > 600) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'POOR' };
-        if (value > 400) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'MODERATE' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'GOOD' };
+        if (value > 600) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'POOR' };
+        if (value > 400) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'MODERATE' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'GOOD' };
       case 'flammableGas':
-        if (value > 700) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
-        if (value > 400) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'DETECTED' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 700) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
+        if (value > 400) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'DETECTED' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       case 'humidity':
-        if (value > 80 || value < 30) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'WARNING' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 80 || value < 30) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'WARNING' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       case 'alcohol':
-        if (value > 500) return { color: 'text-red-400', bg: 'bg-red-900/30', status: 'CRITICAL' };
-        if (value > 300) return { color: 'text-orange-400', bg: 'bg-orange-900/30', status: 'DETECTED' };
-        return { color: 'text-green-400', bg: 'bg-green-900/30', status: 'NORMAL' };
+        if (value > 500) return { color: 'text-red-400 light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
+        if (value > 300) return { color: 'text-orange-400 light:text-orange-800', bg: 'bg-orange-900/30 light:bg-orange-50', status: 'DETECTED' };
+        return { color: 'text-green-400 light:text-green-800', bg: 'bg-green-900/30 light:bg-green-50', status: 'NORMAL' };
       default:
-        return { color: 'text-gray-400', bg: 'bg-gray-900/30', status: 'UNKNOWN' };
+        return { color: 'text-gray-400 light:text-gray-700', bg: 'bg-gray-900/30 light:bg-gray-50', status: 'UNKNOWN' };
     }
   };
 
@@ -140,12 +140,12 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
 
         let status;
         if (isError) {
-          status = { color: 'text-red-500 animate-pulse', bg: 'bg-red-900/30', status: 'ERROR' };
+          status = { color: 'text-red-500 animate-pulse light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'ERROR' };
         } else if (latestAlert) {
           if (latestAlert.alert_type === 'critical') {
-            status = { color: 'text-red-500 animate-pulse', bg: 'bg-red-900/30', status: 'CRITICAL' };
+            status = { color: 'text-red-500 animate-pulse light:text-red-800', bg: 'bg-red-900/30 light:bg-red-50', status: 'CRITICAL' };
           } else if (latestAlert.alert_type === 'warning') {
-            status = { color: 'text-yellow-500 animate-pulse', bg: 'bg-yellow-900/30', status: 'WARNING' };
+            status = { color: 'text-yellow-500 animate-pulse light:text-yellow-800', bg: 'bg-yellow-900/30 light:bg-yellow-50', status: 'WARNING' };
           } else {
             // Fallback for info or others
             status = getSensorStatus(sensor.type, sensor.value);
@@ -157,19 +157,19 @@ export const LiveSensorDisplay: React.FC<LiveSensorDisplayProps> = ({ sensorData
         return (
           <div
             key={sensor.type}
-            className={`${status.bg} border-2 ${status.color.replace('text-', 'border-')} rounded-lg p-4 transition-all duration-300`}
+            className={`${status.bg} border-2 ${status.color.replace('text-', 'border-')} rounded-lg p-4 transition-all duration-300 shadow-sm light:shadow-none`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className={status.color}>{sensor.icon}</div>
-              <span className={`text-xs font-bold ${status.color}`}>{status.status}</span>
+              <span className={`text-[10px] font-bold ${status.color}`}>{status.status}</span>
             </div>
-            <div className="text-gray-400 text-sm mb-1">{sensor.label}</div>
-            <div className="text-gray-500 text-xs mb-2">{sensor.model}</div>
+            <div className="text-gray-400 light:text-gray-700 text-xs font-medium mb-1">{sensor.label}</div>
+            <div className="text-gray-500 light:text-gray-500 text-[10px] mb-2">{sensor.model}</div>
             <div className="flex items-baseline space-x-1">
-              <span className={`text-2xl font-bold ${status.color}`}>
+              <span className={`text-xl font-bold ${status.color}`}>
                 {getSensorDisplayValue(sensor.value, isError, 1)}
               </span>
-              {!isError && <span className="text-sm text-gray-500">{sensor.unit}</span>}
+              {!isError && <span className="text-[10px] text-gray-500 light:text-gray-600 font-medium">{sensor.unit}</span>}
             </div>
           </div>
         );

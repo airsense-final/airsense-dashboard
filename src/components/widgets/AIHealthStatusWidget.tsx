@@ -104,7 +104,7 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
     const suggestions = generateSmartSuggestions();
 
     if (loading) {
-        return <div className="animate-pulse bg-gray-700/50 rounded h-32"></div>;
+        return <div className="animate-pulse bg-gray-700/50 light:bg-gray-200/50 rounded h-32"></div>;
     }
 
     return (
@@ -118,8 +118,8 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
                 <div className="flex items-center justify-between mb-2">
                     <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                         status === 'ANOMALY' 
-                            ? 'bg-purple-900/50 text-purple-200 border-purple-500' 
-                            : 'bg-green-900/50 text-green-200 border-green-500'
+                            ? 'bg-purple-900/50 light:bg-purple-100 text-purple-200 light:text-purple-900 border-purple-500 light:border-purple-700' 
+                            : 'bg-green-900/50 light:bg-green-100 text-green-200 light:text-green-900 border-green-500 light:border-green-700'
                     }`}>
                         {status === 'ANOMALY' ? 'ANOMALY' : 'OPTIMAL'}
                     </div>
@@ -128,12 +128,12 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
                 <div className="flex-1 flex flex-col">
                     {status === 'ANOMALY' ? (
                         <div>
-                            <p className="text-gray-400 text-[10px] mb-2">AI detected unusual patterns</p>
+                            <p className="text-gray-400 light:text-gray-500 text-[10px] mb-2">AI detected unusual patterns</p>
                             
                             {/* Anomaly Detail Card */}
-                            <div className="bg-purple-900/20 p-2 rounded border border-purple-500/30 mb-2">
-                                <div className="text-[9px] text-purple-400 uppercase font-bold mb-0.5">Anomaly</div>
-                                <div className="text-white text-[10px] font-medium line-clamp-2">{lastAnomaly?.message}</div>
+                            <div className="bg-purple-900/20 light:bg-purple-100 p-2 rounded border border-purple-500 light:border-purple-700/30 mb-2">
+                                <div className="text-[9px] text-purple-400 light:text-purple-800 uppercase font-bold mb-0.5">Anomaly</div>
+                                <div className="text-white light:text-gray-900 text-[10px] font-medium line-clamp-2">{lastAnomaly?.message}</div>
                                 <div className="flex justify-between items-center mt-1">
                                     <span className="text-[9px] text-gray-500">Score: {lastAnomaly?.value.toFixed(3)}</span>
                                     <span className="text-[9px] text-gray-500">
@@ -143,12 +143,12 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
                             </div>
 
                             {/* Smart Suggestions */}
-                            <div className="bg-gray-700/50 p-2 rounded border border-gray-600">
+                            <div className="bg-gray-700/50 light:bg-gray-200/50 p-2 rounded border border-gray-600 light:border-gray-300">
                                 <div className="flex items-center gap-1 mb-1">
                                     <span className="text-yellow-400 text-xs">💡</span>
-                                    <span className="text-[10px] font-bold text-gray-200">Action Plan</span>
+                                    <span className="text-[10px] font-bold text-gray-200 light:text-gray-800">Action Plan</span>
                                 </div>
-                                <ul className="text-[9px] text-gray-300 space-y-0.5 list-none">
+                                <ul className="text-[9px] text-gray-300 light:text-gray-700 light:text-gray-600 space-y-0.5 list-none">
                                     {suggestions.slice(0, 3).map((s, idx) => (
                                         <li key={idx} className="flex items-start gap-1">
                                             <span className="mt-0.5 text-yellow-500/80 text-[8px]">➤</span>
@@ -160,22 +160,22 @@ export const AIHealthStatusWidget: React.FC<AIHealthStatusWidgetProps> = ({ comp
                         </div>
                     ) : (
                         <div>
-                            <p className="text-gray-400 text-[10px] mb-2">No anomalies detected</p>
+                            <p className="text-gray-400 light:text-gray-500 text-[10px] mb-2">No anomalies detected</p>
                             
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="h-1.5 flex-1 bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-1.5 flex-1 bg-gray-700 light:bg-gray-100 rounded-full overflow-hidden">
                                     <div className="h-full bg-green-500 w-full animate-pulse"></div>
                                 </div>
-                                <span className="text-[9px] text-green-400 font-mono">OK</span>
+                                <span className="text-[9px] text-green-400 light:text-green-800 font-mono">OK</span>
                             </div>
 
                             {/* Normal State Suggestion */}
                             <div className="bg-gray-700/30 p-2 rounded border border-gray-700/50">
                                 <div className="flex items-center gap-1 mb-1">
-                                    <span className="text-cyan-400 text-xs">ℹ️</span>
-                                    <span className="text-[10px] font-bold text-gray-300">Status</span>
+                                    <span className="text-cyan-400 light:text-cyan-800 text-xs">ℹ️</span>
+                                    <span className="text-[10px] font-bold text-gray-300 light:text-gray-700 light:text-gray-600">Status</span>
                                 </div>
-                                <ul className="text-[9px] text-gray-400 space-y-0.5">
+                                <ul className="text-[9px] text-gray-400 light:text-gray-500 space-y-0.5">
                                      {suggestions.slice(0, 2).map((s, idx) => (
                                         <li key={idx} className="line-clamp-1">{s}</li>
                                     ))}

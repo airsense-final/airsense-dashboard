@@ -215,8 +215,8 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       {/* Header - Fixed Responsive Layout */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 flex items-center space-x-3">
-            <svg aria-hidden="true" className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white light:text-gray-900 mb-1 flex items-center space-x-3">
+            <svg aria-hidden="true" className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-400 light:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
             <span>Test Simulation</span>
@@ -227,10 +227,10 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
               </span>
             )}
           </h1>
-          <p className="text-gray-400 text-xs sm:text-sm">
+          <p className="text-gray-400 light:text-gray-700 text-xs sm:text-sm">
             Monitor system response with automated test scenarios
             {lastUpdate && (
-              <span className="text-[10px] sm:text-xs text-gray-500 ml-2 hidden sm:inline">
+              <span className="text-[10px] sm:text-xs text-gray-500 light:text-gray-600 ml-2 hidden sm:inline">
                 Last update: {lastUpdate.toLocaleTimeString()}
               </span>
             )}
@@ -240,8 +240,8 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
         {/* Company Selector & Controls - Mobile optimized */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {currentUser?.role === 'superadmin' && companies.length > 0 && (
-            <div className="flex items-center gap-2 bg-gray-800 p-1.5 px-3 rounded-lg border border-gray-700">
-              <label className="text-xs font-medium text-gray-400">Org:</label>
+            <div className="flex items-center gap-2 bg-gray-800 light:bg-white p-1.5 px-3 rounded-lg border border-gray-700 light:border-gray-200">
+              <label className="text-xs font-medium text-gray-400 light:text-gray-600">Org:</label>
               <select
                 value={selectedCompany}
                 onChange={(e) => {
@@ -249,10 +249,10 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
                   setSelectedCompany(val);
                   localStorage.setItem('simulation_selected_company', val);
                 }}
-                className="bg-transparent text-white text-xs sm:text-sm focus:outline-none cursor-pointer"
+                className="bg-transparent text-white light:text-gray-900 text-xs sm:text-sm focus:outline-none cursor-pointer"
               >
                 {companies.map((company) => (
-                  <option key={company._id} value={company.name} className="bg-gray-800">{company.name}</option>
+                  <option key={company._id} value={company.name} className="bg-gray-800 light:bg-white">{company.name}</option>
                 ))}
               </select>
             </div>
@@ -275,7 +275,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
                 disabled={isRunning}
                 className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-base font-semibold flex items-center justify-center space-x-2 transition-all ${isRunning
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20'
+                  : 'bg-cyan-600 light:bg-cyan-800 hover:bg-cyan-700 light:hover:bg-cyan-900 text-white shadow-lg shadow-cyan-900/20'
                   }`}
               >
                 <svg aria-hidden="true" className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -298,7 +298,7 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
               disabled={isRunning}
               className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-base font-semibold flex items-center justify-center space-x-2 transition-all ${isRunning
                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-700 hover:bg-gray-600 text-white'
+                : 'bg-gray-700 light:bg-gray-100 hover:bg-gray-600 light:hover:bg-gray-200 text-white light:text-gray-900 border border-transparent light:border-gray-300'
                 }`}
             >
               <svg aria-hidden="true" className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -312,23 +312,23 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
 
       {/* Status Indicator */}
       {(isRunning || autoRunEnabled) && (
-        <div className="bg-cyan-900/30 border-2 border-cyan-500 rounded-lg p-4">
+        <div className="bg-cyan-900/30 light:bg-cyan-50 border-2 border-cyan-500 light:border-cyan-300 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-cyan-400 light:bg-cyan-700 rounded-full animate-pulse"></div>
               <div>
-                <div className="text-cyan-300 font-semibold">
+                <div className="text-cyan-300 light:text-cyan-900 font-bold">
                   {autoRunEnabled
                     ? `Auto Test Running (${autoRunIndex + 1}/${TEST_SCENARIOS.length})`
                     : 'Test Running'}
                 </div>
                 {currentScenario && (
-                  <div className="text-gray-400 text-sm">{currentScenario.name}</div>
+                  <div className="text-gray-400 light:text-gray-700 text-sm font-medium">{currentScenario.name}</div>
                 )}
               </div>
             </div>
             {autoRunEnabled && (
-              <div className="text-cyan-400 text-sm">
+              <div className="text-cyan-400 light:text-cyan-800 text-sm font-black uppercase tracking-wider">
                 Next test will start in 2 seconds...
               </div>
             )}
@@ -338,8 +338,8 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
 
       {/* Live Sensor Data */}
       <div>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-          <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h2 className="text-xl font-bold text-white light:text-gray-900 mb-4 flex items-center space-x-2">
+          <svg aria-hidden="true" className="w-6 h-6 text-cyan-400 light:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <span>Live Sensor Data</span>
@@ -350,8 +350,8 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       {/* Test Results */}
       {lastResult && (
         <div>
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-            <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <h2 className="text-xl font-bold text-white light:text-gray-900 mb-4 flex items-center space-x-2">
+            <svg aria-hidden="true" className="w-6 h-6 text-cyan-400 light:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <span>Latest Test Result</span>
@@ -362,8 +362,8 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
 
       {/* Test Scenarios */}
       <div>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-          <svg aria-hidden="true" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h2 className="text-xl font-bold text-white light:text-gray-900 mb-4 flex items-center space-x-2">
+          <svg aria-hidden="true" className="w-6 h-6 text-cyan-400 light:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <span>Test Scenarios</span>
@@ -382,32 +382,32 @@ export const TestSimulationPage: React.FC<TestSimulationPageProps> = ({ currentU
       </div>
 
       {/* Info Panel */}
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-white mb-3 flex items-center space-x-2">
-          <svg aria-hidden="true" className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="bg-gray-800/50 light:bg-white border border-gray-700 light:border-gray-200 rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-white light:text-gray-900 mb-3 flex items-center space-x-2">
+          <svg aria-hidden="true" className="w-5 h-5 text-cyan-400 light:text-cyan-700" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
           <span>How to Use?</span>
         </h3>
-        <ul className="space-y-2 text-gray-400">
+        <ul className="space-y-2 text-gray-400 light:text-gray-700">
           <li className="flex items-start">
-            <span className="text-cyan-400 mr-2">1.</span>
+            <span className="text-cyan-400 light:text-cyan-700 font-bold mr-2">1.</span>
             <span>Select one of the test scenarios above and click "Start Test" button</span>
           </li>
           <li className="flex items-start">
-            <span className="text-cyan-400 mr-2">2.</span>
+            <span className="text-cyan-400 light:text-cyan-700 font-bold mr-2">2.</span>
             <span>Observe live sensor data and system responses</span>
           </li>
           <li className="flex items-start">
-            <span className="text-cyan-400 mr-2">3.</span>
+            <span className="text-cyan-400 light:text-cyan-700 font-bold mr-2">3.</span>
             <span>Review the results once the test is completed</span>
           </li>
           <li className="flex items-start">
-            <span className="text-cyan-400 mr-2">4.</span>
+            <span className="text-cyan-400 light:text-cyan-700 font-bold mr-2">4.</span>
             <span>Use "Run All Tests" to automatically run all scenarios sequentially</span>
           </li>
           <li className="flex items-start">
-            <span className="text-cyan-400 mr-2">5.</span>
+            <span className="text-cyan-400 light:text-cyan-700 font-bold mr-2">5.</span>
             <span>Click "Reset" button to return sensors to initial values</span>
           </li>
         </ul>

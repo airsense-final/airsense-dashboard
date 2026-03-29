@@ -393,6 +393,17 @@ export function markAllAlertsAsRead(targetCompanyName?: string): Promise<{ messa
   });
 }
 
+export function triggerManualAnomaly(data: {
+  company_name: string;
+  scenario_id: string;
+  sensor_data: any;
+}): Promise<{ message: string; results: any }> {
+  return apiFetch<{ message: string; results: any }>('/api/v1/alerts/trigger-manual', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function exportAlertsPDF(params: {
   target_company_name?: string;
   start_date?: string;

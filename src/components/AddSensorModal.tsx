@@ -46,13 +46,13 @@ export const AddSensorModal: React.FC<AddSensorModalProps> = ({ isOpen, onClose,
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black light:bg-white bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 light:bg-white rounded-lg p-6 w-full max-w-md">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-2xl font-bold">Add New Sensor</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white text-2xl"
+                        className="text-gray-400 light:text-gray-500 hover:text-white light:hover:text-gray-900 text-2xl"
                         disabled={isLoading}
                     >
                         ×
@@ -61,7 +61,7 @@ export const AddSensorModal: React.FC<AddSensorModalProps> = ({ isOpen, onClose,
 
                 <form onSubmit={handleSubmit}>
                     {error && (
-                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-200">
+                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500 light:border-red-700 rounded text-red-200">
                             {error}
                         </div>
                     )}
@@ -74,7 +74,7 @@ export const AddSensorModal: React.FC<AddSensorModalProps> = ({ isOpen, onClose,
                             type="text"
                             value={sensorId}
                             onChange={(e) => setSensorId(e.target.value)}
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-cyan-500"
+                            className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 light:border-cyan-700"
                             placeholder="e.g., SENSOR001"
                             disabled={isLoading}
                         />
@@ -87,7 +87,7 @@ export const AddSensorModal: React.FC<AddSensorModalProps> = ({ isOpen, onClose,
                         <select
                             value={type}
                             onChange={(e) => setType(e.target.value as any)}
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-cyan-500"
+                            className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 light:border-cyan-700"
                             disabled={isLoading}
                         >
                             <option value="dht11">DHT11 (Temperature/Humidity)</option>
@@ -108,7 +108,7 @@ export const AddSensorModal: React.FC<AddSensorModalProps> = ({ isOpen, onClose,
                             type="text"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-cyan-500"
+                            className="w-full px-3 py-2 bg-gray-700 light:bg-gray-100 border border-gray-600 light:border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 light:border-cyan-700"
                             placeholder="e.g., Living Room Sensor"
                             disabled={isLoading}
                         />
@@ -118,14 +118,14 @@ export const AddSensorModal: React.FC<AddSensorModalProps> = ({ isOpen, onClose,
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                            className="flex-1 px-4 py-2 bg-gray-600 light:bg-gray-200 rounded-lg hover:bg-gray-700 light:hover:bg-gray-200 transition-colors"
                             disabled={isLoading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+                            className="flex-1 px-4 py-2 bg-cyan-600 light:bg-cyan-800 rounded-lg hover:bg-cyan-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
                             disabled={isLoading}
                         >
                             {isLoading ? 'Adding...' : 'Add Sensor'}
