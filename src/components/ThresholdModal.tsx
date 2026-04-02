@@ -139,7 +139,7 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-[#1f2937] rounded-lg p-6 max-w-2xl w-full border border-gray-700 light:border-gray-200 shadow-xl">
+            <div className="bg-[#1f2937] light:bg-white rounded-lg p-6 max-w-2xl w-full border border-gray-700 light:border-gray-200 shadow-xl">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-white light:text-gray-900">Edit Thresholds</h2>
@@ -160,18 +160,18 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                     <button
                         onClick={() => setActiveTab('active')}
                         className={`py-2 px-4 rounded-md font-medium text-sm transition-all duration-200 ${activeTab === 'active'
-                            ? 'bg-[#374151] text-white border border-gray-500'
-                            : 'bg-[#1F2937] text-gray-400 hover:bg-[#374151] border border-gray-700'
-                            } light:text-gray-900 light:text-gray-500 light:border-gray-200`}
+                            ? 'bg-[#374151] light:bg-gray-200 text-white light:text-gray-900 border border-gray-500 light:border-gray-400'
+                            : 'bg-[#1F2937] light:bg-gray-50 text-gray-400 light:text-gray-500 hover:bg-[#374151] light:hover:bg-gray-100 border border-gray-700 light:border-gray-300'
+                            }`}
                     >
                         Active Values
                     </button>
                     <button
                         onClick={() => setActiveTab('configure')}
                         className={`py-2 px-4 rounded-md font-medium text-sm transition-all duration-200 ${activeTab === 'configure'
-                            ? 'bg-[#D97706] text-white border border-[#D97706]'
-                            : 'bg-[#1F2937] text-gray-400 hover:bg-[#374151] border border-gray-700'
-                            } light:text-gray-900 light:text-gray-500 light:border-gray-200`}
+                            ? 'bg-[#D97706] light:bg-amber-500 text-white border border-[#D97706] light:border-amber-500'
+                            : 'bg-[#1F2937] light:bg-gray-50 text-gray-400 light:text-gray-500 hover:bg-[#374151] light:hover:bg-gray-100 border border-gray-700 light:border-gray-300'
+                            }`}
                     >
                         Configure Threshold
                     </button>
@@ -180,13 +180,13 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                 {/* Content Area */}
                 <div className="min-h-[300px]">
                     {activeTab === 'active' ? (
-                        <div className="flex flex-col items-center justify-center h-[300px] text-center border border-dashed border-gray-700 light:border-gray-200 rounded-lg bg-gray-800/30">
+                        <div className="flex flex-col items-center justify-center h-[300px] text-center border border-dashed border-gray-700 light:border-gray-300 rounded-lg bg-gray-800/30 light:bg-gray-50">
                             {!activeThreshold ? (
                                 <div className="space-y-4">
                                     <p className="text-gray-400 light:text-gray-500">No active values found.</p>
                                     <button
                                         onClick={() => setActiveTab('configure')}
-                                        className="text-cyan-400 light:text-cyan-800 hover:text-cyan-300 font-medium underline text-sm"
+                                        className="text-cyan-400 light:text-cyan-600 hover:text-cyan-300 light:hover:text-cyan-700 font-medium underline text-sm"
                                     >
                                         Configure now
                                     </button>
@@ -194,12 +194,12 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                             ) : (
                                 <div className="w-full p-6 space-y-6">
                                     <div className={`p-4 rounded-lg border flex items-center gap-4 ${companyThreshold
-                                        ? 'bg-purple-900/20 light:bg-purple-100 border-purple-500 light:border-purple-700/30'
-                                        : 'bg-blue-900/20 border-blue-500/30'
+                                        ? 'bg-purple-900/20 light:bg-purple-50 border-purple-500 light:border-purple-200'
+                                        : 'bg-blue-900/20 light:bg-blue-50 border-blue-500/30 light:border-blue-200'
                                         }`}>
                                         <div className="text-2xl">{companyThreshold ? '🏢' : '🌐'}</div>
                                         <div className="text-left">
-                                            <h3 className={`font-semibold text-sm ${companyThreshold ? 'text-purple-300' : 'text-blue-300'
+                                            <h3 className={`font-semibold text-sm ${companyThreshold ? 'text-purple-300 light:text-purple-700' : 'text-blue-300 light:text-blue-700'
                                                 }`}>
                                                 {companyThreshold ? 'Company Specific' : 'Global Default'}
                                             </h3>
@@ -210,16 +210,16 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 light:border-gray-200">
-                                            <h4 className="text-amber-400 light:text-amber-800 text-xs font-bold uppercase tracking-wider mb-2">Warning Range</h4>
-                                            <div className="text-sm text-gray-300 light:text-gray-700 light:text-gray-600 space-y-1">
+                                        <div className="bg-gray-800/50 light:bg-gray-100 p-4 rounded-lg border border-gray-700 light:border-gray-200">
+                                            <h4 className="text-amber-400 light:text-amber-600 text-xs font-bold uppercase tracking-wider mb-2">Warning Range</h4>
+                                            <div className="text-sm text-gray-300 light:text-gray-600 space-y-1">
                                                 <div className="flex justify-between"><span>Min:</span> <span className="text-white light:text-gray-900 font-mono">{activeThreshold.warning_min ?? '--'}</span></div>
                                                 <div className="flex justify-between"><span>Max:</span> <span className="text-white light:text-gray-900 font-mono">{activeThreshold.warning_max ?? '--'}</span></div>
                                             </div>
                                         </div>
-                                        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 light:border-gray-200">
-                                            <h4 className="text-red-400 light:text-red-800 text-xs font-bold uppercase tracking-wider mb-2">Critical Range</h4>
-                                            <div className="text-sm text-gray-300 light:text-gray-700 light:text-gray-600 space-y-1">
+                                        <div className="bg-gray-800/50 light:bg-gray-100 p-4 rounded-lg border border-gray-700 light:border-gray-200">
+                                            <h4 className="text-red-400 light:text-red-600 text-xs font-bold uppercase tracking-wider mb-2">Critical Range</h4>
+                                            <div className="text-sm text-gray-300 light:text-gray-600 space-y-1">
                                                 <div className="flex justify-between"><span>Min:</span> <span className="text-white light:text-gray-900 font-mono">{activeThreshold.critical_min ?? '--'}</span></div>
                                                 <div className="flex justify-between"><span>Max:</span> <span className="text-white light:text-gray-900 font-mono">{activeThreshold.critical_max ?? '--'}</span></div>
                                             </div>
@@ -231,33 +231,33 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                     ) : (
                         <div>
                             {/* Global Values Info Box */}
-                            <div className="bg-[#1e3a8a]/20 border border-blue-500/30 rounded-lg p-5 mb-6">
-                                <h4 className="text-blue-400 text-base font-bold mb-4 flex items-center gap-2">
+                            <div className="bg-[#1e3a8a]/20 light:bg-blue-50 border border-blue-500/30 light:border-blue-200 rounded-lg p-5 mb-6">
+                                <h4 className="text-blue-400 light:text-blue-600 text-base font-bold mb-4 flex items-center gap-2">
                                     <span className="text-xl">📊</span> Global Default Values:
                                 </h4>
                                 {globalThreshold ? (
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-300 light:text-gray-700 light:text-gray-600">Warning Min:</span>
-                                                <span className="text-amber-400 light:text-amber-800 font-bold text-base">{globalThreshold.warning_min ?? '-'}</span>
+                                                <span className="text-gray-300 light:text-gray-600">Warning Min:</span>
+                                                <span className="text-amber-400 light:text-amber-600 font-bold text-base">{globalThreshold.warning_min ?? '-'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-300 light:text-gray-700 light:text-gray-600">Critical Min:</span>
-                                                <span className="text-red-400 light:text-red-800 font-bold text-base">{globalThreshold.critical_min ?? '-'}</span>
+                                                <span className="text-gray-300 light:text-gray-600">Critical Min:</span>
+                                                <span className="text-red-400 light:text-red-600 font-bold text-base">{globalThreshold.critical_min ?? '-'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-300 light:text-gray-700 light:text-gray-600">Warning Max:</span>
-                                                <span className="text-amber-400 light:text-amber-800 font-bold text-base">{globalThreshold.warning_max ?? '-'}</span>
+                                                <span className="text-gray-300 light:text-gray-600">Warning Max:</span>
+                                                <span className="text-amber-400 light:text-amber-600 font-bold text-base">{globalThreshold.warning_max ?? '-'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-300 light:text-gray-700 light:text-gray-600">Critical Max:</span>
-                                                <span className="text-red-400 light:text-red-800 font-bold text-base">{globalThreshold.critical_max ?? '-'}</span>
+                                                <span className="text-gray-300 light:text-gray-600">Critical Max:</span>
+                                                <span className="text-red-400 light:text-red-600 font-bold text-base">{globalThreshold.critical_max ?? '-'}</span>
                                             </div>
                                         </div>
-                                        <div className="pt-2 mt-2 border-t border-blue-500/20 flex items-center gap-2">
+                                        <div className="pt-2 mt-2 border-t border-blue-500/20 light:border-blue-200 flex items-center gap-2">
                                             <span className="text-gray-400 light:text-gray-500 text-sm">Unit:</span>
-                                            <span className="text-cyan-400 light:text-cyan-800 font-bold">{globalThreshold.unit || getSensorUnit(sensorType) || '-'}</span>
+                                            <span className="text-cyan-400 light:text-cyan-600 font-bold">{globalThreshold.unit || getSensorUnit(sensorType) || '-'}</span>
                                         </div>
                                     </div>
                                 ) : (
@@ -268,25 +268,25 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                             <div className="grid grid-cols-2 gap-6 mb-8">
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-400 light:text-gray-500 mb-1 uppercase">Warning Range</label>
+                                        <label className="block text-xs font-medium text-gray-400 light:text-gray-600 mb-1 uppercase">Warning Range</label>
                                         <div className="space-y-3">
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Warning Min</label>
+                                                <label className="block text-xs text-gray-500 light:text-gray-600 mb-1">Warning Min</label>
                                                 <input
                                                     type="number"
                                                     value={warningMin}
                                                     onChange={(e) => setWarningMin(e.target.value)}
-                                                    className="w-full bg-[#374151] border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-500 text-sm"
+                                                    className="w-full bg-[#374151] light:bg-white border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-500 light:placeholder-gray-400 text-sm"
                                                     placeholder="Optional"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Warning Max</label>
+                                                <label className="block text-xs text-gray-500 light:text-gray-600 mb-1">Warning Max</label>
                                                 <input
                                                     type="number"
                                                     value={warningMax}
                                                     onChange={(e) => setWarningMax(e.target.value)}
-                                                    className="w-full bg-[#374151] border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-500 text-sm"
+                                                    className="w-full bg-[#374151] light:bg-white border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-500 light:placeholder-gray-400 text-sm"
                                                     placeholder="Optional"
                                                 />
                                             </div>
@@ -296,25 +296,25 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-400 light:text-gray-500 mb-1 uppercase">Critical Range</label>
+                                        <label className="block text-xs font-medium text-gray-400 light:text-gray-600 mb-1 uppercase">Critical Range</label>
                                         <div className="space-y-3">
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Critical Min</label>
+                                                <label className="block text-xs text-gray-500 light:text-gray-600 mb-1">Critical Min</label>
                                                 <input
                                                     type="number"
                                                     value={criticalMin}
                                                     onChange={(e) => setCriticalMin(e.target.value)}
-                                                    className="w-full bg-[#374151] border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-red-500 outline-none placeholder-gray-500 text-sm"
+                                                    className="w-full bg-[#374151] light:bg-white border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-red-500 outline-none placeholder-gray-500 light:placeholder-gray-400 text-sm"
                                                     placeholder="Optional"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Critical Max</label>
+                                                <label className="block text-xs text-gray-500 light:text-gray-600 mb-1">Critical Max</label>
                                                 <input
                                                     type="number"
                                                     value={criticalMax}
                                                     onChange={(e) => setCriticalMax(e.target.value)}
-                                                    className="w-full bg-[#374151] border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-red-500 outline-none placeholder-gray-500 text-sm"
+                                                    className="w-full bg-[#374151] light:bg-white border border-gray-600 light:border-gray-300 rounded-md px-3 py-2 text-white light:text-gray-900 focus:ring-1 focus:ring-red-500 outline-none placeholder-gray-500 light:placeholder-gray-400 text-sm"
                                                     placeholder="Optional"
                                                 />
                                             </div>
@@ -327,14 +327,14 @@ export const ThresholdModal: React.FC<ThresholdModalProps> = ({
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-700 light:border-gray-200">
                                 <button
                                     onClick={onClose}
-                                    className="px-4 py-2 border border-gray-600 light:border-gray-300 rounded-md hover:bg-gray-700 light:hover:bg-gray-200 text-sm font-medium transition-colors text-gray-300 light:text-gray-700 light:text-gray-600"
+                                    className="px-4 py-2 border border-gray-600 light:border-gray-300 rounded-md hover:bg-gray-700 light:hover:bg-gray-100 text-sm font-medium transition-colors text-gray-300 light:text-gray-700"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleSave}
                                     disabled={loading}
-                                    className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-md text-sm font-medium transition-all shadow-lg disabled:opacity-50"
+                                    className="px-6 py-2 bg-green-600 hover:bg-green-500 light:bg-green-500 light:hover:bg-green-600 text-white rounded-md text-sm font-medium transition-all shadow-lg disabled:opacity-50"
                                 >
                                     {loading ? 'Saving...' : 'Apply'}
                                 </button>
