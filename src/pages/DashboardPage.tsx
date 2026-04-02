@@ -248,7 +248,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
       Object.entries(data.values).forEach(([key, value]) => {
         if (ignoreKeys.includes(key) || typeof value !== 'number') return;
-        const uniqueId = `${data.device_id}_${key}`;
+        const uniqueId = data.company_name ? `${data.company_name}_${data.device_id}_${key}` : `${data.device_id}_${key}`;
         
         updates.push({
           _id: uniqueId,
