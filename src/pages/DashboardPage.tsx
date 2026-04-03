@@ -248,7 +248,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
       Object.entries(data.values).forEach(([key, value]) => {
         if (ignoreKeys.includes(key) || typeof value !== 'number') return;
-        const uniqueId = data.company_name ? `${data.company_name}_${data.device_id}_${key}` : `${data.device_id}_${key}`;
+        
+        // Strip trailing hardware index (e.g., _1) to match DB logic
+        const parts = key.split('_');
+        const baseKey = (parts.length > 1 && !isNaN(parseInt(parts[parts.length - 1]))) 
+          ? parts.slice(0, -1).join('_') 
+          : key;
+
+        const uniqueId = data.company_name ? `${data.company_name}_${data.device_id}_${baseKey}` : `${data.device_id}_${baseKey}`;
         
         updates.push({
           _id: uniqueId,
