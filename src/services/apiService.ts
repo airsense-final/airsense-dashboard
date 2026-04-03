@@ -1,6 +1,8 @@
 import { BASE_URL } from '../constants';
 import type {
   LoginRequest,
+  GoogleLoginRequest,
+  GoogleRegisterRequest,
   RegisterRequest,
   AuthResponse,
   User,
@@ -70,7 +72,9 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
         }
       }
       else if (response.status === 404) {
-        errorMessage = 'Requested resource not found.';
+        if (!errorMessage || errorMessage === 'An unexpected error occurred.') {
+          errorMessage = 'Requested resource not found.';
+        }
       }
       else if (response.status >= 500) {
         errorMessage = 'Something went wrong on our end. Please try again later.';
@@ -108,6 +112,28 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   if (!res?.access_token) throw new Error('Login response missing access_token.'); // Guarding if no token is returned
   setToken(res.access_token);
   return res;
+}
+
+export async function googleLogin(data: GoogleLoginRequest): Promise<AuthResponse> {
+  const res = await apiFetch<AuthResponse>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({
+      id_token: data.id_token,
+    }),
+  });
+  if (!res?.access_token) throw new Error('Google login response missing access_token.');
+  setToken(res.access_token);
+  return res;
+}
+
+export function googleRegister(data: GoogleRegisterRequest): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/auth/google-register', {
+    method: 'POST',
+    body: JSON.stringify({
+      id_token: data.id_token,
+      company_name: data.company_name,
+    }),
+  });
 }
 
 export function changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
