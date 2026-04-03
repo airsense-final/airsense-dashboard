@@ -265,7 +265,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           metadata: {
             sensor_id: uniqueId,
             parent_device: data.device_id,
-            type: key,
+            type: baseKey,
             unit: ''
           }
         });
