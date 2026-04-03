@@ -38,33 +38,15 @@ const SensorManagementPage: React.FC = () => {
 
   // Auto-generate sensor_id when sensor type and company are selected
   useEffect(() => {
-    if (formData.sensor_type && formData.company_name && showCreateModal) {
+    if (formData.sensor_type && formData.company_name && formData.parent_device_id && showCreateModal) {
       // Find the sensor type key
       const sensorType = sensorTypes.find(s => s.type === formData.sensor_type);
       if (!sensorType) return;
 
-      // Find existing sensors of this type for this company
-      const pattern = `${formData.company_name}_${sensorType.key}_`;
-      const existingSensors = sensors.filter(s =>
-        s.sensor_id.startsWith(pattern)
-      );
-
-      // Find the highest index
-      let maxIndex = 0;
-      existingSensors.forEach(s => {
-        const parts = s.sensor_id.split('_');
-        const lastPart = parts[parts.length - 1];
-        const index = parseInt(lastPart);
-        if (!isNaN(index) && index > maxIndex) {
-          maxIndex = index;
-        }
-      });
-
-      const nextIndex = maxIndex + 1;
-      const generatedId = `${formData.company_name}_${sensorType.key}_${nextIndex}`;
+      const generatedId = `${formData.company_name}_${formData.parent_device_id}_${sensorType.key}`;
       setFormData(prev => ({ ...prev, sensor_id: generatedId }));
     }
-  }, [formData.sensor_type, formData.company_name, showCreateModal, sensors]);
+  }, [formData.sensor_type, formData.company_name, formData.parent_device_id, showCreateModal, sensors]);
 
   useEffect(() => {
     loadData();
