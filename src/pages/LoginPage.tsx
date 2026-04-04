@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { login } from '../services/apiService';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { googleLogin, login } from '../services/apiService';
 
 interface LoginPageProps {
     onLoginSuccess: () => void;
@@ -25,6 +26,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,6 +51,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
     const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
         (e.target as HTMLInputElement).setCustomValidity('');
+    };
+
+    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+        if (!credentialResponse.credential) {
+            setError('Google sign-in did not return a valid credential.');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            await googleLogin({ id_token: credentialResponse.credential });
+            onLoginSuccess();
+        } catch (err) {
+            console.error(err);
+            const errorMessage = err instanceof Error ? err.message : 'Google login failed. Please try again.';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -115,6 +138,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         {loading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
+
+                <div className="my-6 flex items-center gap-3 text-gray-400 light:text-gray-500">
+                    <span className="h-px flex-1 bg-gray-700 light:bg-gray-300" />
+                    <span className="text-xs uppercase tracking-[0.2em]">or</span>
+                    <span className="h-px flex-1 bg-gray-700 light:bg-gray-300" />
+                </div>
+
+                {googleClientId ? (
+                    <div className="flex justify-center">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => setError('Google sign-in failed. Please try again.')}
+                            theme={document.body.classList.contains('light-mode') ? 'outline' : 'filled_black'}
+                            size="large"
+                            width={320}
+                            text="signin_with"
+                            shape="rectangular"
+                        />
+                    </div>
+                ) : (
+                    <div className="rounded-lg border border-dashed border-gray-600 light:border-gray-300 px-4 py-3 text-center text-sm text-gray-400 light:text-gray-500">
+                        Google sign-in is disabled until <span className="font-medium">VITE_GOOGLE_CLIENT_ID</span> is configured.
+                    </div>
+                )}
+
                 <div className="mt-6 text-center text-sm text-gray-400 light:text-gray-500">
                     Don&apos;t have an account?{' '}
                     <a href="#/register" className="text-cyan-400 light:text-cyan-800 hover:text-cyan-300 light:hover:text-cyan-900 font-medium">

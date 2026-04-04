@@ -40,6 +40,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface GoogleLoginRequest {
+  id_token: string;
+}
+
+export interface GoogleRegisterRequest {
+  id_token: string;
+  company_name: string;
+}
+
 export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;
