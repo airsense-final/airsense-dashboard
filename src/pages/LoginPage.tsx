@@ -20,7 +20,7 @@ const EyeSlashIcon = () => (
     </svg>
 );
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, isDarkMode }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -150,7 +150,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         <GoogleLogin
                             onSuccess={handleGoogleSuccess}
                             onError={() => setError('Google sign-in failed. Please try again.')}
-                            theme={document.body.classList.contains('light-mode') ? 'outline' : 'filled_black'}
+                            theme={isDarkMode ? 'filled_blue' : 'outline'}
                             size="large"
                             width={320}
                             text="signin_with"
