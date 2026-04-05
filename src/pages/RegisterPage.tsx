@@ -18,8 +18,7 @@ const decodeGooglePayload = (token: string): { email?: string; name?: string; pi
     return JSON.parse(atob(paddedPayload));
 };
 
-export const RegisterPage: React.FC<RegisterPageProps> = ({ isDarkMode: _isDarkMode }) => {
-    void _isDarkMode;
+export const RegisterPage: React.FC<RegisterPageProps> = ({ isDarkMode }) => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
     const [email, setEmail] = useState('');
@@ -204,7 +203,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ isDarkMode: _isDarkM
                             <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
                                 onError={() => setError('Google sign-in failed. Please try again.')}
-                                theme={document.body.classList.contains('light-mode') ? 'outline' : 'filled_black'}
+                                theme={isDarkMode ? 'filled_blue' : 'outline'}
                                 size="large"
                                 width={320}
                                 text="signup_with"
