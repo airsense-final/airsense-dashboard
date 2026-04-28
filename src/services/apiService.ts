@@ -57,17 +57,13 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
       } catch {
       }
 
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         removeToken();
         window.dispatchEvent(new CustomEvent('auth:unauthorized'));
 
-        if (errorMessage === 'Unauthorized' || errorMessage === 'An unexpected error occurred.') {
+        if (response.status === 401 && (errorMessage === 'Unauthorized' || errorMessage === 'An unexpected error occurred.')) {
           errorMessage = 'Incorrect email or password.';
-        }
-      }
-      else if (response.status === 403) {
-        // Preserve backend-provided detail when available; only fall back to generic if missing.
-        if (!errorMessage || errorMessage === 'An unexpected error occurred.') {
+        } else if (response.status === 403 && (!errorMessage || errorMessage === 'An unexpected error occurred.')) {
           errorMessage = 'You do not have permission to perform this action.';
         }
       }
