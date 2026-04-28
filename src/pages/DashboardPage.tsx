@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getCompanies, getDashboardSummary, getLatestAlerts, listSensors } from '../services/apiService';
-import type { Sensor, LatestSensorData, User, Company, DataPoint, Alert } from '../types/types';
+import type { Sensor, LatestSensorData, User, Company, DataPoint, Alert, UsageStats } from '../types/types';
 import { LineChartWidget } from '../components/widgets/LineChartWidget';
 import { RecentAlertsWidget } from '../components/widgets/RecentAlertsWidget';
 import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget';
@@ -368,7 +368,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         return;
       }
 
-      const latestDataFormatted: LatestSensorData[] = summaryData.map(item => ({
+      const latestDataFormatted: LatestSensorData[] = summaryData.map((item: any) => ({
         _id: item.sensor_id,
         timestamp: item.latest_timestamp || new Date().toISOString(),
         value: item.latest_value ?? 0,
@@ -382,8 +382,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       }));
 
       const historyMap: Record<string, DataPoint[]> = {};
-      summaryData.forEach(item => {
-        historyMap[item.sensor_id] = item.history.map(h => {
+      summaryData.forEach((item: any) => {
+        historyMap[item.sensor_id] = item.history.map((h: any) => {
           const ts = h.timestamp.endsWith('Z') ? h.timestamp : h.timestamp + 'Z';
           return {
             timestamp: h.timestamp,
@@ -417,9 +417,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   useEffect(() => {
     const stored = localStorage.getItem('sensor_order');
-    if (stored) try { setSensorOrder(JSON.parse(stored)); } catch (e) {}
+    if (stored) try { setSensorOrder(JSON.parse(stored)); } catch { /* ignore error */ }
     const storedDevices = localStorage.getItem('device_order');
-    if (storedDevices) try { setDeviceOrder(JSON.parse(storedDevices)); } catch (e) {}
+    if (storedDevices) try { setDeviceOrder(JSON.parse(storedDevices)); } catch { /* ignore error */ }
   }, []);
 
   useEffect(() => {

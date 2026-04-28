@@ -9,7 +9,7 @@ import type {
   Company,
   ThresholdConfig,
   ThresholdUpsert,
-  SensorDashboardView,
+  DashboardSummaryResponse,
   ChangePasswordRequest,
   Alert
 } from '../types/types';
@@ -55,6 +55,7 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
           }
         }
       } catch {
+        /* ignore JSON parse errors for non-JSON responses */
       }
 
       if (response.status === 401 || response.status === 403) {
@@ -200,6 +201,7 @@ export function createCompanyWithAdmin(data: {
   admin_username: string;
   admin_email: string;
   admin_password: string;
+  tier?: string;
 }): Promise<{ success: boolean; company_id: string; company_name: string; admin_username: string; message: string }> {
   return apiFetch<{ success: boolean; company_id: string; company_name: string; admin_username: string; message: string }>('/companies/with-admin', {
     method: 'POST',

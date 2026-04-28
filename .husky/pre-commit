@@ -1,0 +1,5 @@
+echo "🔎 Running Lint-Staged (ESLint)..."
+npx lint-staged
+
+echo "🛡️ Running TypeScript Type Check..."
+npm run type-check
