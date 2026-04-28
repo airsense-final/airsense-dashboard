@@ -33,6 +33,7 @@ export interface User {
   is_active: boolean;
   company_id: string;
   company_name?: string;
+  company_tier?: 'starter' | 'mid' | 'enterprise';
 }
 
 export interface LoginRequest {
@@ -66,6 +67,7 @@ export interface RegisterRequest {
 export interface Company {
   _id: string;
   name: string;
+  tier?: 'starter' | 'mid' | 'enterprise';
 }
 
 export interface AuthResponse {
@@ -152,13 +154,24 @@ export interface SensorDashboardView {
   sensor_name: string;
   sensor_type: string;
   unit: string;
-  location?: string;
-  parent_device_id?: string;
+  location: string;
+  parent_device_id: string;
   latest_value: number | null;
   latest_timestamp: string | null;
   status: string;
   history: { timestamp: string; value: number }[];
 }
+
+export interface UsageStats {
+  user_count: number;
+  device_count: number;
+}
+
+export interface DashboardSummaryResponse {
+  summary: SensorDashboardView[];
+  usage_stats: UsageStats;
+}
+
 
 export interface Alert {
   _id: string;

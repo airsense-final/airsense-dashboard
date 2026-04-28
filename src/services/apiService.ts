@@ -229,6 +229,12 @@ export function deleteCompany(companyId: string): Promise<{ message: string }> {
   });
 }
 
+export function updateCompanyTier(companyId: string, tier: string): Promise<{ success: boolean; message: string }> {
+  return apiFetch<{ success: boolean; message: string }>(`/companies/${companyId}/tier?tier=${tier}`, {
+    method: 'PUT',
+  });
+}
+
 // --- Get Current User ---
 export function getCurrentUser(): Promise<User> {
   return apiFetch<User>('/auth/me');
@@ -236,9 +242,9 @@ export function getCurrentUser(): Promise<User> {
 
 // --- Sensor Data Endpoints ---
 
-export function getDashboardSummary(companyName?: string): Promise<SensorDashboardView[]> {
+export function getDashboardSummary(companyName?: string): Promise<DashboardSummaryResponse> {
   const params = companyName ? `?target_company_name=${encodeURIComponent(companyName)}` : '';
-  return apiFetch<SensorDashboardView[]>(`/api/v1/sensors/dashboard/summary${params}`);
+  return apiFetch<DashboardSummaryResponse>(`/api/v1/sensors/dashboard/summary${params}`);
 }
 
 export function getLatestSensorData(companyName?: string): Promise<any[]> {
