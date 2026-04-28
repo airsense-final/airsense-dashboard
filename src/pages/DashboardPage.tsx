@@ -532,7 +532,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
             
             {/* NEW: Usage Widget */}
             {currentUser && usageStats && (
-              <div className="hidden lg:block w-64">
+              <div className="w-32 sm:w-48 lg:w-64 flex-shrink-0">
                 <SubscriptionUsageWidget 
                   currentUsers={usageStats.user_count}
                   maxUsers={currentUser.company_tier === 'enterprise' ? 50 : currentUser.company_tier === 'mid' ? 25 : 10}
