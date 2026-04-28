@@ -7,6 +7,7 @@ import { AIHealthStatusWidget } from '../components/widgets/AIHealthStatusWidget
 import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 import { useWebSocket } from '../hooks/useWebSocket';
 import DigitalTwinButton from '../components/DigitalTwinButton';
+import { SubscriptionUsageWidget } from '../components/widgets/SubscriptionUsageWidget';
 import {
   DndContext,
   closestCenter,
@@ -206,6 +207,7 @@ const SensorCard = React.memo< {
 export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => {
   const [sensorData, setSensorData] = useState<LatestSensorData[]>([]);
   const [sensorHistory, setSensorHistory] = useState<Record<string, DataPoint[]>>({});
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>(localStorage.getItem('dashboard_selected_company') || '');
   const [loading, setLoading] = useState(true);
@@ -357,7 +359,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     try {
       isFetchingRef.current = true;
       const companyName = currentUser?.role === 'superadmin' ? currentCompany : undefined;
-      const summaryData = await getDashboardSummary(companyName);
+      const response = await getDashboardSummary(companyName);
+      
+      const summaryData = response.summary;
+      setUsageStats(response.usage_stats);
 
       if (currentUser?.role === 'superadmin' && selectedCompanyRef.current !== currentCompany) {
         return;
@@ -522,7 +527,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
             <DigitalTwinButton 
               role={currentUser?.role}
               company={currentUser?.company_name || selectedCompany}
+              tier={currentUser?.company_tier}
             />
+            
+            {/* NEW: Usage Widget */}
+            {currentUser && usageStats && (
+              <div className="w-32 sm:w-48 lg:w-64 flex-shrink-0">
+                <SubscriptionUsageWidget 
+                  currentUsers={usageStats.user_count}
+                  maxUsers={currentUser.company_tier === 'enterprise' ? 50 : currentUser.company_tier === 'mid' ? 25 : 10}
+                  currentDevices={usageStats.device_count}
+                  maxDevices={currentUser.company_tier === 'enterprise' ? 100 : currentUser.company_tier === 'mid' ? 10 : 1}
+                  tier={currentUser.company_tier || 'starter'}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -555,6 +574,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           </svg>
           <span className="text-sm font-medium">{error}</span>
         </div>
+      )}
+
+      {/* NEW: Subscription Limit Banner */}
+      {currentUser && usageStats && currentUser.company_tier !== 'enterprise' && (
+        (() => {
+          const maxU = currentUser.company_tier === 'mid' ? 25 : 10;
+          const maxD = currentUser.company_tier === 'mid' ? 10 : 1;
+          const isLimitReached = usageStats.user_count >= maxU || usageStats.device_count >= maxD;
+          
+          if (!isLimitReached) return null;
+
+          return (
+            <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-2xl mb-8 flex items-center justify-between group animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-500 animate-pulse">
+                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                   </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-orange-400">Subscription Limit Reached</h4>
+                  <p className="text-xs text-orange-400/70">You have reached the maximum allowed {usageStats.device_count >= maxD ? 'devices' : 'users'} for your <b>{currentUser.company_tier}</b> plan.</p>
+                </div>
+              </div>
+              <a href="mailto:airsense.notification@gmail.com" className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-black rounded-lg transition-all active:scale-95 shadow-lg shadow-orange-900/20 uppercase tracking-tighter">
+                Upgrade Plan
+              </a>
+            </div>
+          );
+        })()
       )}
 
       {sensorData.length > 0 ? (

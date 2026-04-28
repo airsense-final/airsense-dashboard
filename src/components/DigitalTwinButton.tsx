@@ -4,9 +4,12 @@ import { getToken } from '../services/apiService';
 interface DigitalTwinButtonProps {
   role?: string;
   company?: string;
+  tier?: string;
 }
 
-const DigitalTwinButton: React.FC<DigitalTwinButtonProps> = ({ role, company }) => {
+const DigitalTwinButton: React.FC<DigitalTwinButtonProps> = ({ role, company, tier }) => {
+  // SUBSCRIPTION CHECK: Only 'enterprise' tier can access 3D monitoring
+  if (tier !== 'enterprise') return null;
 
   const handleOpenTwin = () => {
     const token = getToken();

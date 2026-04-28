@@ -25,16 +25,20 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser,
             >
                 Dashboard
             </a>
-            <a
-                href="#/test-simulation"
-                className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
-                onClick={() => setIsMenuOpen(false)}
-            >
-                <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                </svg>
-                <span>Test Simulation</span>
-            </a>
+            
+            {/* SUBSCRIPTION CHECK: Show Digital Twin/Simulation only for Enterprise */}
+            {currentUser.company_tier === 'enterprise' && (
+                <a
+                    href="#/test-simulation"
+                    className="text-gray-300 light:text-gray-700 hover:text-cyan-400 light:text-cyan-800 light:hover:text-cyan-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-700/50 light:hover:bg-gray-200/50 flex items-center space-x-2"
+                    onClick={() => setIsMenuOpen(false)}
+                >
+                    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <span>Simulation</span>
+                </a>
+            )}
 
             {currentUser.role !== 'viewer' && (
                 <a
@@ -107,7 +111,15 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser,
                             <div className="w-8 h-8 bg-cyan-500 light:bg-cyan-700 light:bg-cyan-600 light:bg-cyan-800 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-cyan-500/20 light:shadow-cyan-600/10">
                                 <span className="text-white font-bold text-xl">A</span>
                             </div>
-                            <span className="text-xl font-bold text-white light:text-gray-900 group-hover:text-cyan-400 light:text-cyan-800 light:group-hover:text-cyan-700 transition-colors hidden sm:block">AirSense</span>
+                            <div className="flex items-baseline space-x-1">
+                                <span className="text-xl font-bold text-white light:text-gray-900 group-hover:text-cyan-400 light:text-cyan-800 light:group-hover:text-cyan-700 transition-colors hidden sm:inline">AirSense</span>
+                                {currentUser.company_tier === 'mid' && (
+                                    <span className="text-xs font-light text-cyan-400 light:text-cyan-600 italic tracking-wide">Pro</span>
+                                )}
+                                {currentUser.company_tier === 'enterprise' && (
+                                    <span className="text-xs font-light text-emerald-400 light:text-emerald-600 uppercase tracking-widest bg-emerald-500/10 light:bg-emerald-100 px-1.5 py-0.5 rounded ml-1">Business</span>
+                                )}
+                            </div>
                         </a>
                         
                         {/* Desktop Navigation */}
