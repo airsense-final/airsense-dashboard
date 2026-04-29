@@ -354,6 +354,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   const loadSensorData = async () => {
     if (isFetchingRef.current) return;
+    
+    // Prevent 401 errors when polling after token expiration
+    const token = localStorage.getItem('iot_dashboard_access_token');
+    if (!token) return;
+
     const currentCompany = selectedCompanyRef.current;
 
     try {
@@ -527,20 +532,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
             <DigitalTwinButton 
               role={currentUser?.role}
               company={currentUser?.company_name || selectedCompany}
-              tier={currentUser?.company_tier}
+              tier={(() => {
+                const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser?.company_id);
+                return currentUser?.role === 'superadmin' && activeCompany ? activeCompany.tier || 'starter' : currentUser?.company_tier || 'starter';
+              })()}
             />
             
             {/* NEW: Usage Widget */}
             {currentUser && usageStats && (
-              <div className="w-32 sm:w-48 lg:w-64 flex-shrink-0">
-                <SubscriptionUsageWidget 
-                  currentUsers={usageStats.user_count}
-                  maxUsers={currentUser.company_tier === 'enterprise' ? 50 : currentUser.company_tier === 'mid' ? 25 : 10}
-                  currentDevices={usageStats.device_count}
-                  maxDevices={currentUser.company_tier === 'enterprise' ? 100 : currentUser.company_tier === 'mid' ? 10 : 1}
-                  tier={currentUser.company_tier || 'starter'}
-                />
-              </div>
+              (() => {
+                const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser.company_id);
+                const displayTier = currentUser.role === 'superadmin' && activeCompany ? activeCompany.tier || 'starter' : currentUser.company_tier || 'starter';
+                const maxU = displayTier === 'enterprise' ? 50 : displayTier === 'mid' ? 25 : 10;
+                const maxD = displayTier === 'enterprise' ? 100 : displayTier === 'mid' ? 10 : 1;
+                
+                return (
+                  <div className="w-32 sm:w-48 lg:w-64 flex-shrink-0">
+                    <SubscriptionUsageWidget 
+                      currentUsers={usageStats.user_count}
+                      maxUsers={maxU}
+                      currentDevices={usageStats.device_count}
+                      maxDevices={maxD}
+                      tier={displayTier}
+                    />
+                  </div>
+                );
+              })()
             )}
           </div>
         </div>
@@ -577,10 +594,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       )}
 
       {/* NEW: Subscription Limit Banner */}
-      {currentUser && usageStats && currentUser.company_tier !== 'enterprise' && (
+      {currentUser && usageStats && (
         (() => {
-          const maxU = currentUser.company_tier === 'mid' ? 25 : 10;
-          const maxD = currentUser.company_tier === 'mid' ? 10 : 1;
+          const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser.company_id);
+          const displayTier = currentUser.role === 'superadmin' && activeCompany ? activeCompany.tier || 'starter' : currentUser.company_tier || 'starter';
+          
+          if (displayTier === 'enterprise') return null;
+
+          const maxU = displayTier === 'mid' ? 25 : 10;
+          const maxD = displayTier === 'mid' ? 10 : 1;
           const isLimitReached = usageStats.user_count >= maxU || usageStats.device_count >= maxD;
           
           if (!isLimitReached) return null;
@@ -595,7 +617,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-orange-400">Subscription Limit Reached</h4>
-                  <p className="text-xs text-orange-400/70">You have reached the maximum allowed {usageStats.device_count >= maxD ? 'devices' : 'users'} for your <b>{currentUser.company_tier}</b> plan.</p>
+                  <p className="text-xs text-orange-400/70">You have reached the maximum allowed {usageStats.device_count >= maxD ? 'devices' : 'users'} for your <b>{displayTier}</b> plan.</p>
                 </div>
               </div>
               <a href="mailto:airsense.notification@gmail.com" className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-black rounded-lg transition-all active:scale-95 shadow-lg shadow-orange-900/20 uppercase tracking-tighter">
