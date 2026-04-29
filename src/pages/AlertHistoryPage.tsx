@@ -54,7 +54,7 @@ const AlertHistoryPage: React.FC = () => {
 
     const applyPreset = (preset: string) => {
         const end = new Date();
-        let start = new Date();
+        const start = new Date();
 
         if (preset === '1h') start.setHours(end.getHours() - 1);
         else if (preset === '24h') start.setHours(end.getHours() - 24);

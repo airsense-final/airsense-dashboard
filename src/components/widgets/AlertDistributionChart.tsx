@@ -164,7 +164,7 @@ const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({ total, 
               outerRadius="80%"
               paddingAngle={5}
               dataKey="value"
-              // @ts-ignore
+              // @ts-expect-error recharts ActiveShape types are incomplete
               activeIndex={activeIndex !== null ? activeIndex : undefined}
               activeShape={renderActiveShape}
               onMouseEnter={(_, index) => setActiveIndex(index)}

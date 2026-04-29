@@ -222,13 +222,13 @@ export function createCompanyAdmin(data: {
 }
 
 export function deleteCompany(companyId: string): Promise<{ message: string }> {
-  return apiFetch<{ message: string }>(`/companies/${companyId}`, {
+  return apiFetch<{ message: string }>(`/api/v1/companies/${companyId}`, {
     method: 'DELETE',
   });
 }
 
 export function updateCompanyTier(companyId: string, tier: string): Promise<{ success: boolean; message: string }> {
-  return apiFetch<{ success: boolean; message: string }>(`/companies/${companyId}/tier?tier=${tier}`, {
+  return apiFetch<{ success: boolean; message: string }>(`/api/v1/companies/${companyId}/tier?tier=${tier}`, {
     method: 'PUT',
   });
 }
