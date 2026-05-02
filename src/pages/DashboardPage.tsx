@@ -15,6 +15,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -524,14 +525,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           </div>
 
           <div className="flex items-center gap-3">
-            <DigitalTwinButton 
-              role={currentUser?.role}
-              company={currentUser?.company_name || selectedCompany}
-              tier={(() => {
-                const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser?.company_id);
-                return currentUser?.role === 'superadmin' && activeCompany ? activeCompany.tier || 'starter' : currentUser?.company_tier || 'starter';
-              })()}
-            />
+            
             
             {/* NEW: Usage Widget */}
             {currentUser && usageStats && (
@@ -718,7 +712,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
                             <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
                               <div className="flex-grow">
-                                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(event, parentDevice)}>
+                                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(event: DragEndEvent) => handleDragEnd(event, parentDevice)}>
                                   <SortableContext items={sensors.map(s => s.metadata.sensor_id)} strategy={rectSortingStrategy}>
                                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
                                       {sensors.map((data) => {
