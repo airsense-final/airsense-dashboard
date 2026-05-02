@@ -28,7 +28,7 @@ const DigitalTwinButton: React.FC<DigitalTwinButtonProps> = ({ role, company, ti
   return (
     <button 
       onClick={handleOpenTwin}
-      className="flex items-center gap-2.5 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-all duration-300 active:scale-95 group shadow-lg shadow-indigo-900/10"
+      className="flex items-center gap-2.5 px-4 py-2 bg-indigo-600/50 backdrop-blur-md hover:bg-indigo-500/70 text-white border border-indigo-400/50 rounded-xl transition-all duration-300 active:scale-95 group shadow-[0_8px_16px_rgba(79,70,229,0.3)]"
       title="Launch 3D Environment"
     >
       <span className="text-base group-hover:rotate-12 transition-transform duration-500">🛰️</span>
