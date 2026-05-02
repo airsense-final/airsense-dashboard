@@ -10,6 +10,7 @@ import type {
     ThresholdUpsert,
     Company
 } from '../types/types';
+import { TableRowSkeleton, Skeleton } from '../components/layout/Skeleton';
 
 const ThresholdManagementPage: React.FC = () => {
     const [thresholds, setThresholds] = useState<ThresholdConfig[]>([]);
@@ -263,9 +264,11 @@ const ThresholdManagementPage: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-700 light:divide-gray-200">
                             {loading ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">Loading configurations...</td>
-                                </tr>
+                                [1, 2, 3, 4, 5].map((i) => (
+                                    <tr key={i}>
+                                        <td colSpan={6} className="px-0 py-0"><TableRowSkeleton /></td>
+                                    </tr>
+                                ))
                             ) : filteredThresholds.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-10 text-center text-gray-500">No threshold configurations found matching filters.</td>

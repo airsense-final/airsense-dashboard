@@ -108,11 +108,9 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser,
                     {/* Brand & Desktop Nav */}
                     <div className="flex items-center space-x-4 lg:space-x-8">
                         <a href="#/" className="flex-shrink-0 flex items-center space-x-2 group">
-                            <div className="w-8 h-8 bg-cyan-500 light:bg-cyan-700 light:bg-cyan-600 light:bg-cyan-800 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-cyan-500/20 light:shadow-cyan-600/10">
-                                <span className="text-white font-bold text-xl">A</span>
-                            </div>
-                            <div className="flex items-baseline space-x-1">
-                                <span className="text-xl font-bold text-white light:text-gray-900 group-hover:text-cyan-400 light:text-cyan-800 light:group-hover:text-cyan-700 transition-colors hidden sm:inline">AirSense</span>
+                            <img src="assets/images/AirSense%20Logo%20logo.png" alt="AirSense Logo" className="w-10 h-8 md:w-14 md:h-12" />
+                            <div className="hidden md:flex items-baseline space-x-1">
+                                <img src="assets/images/AirSense%20Logo%20yaz%C4%B1.png" alt="AirSense" className="h-6 w-auto" />
                                 {currentUser.company_tier === 'mid' && (
                                     <span className="text-xs font-light text-cyan-400 light:text-cyan-600 italic tracking-wide">Pro</span>
                                 )}

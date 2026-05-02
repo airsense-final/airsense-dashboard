@@ -8,6 +8,7 @@ import { isSensorError, getSensorDisplayValue } from '../utils/sensorUtils';
 import { useWebSocket } from '../hooks/useWebSocket';
 import DigitalTwinButton from '../components/DigitalTwinButton';
 import { SubscriptionUsageWidget } from '../components/widgets/SubscriptionUsageWidget';
+import { SensorCardSkeleton, WidgetSkeleton, Skeleton } from '../components/layout/Skeleton';
 import {
   DndContext,
   closestCenter,
@@ -498,10 +499,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-4 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-cyan-500 light:border-cyan-700 border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-lg text-cyan-400 light:text-cyan-800 font-medium">Loading dashboard...</div>
+      <div className="px-1 sm:px-2 md:px-4 py-2 sm:py-4 md:py-6 space-y-8">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-gray-800/20 p-4 rounded-2xl border border-gray-700/30">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <div className="flex gap-3">
+             <Skeleton className="h-10 w-24 rounded-xl" />
+             <Skeleton className="h-10 w-48 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Main Grid Skeleton */}
+        <div className="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-6">
+          <div className="flex flex-col xl:flex-row gap-6">
+            <div className="flex-grow grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <SensorCardSkeleton key={i} />
+              ))}
+            </div>
+            <div className="w-full xl:w-80 space-y-4">
+              <WidgetSkeleton />
+              <WidgetSkeleton />
+            </div>
+          </div>
         </div>
       </div>
     );

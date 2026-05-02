@@ -4,6 +4,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { getAlertHistory, getAggregatedAlertHistory, getCompanies, getCurrentUser, markAlertAsRead, markAllAlertsAsRead, listSensors, exportAlertsPDF } from '../services/apiService';
 import type { Alert, Company, User } from '../types/types';
 import AlertDistributionChart from '../components/widgets/AlertDistributionChart';
+import { TableRowSkeleton, Skeleton } from '../components/layout/Skeleton';
 
 const AlertHistoryPage: React.FC = () => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -163,7 +164,6 @@ const AlertHistoryPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* 1. Header Section */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
                         <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
@@ -185,12 +185,10 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 2. Donut Chart */}
                 <div className="w-full">
                     <AlertDistributionChart total={stats.total} activeCritical={stats.activeCritical} activeWarning={stats.activeWarning} resolved={stats.resolved} />
                 </div>
 
-                {/* 3. Summary Stats Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                     <div className="bg-gray-800 light:bg-white p-3 sm:p-4 rounded-xl border border-gray-700 light:border-gray-200 shadow-sm flex items-center justify-between">
                         <div><p className="text-gray-400 light:text-gray-600 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Active</p><p className="text-lg sm:text-2xl font-bold text-white light:text-gray-900">{stats.activeTotal}</p></div>
@@ -210,7 +208,6 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 4. Filters Grid */}
                 <div className="bg-gray-800 light:bg-white p-4 rounded-xl border border-gray-700 light:border-gray-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                     <div className="space-y-1">
                         <label className="text-[10px] font-medium text-gray-500 light:text-gray-600 uppercase tracking-widest ml-1">Start Date</label>
@@ -275,7 +272,6 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* 5. Alert List */}
                 <div className="bg-gray-800 light:bg-white rounded-xl border border-gray-700 light:border-gray-200 overflow-hidden shadow-xl">
                     <div className="hidden md:block overflow-x-auto">
                         <table className="min-w-full text-left border-collapse">
@@ -290,7 +286,15 @@ const AlertHistoryPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700 light:divide-gray-200">
-                                {loading ? (<tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400 light:text-gray-600">Loading alerts...</td></tr>) : alerts.length === 0 ? (<tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400 light:text-gray-600 italic">No alerts found.</td></tr>) : (
+                                {loading ? (
+                                    [1, 2, 3, 4, 5].map((i) => (
+                                        <tr key={i}>
+                                            <td colSpan={6} className="px-0 py-0"><TableRowSkeleton /></td>
+                                        </tr>
+                                    ))
+                                ) : alerts.length === 0 ? (
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400 light:text-gray-600 italic">No alerts found.</td></tr>
+                                ) : (
                                     alerts.map((alert) => (
                                         <tr key={alert._id} className={`border-b border-gray-700 light:border-gray-100 hover:bg-gray-700/50 light:hover:bg-gray-50 transition-colors ${!alert.is_read ? 'bg-gray-800/80 light:bg-cyan-50/30' : 'light:bg-white'}`}>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -323,7 +327,17 @@ const AlertHistoryPage: React.FC = () => {
                     </div>
 
                     <div className="md:hidden divide-y divide-gray-700 light:divide-gray-200">
-                        {loading ? (<div className="p-10 text-center text-gray-400 light:text-gray-600 text-sm">Loading alerts...</div>) : alerts.length === 0 ? (<div className="p-10 text-center text-gray-400 light:text-gray-600 text-sm italic">No alerts found.</div>) : (
+                        {loading ? (
+                            [1, 2, 3].map((i) => (
+                                <div key={i} className="p-4 space-y-3">
+                                    <Skeleton className="h-4 w-1/4" />
+                                    <Skeleton className="h-10 w-full" />
+                                    <Skeleton className="h-4 w-1/2" />
+                                </div>
+                            ))
+                        ) : alerts.length === 0 ? (
+                            <div className="p-10 text-center text-gray-400 light:text-gray-600 text-sm italic">No alerts found.</div>
+                        ) : (
                             alerts.map((alert) => (
                                 <div key={alert._id} className={`p-4 ${!alert.is_read ? 'bg-cyan-900/10 light:bg-cyan-50' : 'light:bg-white'} relative overflow-hidden`}>
                                     <div className={`absolute left-0 top-0 bottom-0 w-1 ${alert.alert_type === 'critical' ? 'bg-red-600' : 'bg-amber-500'}`} />
