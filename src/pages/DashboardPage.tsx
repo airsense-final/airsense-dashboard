@@ -240,8 +240,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   useEffect(() => {
     if (lastMessage && lastMessage.type === 'SENSOR_UPDATE') {
       const data = lastMessage.data;
-      if (currentUser?.role === 'superadmin' && selectedCompany && data.company_name !== selectedCompany) {
-        return;
+      
+      // Filter out messages for other companies
+      if (currentUser?.role === 'superadmin') {
+        if (selectedCompany && data.company_name !== selectedCompany) return;
+      } else {
+        if (data.company_name !== currentUser?.company_name) return;
       }
 
       const timestamp = data.timestamp || new Date().toISOString();
@@ -495,17 +499,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-4 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-cyan-500 light:border-cyan-700 border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-lg text-cyan-400 light:text-cyan-800 font-medium">Loading dashboard...</div>
-        </div>
-      </div>
-    );
-  }
-
+  // We remove the early return for loading to allow the header to render immediately.
+  
   return (
     <div className="px-1 sm:px-2 md:px-4 py-2 sm:py-4 md:py-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 bg-gray-800/20 p-4 rounded-2xl border border-gray-700/30 backdrop-blur-sm">
@@ -593,7 +588,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
       )}
 
-      {/* NEW: Subscription Limit Banner */}
+      {loading ? (
+        <div className="flex items-center justify-center py-24 bg-gray-800/20 rounded-3xl border border-gray-700/50 border-dashed">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-12 h-12 border-4 border-cyan-500 light:border-cyan-700 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-lg text-cyan-400 light:text-cyan-800 font-medium">Loading dashboard...</div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* NEW: Subscription Limit Banner */}
       {currentUser && usageStats && (
         (() => {
           const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser.company_id);
@@ -793,6 +797,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
               : 'Waiting for devices to connect and transmit sensor readings...'}
           </p>
         </div>
+      )}
+        </>
       )}
     </div>
   );
