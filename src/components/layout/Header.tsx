@@ -108,9 +108,9 @@ export const Header: React.FC<HeaderProps> = ({ isAuthed, onLogout, currentUser,
                     {/* Brand & Desktop Nav */}
                     <div className="flex items-center space-x-4 lg:space-x-8">
                         <a href="#/" className="flex-shrink-0 flex items-center space-x-2 group">
-                            <img src="assets/images/AirSense%20Logo%20logo.png" alt="AirSense Logo" className="w-10 h-8 md:w-14 md:h-12" />
+                            <img src="assets/images/airsense-logo-icon.png" alt="AirSense Logo" className="w-10 h-8 md:w-14 md:h-12" />
                             <div className="hidden md:flex items-baseline space-x-1">
-                                <img src="assets/images/AirSense%20Logo%20yaz%C4%B1.png" alt="AirSense" className="h-6 w-auto" />
+                                <img src="assets/images/airsense-logo-text.png" alt="AirSense" className="h-6 w-auto" />
                                 {currentUser.company_tier === 'mid' && (
                                     <span className="text-xs font-light text-cyan-400 light:text-cyan-600 italic tracking-wide">Pro</span>
                                 )}
