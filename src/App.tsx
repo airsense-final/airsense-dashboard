@@ -30,8 +30,8 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    // Default to light (false) if no theme is saved
-    return saved ? saved === 'dark' : false;
+    // Default to dark (true) if no theme is saved
+    return saved ? saved === 'dark' : true;
   });
 
   useEffect(() => {
@@ -224,19 +224,18 @@ function App() {
   }
 
   return (
-    <div className={`bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 min-h-screen font-sans ${!isDarkMode ? 'light-mode' : ''}`}>
-      <Header 
-        isAuthed={isAuthed} 
-        onLogout={handleLogout} 
-        currentUser={currentUser} 
+    <div className={`bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 min-h-screen font-sans flex flex-col ${!isDarkMode ? 'light-mode' : ''}`}>
+      <Header
+        isAuthed={isAuthed}
+        onLogout={handleLogout}
+        currentUser={currentUser}
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
       />
-      <main className="container mx-auto p-3 sm:p-6">
+      <main className="container mx-auto p-3 sm:p-6 flex-1 min-h-[calc(100vh-100px)]">
         {content}
       </main>
-    </div>
-  );
+    </div>  );
 }
 
 export default App;
