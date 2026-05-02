@@ -38,7 +38,7 @@ const AlertHistoryPage: React.FC = () => {
 
     const loadSensorMap = async () => {
         try {
-            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : currentUser?.company_name;
+            const companyName = currentUser?.role === 'superadmin' ? (selectedCompany || undefined) : undefined;
             const sensors = await listSensors(companyName);
             const map: Record<string, string> = {};
             sensors.forEach((s: any) => {
