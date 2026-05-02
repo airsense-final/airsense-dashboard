@@ -10,7 +10,7 @@ import type {
     ThresholdUpsert,
     Company
 } from '../types/types';
-import { TableRowSkeleton, Skeleton } from '../components/layout/Skeleton';
+import { TableRowSkeleton } from '../components/layout/Skeleton';
 
 const ThresholdManagementPage: React.FC = () => {
     const [thresholds, setThresholds] = useState<ThresholdConfig[]>([]);
