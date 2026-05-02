@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { listSensors, createSensor, updateSensor, deleteSensor, getCompanies, getCurrentUser } from '../services/apiService';
+import { TableRowSkeleton, Skeleton } from '../components/layout/Skeleton';
 
 const SensorManagementPage: React.FC = () => {
   const [sensors, setSensors] = useState<any[]>([]);
@@ -140,8 +141,19 @@ const SensorManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 light:bg-gray-50">
-        <div className="text-xl text-white light:text-gray-900">Loading...</div>
+      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6 space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex justify-between items-center mb-8">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+          <div className="bg-gray-800 light:bg-white rounded-lg overflow-hidden border border-gray-700 light:border-gray-200 shadow-xl">
+            {[1, 2, 3, 4, 5].map((i) => <TableRowSkeleton key={i} />)}
+          </div>
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getUsers, getPendingUsers, updateUserRole, updateUserStatus, deleteUser, getCompanies, getCurrentUser } from '../services/apiService';
 import { DeleteUserModal } from '../components/DeleteUserModal';
 import type { User, Company } from '../types/types';
+import { TableRowSkeleton, Skeleton } from '../components/layout/Skeleton';
 
 export function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -114,9 +115,19 @@ export function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl">Loading users...</div>
+      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6 space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32 rounded-xl" />
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+          <div className="bg-gray-800 light:bg-white rounded-lg overflow-hidden border border-gray-700 light:border-gray-200 shadow-lg">
+            {[1, 2, 3, 4, 5].map((i) => <TableRowSkeleton key={i} />)}
+          </div>
         </div>
       </div>
     );

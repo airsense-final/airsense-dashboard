@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getCompanies, createCompanyWithAdmin, deleteCompany, getCurrentUser, getUsers, updateCompanyTier } from '../services/apiService';
 import type { Company, User } from '../types/types';
 import { DeleteCompanyModal } from '../components/DeleteCompanyModal';
+import { TableRowSkeleton, Skeleton } from '../components/layout/Skeleton';
 
 export function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -139,9 +140,21 @@ export function AdminCompaniesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl">Loading companies...</div>
+      <div className="min-h-screen bg-gray-900 light:bg-gray-50 text-white light:text-gray-900 p-3 sm:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex justify-between items-center mb-8">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+          </div>
+          <div className="bg-gray-800 light:bg-white rounded-2xl overflow-hidden border border-gray-700 light:border-gray-200 shadow-xl">
+            {[1, 2, 3, 4, 5].map((i) => <TableRowSkeleton key={i} />)}
+          </div>
         </div>
       </div>
     );
