@@ -71,11 +71,11 @@ export const RecentAlertsWidget: React.FC<RecentAlertsWidgetProps> = ({ companyN
     };
 
     if (loading) {
-        return <div className="animate-pulse bg-gray-800 light:bg-white rounded-lg h-64"></div>;
+        return <div className="animate-pulse bg-gray-800/50 light:bg-gray-200/50 rounded-xl h-full min-h-[250px] w-full"></div>;
     }
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col min-h-[250px]">
             <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-white light:text-gray-900 flex items-center gap-1">
                     <span className="text-red-500 text-sm">🔔</span> Active Alerts
