@@ -242,8 +242,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
   useEffect(() => {
     if (lastMessage && lastMessage.type === 'SENSOR_UPDATE') {
       const data = lastMessage.data;
-      if (currentUser?.role === 'superadmin' && selectedCompany && data.company_name !== selectedCompany) {
-        return;
+      
+      // Filter out messages for other companies
+      if (currentUser?.role === 'superadmin') {
+        if (selectedCompany && data.company_name !== selectedCompany) return;
+      } else {
+        if (data.company_name !== currentUser?.company_name) return;
       }
 
       const timestamp = data.timestamp || new Date().toISOString();
@@ -610,7 +614,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
         </div>
       )}
 
-      {/* NEW: Subscription Limit Banner */}
+      {loading ? (
+        <div className="flex items-center justify-center py-24 bg-gray-800/20 rounded-3xl border border-gray-700/50 border-dashed">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-12 h-12 border-4 border-cyan-500 light:border-cyan-700 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-lg text-cyan-400 light:text-cyan-800 font-medium">Loading dashboard...</div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* NEW: Subscription Limit Banner */}
       {currentUser && usageStats && (
         (() => {
           const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser.company_id);
@@ -811,6 +824,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           </p>
         </div>
       )}
+        </>
+      )}
+
       {/* SABİT DIGITAL TWIN BUTONU (FLOATING) */}
       <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 hover:scale-105 transition-transform duration-300 shadow-2xl shadow-cyan-500/20 rounded-full">
         <DigitalTwinButton 
@@ -822,7 +838,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
           })()}
         />
       </div>
-      
+
     </div>
   );
 };
