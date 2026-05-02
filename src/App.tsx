@@ -1,10 +1,10 @@
 import React, { useState, useEffect, lazy } from 'react';
 import { getToken, removeToken, getCurrentUser } from './services/apiService';
 import { Header } from './components/layout/Header';
+import { DashboardPage } from './pages/DashboardPage';
 import type { User } from './types/types';
 
 // Lazy load pages for performance optimization
-const DashboardPage = lazy(() => import('./pages/DashboardPage').then(module => ({ default: module.DashboardPage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then(module => ({ default: module.RegisterPage })));
 const TestSimulationPage = lazy(() => import('./pages/TestSimulationPage').then(module => ({ default: module.TestSimulationPage })));
