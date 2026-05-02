@@ -395,16 +395,33 @@ export function AdminCompaniesPage() {
               <div key={company._id} className="p-4 space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-2">
                         <div className="text-sm font-bold text-white light:text-gray-900 tracking-tight">{company.name}</div>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
-                            company.tier === 'enterprise' ? 'bg-emerald-500/20 text-emerald-400' :
-                            company.tier === 'mid' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                            {company.tier === 'enterprise' ? 'Business' : company.tier === 'mid' ? 'Pro' : 'Starter'}
-                        </span>
                     </div>
-                    <div className="text-[10px] text-gray-500 font-mono mt-1">{company._id}</div>
+                    {updatingTierId === company._id ? (
+                        <div className="flex items-center gap-2">
+                           <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                           <span className="text-xs text-cyan-400">Updating...</span>
+                        </div>
+                    ) : (
+                        <select
+                          value={company.tier || 'starter'}
+                          onChange={(e) => handleTierChange(company._id, e.target.value)}
+                          disabled={updatingTierId !== null}
+                          className={`bg-transparent border rounded px-2 py-1 text-xs font-bold cursor-pointer outline-none transition-all ${
+                            company.tier === 'enterprise' 
+                              ? 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10' 
+                              : company.tier === 'mid'
+                                ? 'text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10'
+                                : 'text-gray-400 border-gray-500/30 hover:bg-gray-500/10'
+                          }`}
+                        >
+                          <option value="starter" className="bg-gray-800 text-white">Starter</option>
+                          <option value="mid" className="bg-gray-800 text-white">Pro</option>
+                          <option value="enterprise" className="bg-gray-800 text-white">Business</option>
+                        </select>
+                    )}
+                    <div className="text-[10px] text-gray-500 font-mono mt-2">{company._id}</div>
                   </div>
                   <button
                     onClick={() => handleDeleteCompany(company._id)}
