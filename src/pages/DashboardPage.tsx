@@ -800,6 +800,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser }) => 
       )}
         </>
       )}
+
+      {/* SABİT DIGITAL TWIN BUTONU (FLOATING) */}
+      <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 hover:scale-105 transition-transform duration-300 shadow-2xl shadow-cyan-500/20 rounded-full">
+        <DigitalTwinButton 
+          role={currentUser?.role}
+          company={currentUser?.company_name || selectedCompany}
+          tier={(() => {
+            const activeCompany = companies.find(c => c.name === selectedCompany) || companies.find(c => c._id === currentUser?.company_id);
+            return currentUser?.role === 'superadmin' && activeCompany ? activeCompany.tier || 'starter' : currentUser?.company_tier || 'starter';
+          })()}
+        />
+      </div>
+
     </div>
   );
 };
